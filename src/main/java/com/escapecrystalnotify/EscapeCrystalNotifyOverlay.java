@@ -31,6 +31,7 @@ public class EscapeCrystalNotifyOverlay extends Overlay {
         loadEscapeCrystalImage();
         previouslyScaledImage.scale = 1;
         previouslyScaledImage.scaledBufferedImage = escapeCrystalImage;
+        previouslyScaledImage.inactivityTeleportTime = escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTime();
     }
 
     private static void loadEscapeCrystalImage() {
@@ -48,32 +49,64 @@ public class EscapeCrystalNotifyOverlay extends Overlay {
     }
 
     private BufferedImage scaleImage(BufferedImage escapeCrystalImage) {
-        if (previouslyScaledImage.scale == escapeCrystalNotifyConfig.scale() || escapeCrystalNotifyConfig.scale() <= 0) {
+        boolean inactivityTeleportTimeChanged = previouslyScaledImage.inactivityTeleportTime != escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTime();
+        boolean escapeCrystalImageScaleChanged = previouslyScaledImage.scale != escapeCrystalNotifyConfig.scale();
+        boolean escapeCrystalImageScaleBelowMinimum = escapeCrystalNotifyConfig.scale() <= 0;
+
+        if (!inactivityTeleportTimeChanged && !escapeCrystalImageScaleChanged) {
             return previouslyScaledImage.scaledBufferedImage;
+        }
+
+        int scale;
+        if (escapeCrystalImageScaleBelowMinimum) {
+            scale = 1;
+        }
+        else {
+            scale = escapeCrystalNotifyConfig.scale();
         }
 
         int width = escapeCrystalImage.getWidth();
         int height = escapeCrystalImage.getHeight();
 
         BufferedImage scaledEscapeCrystalImage = new BufferedImage(
-                escapeCrystalNotifyConfig.scale() * width,
-                escapeCrystalNotifyConfig.scale() * height,
+                scale * width,
+                scale * height,
                 BufferedImage.TYPE_INT_ARGB
         );
 
         AffineTransform at = new AffineTransform();
-        at.scale(escapeCrystalNotifyConfig.scale(), escapeCrystalNotifyConfig.scale());
+        at.scale(scale, scale);
         AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
         scaledEscapeCrystalImage = scaleOp.filter(escapeCrystalImage, scaledEscapeCrystalImage);
 
+        Graphics g = scaledEscapeCrystalImage.getGraphics();
+        Font font = new Font("Arial", Font.BOLD, 12 * scale);
+        g.setFont(font);
+        g.setColor(Color.WHITE);
+        g.setColor(Color.BLACK);
+        drawText(g, font, escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTime() + "s", scaledEscapeCrystalImage.getWidth() - 1, scaledEscapeCrystalImage.getHeight() - 1);
+        g.setColor(Color.WHITE);
+        drawText(g, font, escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTime() + "s", scaledEscapeCrystalImage.getWidth() - 3, scaledEscapeCrystalImage.getHeight() - 3);
+
         previouslyScaledImage.scaledBufferedImage = scaledEscapeCrystalImage;
-        previouslyScaledImage.scale = escapeCrystalNotifyConfig.scale();
+        previouslyScaledImage.scale = scale;
+        previouslyScaledImage.inactivityTeleportTime = escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTime();
+
+        g.dispose();
 
         return scaledEscapeCrystalImage;
     }
 
+    private void drawText(Graphics g, Font font, String text, int x, int y) {
+        FontMetrics metrics = g.getFontMetrics(font);
+        int textWidth = metrics.stringWidth(text);
+        int textHeight = metrics.getHeight();
+        g.drawString(text, x - textWidth, y - textHeight/4); // Adjust position to bottom right
+    }
+
     private static class ScaledImage {
         private int scale;
+        private int inactivityTeleportTime;
         private BufferedImage scaledBufferedImage;
     }
 }

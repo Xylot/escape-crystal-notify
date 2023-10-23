@@ -4,16 +4,12 @@ import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
-import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 @Slf4j
 @PluginDescriptor(
@@ -51,7 +47,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event) {
 		this.escapeCrystalActive = client.getVarbitValue(14838) == 1;
-		this.escapeCrystalInactivityTime = client.getVarbitValue(14849);
+		this.escapeCrystalInactivityTime = (int) Math.round(client.getVarbitValue(14849) * 0.6);
 		this.escapeCrystalRingOfLifeActive = client.getVarbitValue(14857) == 1;
 
 		ItemContainer equipmentContainer = client.getItemContainer(InventoryID.EQUIPMENT);
@@ -62,7 +58,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			return;
 		}
 
-		if (equipmentContainer.contains(ItemID.ESCAPE_CRYSTAL) || inventoryContainer.contains(ItemID.ESCAPE_CRYSTAL)) {
+		boolean escapeCrystalEquipped = equipmentContainer != null && equipmentContainer.contains(ItemID.ESCAPE_CRYSTAL);
+		boolean escapeCrystalInInventory = inventoryContainer != null && inventoryContainer.contains(ItemID.ESCAPE_CRYSTAL);
+
+		if (escapeCrystalEquipped || escapeCrystalInInventory) {
 			this.escapeCrystalWithPlayer = true;
 			return;
 		}
