@@ -4,16 +4,52 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 
-@ConfigGroup("example")
+@ConfigGroup("escapecrystalnotify")
 public interface EscapeCrystalNotifyConfig extends Config
 {
+	enum InactivityTimeFormat {
+		SECONDS,
+		GAME_TICKS,
+	}
+
 	@ConfigItem(
-			keyName = "scale",
-			name = "Scale",
-			description = "The scale of the escape crystal image"
+			keyName = "activeCrystalScale",
+			name = "Active Crystal Scale",
+			description = "The size of the active crystal image",
+			position = 1
 	)
-	default int scale()
+	default int activeCrystalScale()
 	{
 		return 1;
+	}
+
+	@ConfigItem(
+			keyName = "inactiveCrystalScale",
+			name = "Inactive Crystal Scale",
+			description = "The size of the inactive crystal image",
+			position = 2
+	)
+	default int inactiveCrystalScale()
+	{
+		return 1;
+	}
+
+	@ConfigItem(
+			keyName = "displayTimeBeforeTeleport",
+			name = "Display Time Left Before Teleport",
+			description = "Display the time left before triggering the inactivity teleport",
+			position = 3
+	)
+	default boolean displayTimeBeforeTeleport() { return true; }
+
+	@ConfigItem(
+			keyName = "inactivityTimeFormat",
+			name = "Inactivity Time Format",
+			description = "Format for displaying the time left before triggering the inactivity teleport",
+			position = 4
+	)
+	default InactivityTimeFormat inactivityTimeFormat()
+	{
+		return InactivityTimeFormat.SECONDS;
 	}
 }

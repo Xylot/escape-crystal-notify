@@ -29,8 +29,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	private boolean escapeCrystalWithPlayer = true;
 	private boolean escapeCrystalActive = true;
-	private int escapeCrystalInactivityTime;
 	private boolean escapeCrystalRingOfLifeActive = true;
+	private int escapeCrystalInactivityTicks;
+	private int clientInactivityTicks;
+	private int expectedServerInactivityTicks = 0;
+	private int expectedTicksUntilTeleport;
 
 	@Override
 	protected void startUp() throws Exception
@@ -47,8 +50,20 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event) {
 		this.escapeCrystalActive = client.getVarbitValue(14838) == 1;
-		this.escapeCrystalInactivityTime = (int) Math.round(client.getVarbitValue(14849) * 0.6);
+		this.escapeCrystalInactivityTicks = client.getVarbitValue(14849);
 		this.escapeCrystalRingOfLifeActive = client.getVarbitValue(14857) == 1;
+
+		int currentClientInactivityTicks = Math.min(client.getKeyboardIdleTicks(), client.getMouseIdleTicks());
+
+		if (currentClientInactivityTicks > this.clientInactivityTicks) {
+			this.expectedServerInactivityTicks += 1;
+		}
+		else {
+			this.expectedServerInactivityTicks = 0;
+		}
+
+		this.clientInactivityTicks = currentClientInactivityTicks;
+		this.expectedTicksUntilTeleport = this.escapeCrystalInactivityTicks - this.expectedServerInactivityTicks;
 
 		ItemContainer equipmentContainer = client.getItemContainer(InventoryID.EQUIPMENT);
 		ItemContainer inventoryContainer = client.getItemContainer(InventoryID.INVENTORY);
@@ -83,11 +98,45 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		return escapeCrystalWithPlayer;
 	}
 
+	public boolean isEscapeCrystalInactivityTeleportActive() {
+		return escapeCrystalWithPlayer && escapeCrystalActive;
+	}
+
 	public boolean isEscapeCrystalRingOfLifeActive() {
 		return escapeCrystalRingOfLifeActive;
 	}
 
-	public int getEscapeCrystalInactivityTime() {
-		return escapeCrystalInactivityTime;
+	public int getEscapeCrystalInactivityTicks() {
+		return escapeCrystalInactivityTicks;
 	}
+
+	public int getEscapeCrystalInactivitySeconds() {
+		return convertTicksToSeconds(escapeCrystalInactivityTicks);
+	}
+
+	public int getClientInactivityTicks() {
+		return clientInactivityTicks;
+	}
+
+	public int getExpectedServerInactivityTicks() {
+		return expectedServerInactivityTicks;
+	}
+
+	public int getExpectedServerInactivitySeconds() {
+		return convertTicksToSeconds(expectedServerInactivityTicks);
+	}
+
+	public int getExpectedTicksUntilTeleport() {
+		return expectedTicksUntilTeleport;
+	}
+
+	public int getExpectedSecondsUntilTeleport() {
+		return convertTicksToSeconds(expectedTicksUntilTeleport);
+	}
+
+	private int convertTicksToSeconds(int ticks) {
+		return (int) Math.round(ticks * 0.6);
+	}
+
+
 }
