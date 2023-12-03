@@ -83,7 +83,7 @@ public class EscapeCrystalNotifyOverlay extends Overlay {
         if (!escapeCrystalImageScaleChanged && !escapeCrystalActivityChanged) {
             scaledEscapeCrystalImage = previouslyGeneratedImage.scaledBaseImage;
         } else {
-            scaledEscapeCrystalImage = scaleImage(targetEscapeCrystalImage, targetScale / 15);
+            scaledEscapeCrystalImage = scaleImage(targetEscapeCrystalImage, targetScale / 5);
         }
 
         BufferedImage generatedEscapeCrystalImage;
@@ -156,13 +156,13 @@ public class EscapeCrystalNotifyOverlay extends Overlay {
 
         Graphics g = imageWithInfoText.getGraphics();
         g.drawImage(image, 0, 0, null);
-        Font font = new Font("Arial", Font.BOLD, 16 * (int) Math.ceil(scale));
+        Font font = new Font("Arial", Font.BOLD, 6 * (int) Math.ceil(scale));
 
         g.setFont(font);
         g.setColor(Color.BLACK);
-        drawTextLowerFourth(g, font, overlayText, imageWithInfoText.getWidth() + 3, imageWithInfoText.getHeight() + 1);
+        drawTextLowerFourth(g, font, overlayText, imageWithInfoText.getWidth() + 1, imageWithInfoText.getHeight() + 1);
         g.setColor(Color.WHITE);
-        drawTextLowerFourth(g, font, overlayText, imageWithInfoText.getWidth() + 1, imageWithInfoText.getHeight() - 1);
+        drawTextLowerFourth(g, font, overlayText, imageWithInfoText.getWidth() - 1, imageWithInfoText.getHeight() - 1);
 
         g.dispose();
 

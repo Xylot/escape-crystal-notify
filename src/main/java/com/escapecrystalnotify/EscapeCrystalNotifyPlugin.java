@@ -65,6 +65,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.clientInactivityTicks = currentClientInactivityTicks;
 		this.expectedTicksUntilTeleport = this.escapeCrystalInactivityTicks - this.expectedServerInactivityTicks;
 
+		if (this.expectedTicksUntilTeleport < 0) {
+			this.expectedTicksUntilTeleport = 0;
+		}
+
 		ItemContainer equipmentContainer = client.getItemContainer(InventoryID.EQUIPMENT);
 		ItemContainer inventoryContainer = client.getItemContainer(InventoryID.INVENTORY);
 
