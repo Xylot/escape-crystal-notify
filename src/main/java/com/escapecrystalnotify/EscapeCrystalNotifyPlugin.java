@@ -28,6 +28,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private static final int ESCAPE_CRYSTAL_ACTIVE_VARBIT = 14838;
 	private static final int ESCAPE_CRYSTAL_INACTIVITY_TICKS_VARBIT = 14849;
 	private static final int ESCAPE_CRYSTAL_RING_OF_LIFE_ACTIVE_VARBIT = 14857;
+	private static final int ITEMS_STORED_VARBIT = 14283;
 	private static final List<Integer> HARDCORE_ACCOUNT_TYPE_VARBIT_VALUES = Arrays.asList(3, 5);
 
 	@Inject
@@ -38,10 +39,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Inject
 	private EscapeCrystalNotifyConfig config;
 
-	@Inject private EscapeCrystalNotifyOverlayActive escapeCrystalNotifyOverlayActive;
-	@Inject private EscapeCrystalNotifyOverlayInactive escapeCrystalNotifyOverlayInactive;
+	@Inject
+	private EscapeCrystalNotifyOverlayActive escapeCrystalNotifyOverlayActive;
 
-	@Inject private OverlayManager overlayManager;
+	@Inject
+	private EscapeCrystalNotifyOverlayInactive escapeCrystalNotifyOverlayInactive;
+
+	@Inject
+	private OverlayManager overlayManager;
 
 	private boolean notifyMissing = false;
 	private boolean notifyInactive = false;
@@ -118,7 +123,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
     }
 
 	private void computeEscapeCrystalMetrics() {
-		this.escapeCrystalWithPlayer = checkEscapeCrystalWithPlayer();
+		if (client.getVarbitValue(ITEMS_STORED_VARBIT) == 0) {
+			this.escapeCrystalWithPlayer = checkEscapeCrystalWithPlayer();
+		}
+
 		this.escapeCrystalActive = client.getVarbitValue(ESCAPE_CRYSTAL_ACTIVE_VARBIT) == 1;
 		this.escapeCrystalInactivityTicks = client.getVarbitValue(ESCAPE_CRYSTAL_INACTIVITY_TICKS_VARBIT);
 		this.escapeCrystalRingOfLifeActive = client.getVarbitValue(ESCAPE_CRYSTAL_RING_OF_LIFE_ACTIVE_VARBIT) == 1;

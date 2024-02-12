@@ -19,7 +19,8 @@ public enum EscapeCrystalNotifyRegion {
     BOSS_CORP("Corporeal Beast", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 11842, 11844),
     BOSS_DKS("Dagannoth Kings", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 11588, 11589),
     BOSS_DUKE_SUCELLUS("Duke Sucellus", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 12132),
-    BOSS_GAUNTLET("The Gauntlet", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 12127, 7512),
+    BOSS_GAUNTLET_LOBBY("The Gauntlet Lobby", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 12127),
+    BOSS_GAUNTLET("The Gauntlet", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 7512),
     BOSS_CORRUPTED_GAUNTLET("Corrupted Gauntlet", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 7768),
     BOSS_GENERAL_GRAARDOR("General Graardor", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 11347),
     BOSS_GIANT_MOLE("Giant Mole", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 6993, 6992),
@@ -163,6 +164,12 @@ public enum EscapeCrystalNotifyRegion {
     public static List<Integer> getRegionIdsFromTypes(List<EscapeCrystalNotifyRegionType> selectedRegionTypes) {
         return Arrays.stream(EscapeCrystalNotifyRegion.values())
                 .filter(subRegionType -> selectedRegionTypes.contains(subRegionType.getRegionType()))
+                .flatMap(subRegionType -> Arrays.stream(subRegionType.getRegionIds()).boxed())
+                .collect(Collectors.toList());
+    }
+
+    public static List<Integer> getRegionIdsFromRegions(List<EscapeCrystalNotifyRegion> selectedRegions) {
+        return selectedRegions.stream()
                 .flatMap(subRegionType -> Arrays.stream(subRegionType.getRegionIds()).boxed())
                 .collect(Collectors.toList());
     }
