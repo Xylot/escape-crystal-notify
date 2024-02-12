@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameTick;
+import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -30,6 +31,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private static final List<Integer> HARDCORE_ACCOUNT_TYPE_VARBIT_VALUES = Arrays.asList(3, 5);
 
 	@Inject
+	private Notifier notifier;
+	@Inject
 	private Client client;
 
 	@Inject
@@ -39,6 +42,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Inject private OverlayManager overlayManager;
 
+	private boolean notifyMissing = false;
+	private boolean notifyInactive = false;
+	private boolean notifyTimeRemainingThreshold = false;
+	private String notifyTimeRemainingThresholdMessage;
 	private boolean hardcoreAccountType;
 	private boolean escapeCrystalWithPlayer = true;
 	private boolean escapeCrystalActive = true;
@@ -48,13 +55,23 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private int expectedServerInactivityTicks = 0;
 	private int expectedTicksUntilTeleport;
 	private int currentRegionId;
+	private int previousRegionId;
+	private boolean enteredNotifyRegionId = false;
 	private boolean atNotifyRegionId = false;
+	private boolean previouslyAtNotifyRegionId = false;
+	private int timeRemainingThresholdTicks;
+	private boolean inTimeRemainingThreshold = false;
+	private boolean previouslyInTimeRemainingThreshold = false;
+	private boolean enteredTimeRemainingThreshold = false;
 	private List<Integer> targetRegionIds;
 
 	@Override
 	protected void startUp() throws Exception
 	{
 		this.targetRegionIds = getTargetRegionIdsFromConfig();
+		this.notifyTimeRemainingThresholdMessage = generateTimeRemainingThresholdMessage();
+		this.timeRemainingThresholdTicks = normalizeTimeRemainingThresholdValue();
+
 		overlayManager.add(escapeCrystalNotifyOverlay);
 	}
 
@@ -67,12 +84,20 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event) {
 		this.hardcoreAccountType = HARDCORE_ACCOUNT_TYPE_VARBIT_VALUES.contains(client.getVarbitValue(Varbits.ACCOUNT_TYPE));
+
+		computeLocationMetrics();
+		computeEscapeCrystalMetrics();
+		computeNotificationMetrics();
+
+		sendRequestedNotifications();
+	}
+
+	private void computeLocationMetrics() {
+		this.previousRegionId = this.currentRegionId;
+		this.previouslyAtNotifyRegionId = this.atNotifyRegionId;
 		this.currentRegionId = WorldPoint.fromLocalInstance(client, client.getLocalPlayer().getLocalLocation()).getRegionID();
 		this.atNotifyRegionId = config.displayEverywhere() || this.targetRegionIds.contains(this.currentRegionId);
-
-		computeEscapeCrystalMetrics();
-
-		this.escapeCrystalWithPlayer = checkEscapeCrystalWithPlayer();
+		this.enteredNotifyRegionId = !this.previouslyAtNotifyRegionId && this.atNotifyRegionId;
 	}
 
 	private boolean checkEscapeCrystalWithPlayer() {
@@ -90,6 +115,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
     }
 
 	private void computeEscapeCrystalMetrics() {
+		this.escapeCrystalWithPlayer = checkEscapeCrystalWithPlayer();
 		this.escapeCrystalActive = client.getVarbitValue(ESCAPE_CRYSTAL_ACTIVE_VARBIT) == 1;
 		this.escapeCrystalInactivityTicks = client.getVarbitValue(ESCAPE_CRYSTAL_INACTIVITY_TICKS_VARBIT);
 		this.escapeCrystalRingOfLifeActive = client.getVarbitValue(ESCAPE_CRYSTAL_RING_OF_LIFE_ACTIVE_VARBIT) == 1;
@@ -101,6 +127,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		}
 		else {
 			this.expectedServerInactivityTicks = 0;
+			this.notifyTimeRemainingThreshold = false;
 		}
 
 		this.clientInactivityTicks = currentClientInactivityTicks;
@@ -111,6 +138,47 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		}
 	}
 
+	private void computeNotificationMetrics() {
+		if (!this.atNotifyRegionId || (config.requireHardcoreAccountType() && !this.hardcoreAccountType)) {
+			resetNotificationFlags();
+			return;
+		}
+
+		if (!this.escapeCrystalWithPlayer && this.enteredNotifyRegionId) {
+			this.notifyMissing = true;
+		}
+
+		if (!this.escapeCrystalActive && this.enteredNotifyRegionId) {
+			this.notifyInactive = true;
+		}
+
+		this.previouslyInTimeRemainingThreshold = this.inTimeRemainingThreshold;
+		this.inTimeRemainingThreshold = this.expectedTicksUntilTeleport <= this.timeRemainingThresholdTicks;
+		this.enteredTimeRemainingThreshold = !this.previouslyInTimeRemainingThreshold && this.inTimeRemainingThreshold;
+
+		if (this.inTimeRemainingThreshold && this.enteredTimeRemainingThreshold) {
+			this.notifyTimeRemainingThreshold = true;
+		}
+	}
+
+	private void resetNotificationFlags() {
+		this.notifyMissing = false;
+		this.notifyInactive = false;
+		this.notifyTimeRemainingThreshold = false;
+	}
+
+	private String generateTimeRemainingThresholdMessage() {
+		return String.format("Your escape crystal will teleport you in %s %s!", config.notifyTimeUntilTeleportThreshold(), config.inactivityTimeFormat().toString());
+	}
+
+	private int normalizeTimeRemainingThresholdValue() {
+		switch (config.inactivityTimeFormat()) {
+			case SECONDS:
+				return convertSecondsToTicks(config.notifyTimeUntilTeleportThreshold());
+            default: return config.notifyTimeUntilTeleportThreshold();
+		}
+    }
+
 	@Provides
 	EscapeCrystalNotifyConfig provideConfig(ConfigManager configManager)
 	{
@@ -120,6 +188,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event) {
 		this.targetRegionIds = getTargetRegionIdsFromConfig();
+		this.notifyTimeRemainingThresholdMessage = generateTimeRemainingThresholdMessage();
+		this.timeRemainingThresholdTicks = normalizeTimeRemainingThresholdValue();
 	}
 
 	private List<Integer> getTargetRegionIdsFromConfig() {
@@ -144,6 +214,19 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		if (regionIds.isEmpty()) return List.of();
 
 		return Arrays.stream(regionIds.split(",")).map(Integer::parseInt).collect(Collectors.toList());
+	}
+
+	private void sendRequestedNotifications() {
+		if (config.notifyMissing() && this.notifyMissing) {
+			notifier.notify("You are missing an escape crystal!");
+			this.notifyMissing = false;
+		} else if (config.notifyInactive() && this.notifyInactive) {
+			notifier.notify("Your escape crystal is inactive!");
+			this.notifyInactive = false;
+		} else if (config.notifyTimeUntilTeleportThreshold() != 0 && this.notifyTimeRemainingThreshold) {
+			notifier.notify(this.notifyTimeRemainingThresholdMessage);
+			this.notifyTimeRemainingThreshold = false;
+		}
 	}
 
 	public boolean isHardcoreAccountType() {
@@ -206,5 +289,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		return (int) Math.round(ticks * 0.6);
 	}
 
-
+	private int convertSecondsToTicks(int seconds) {
+		return (int) Math.round(seconds * 1.6);
+	}
 }

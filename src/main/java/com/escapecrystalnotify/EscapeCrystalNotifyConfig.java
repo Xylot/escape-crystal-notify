@@ -9,8 +9,18 @@ import net.runelite.client.config.ConfigSection;
 public interface EscapeCrystalNotifyConfig extends Config
 {
 	enum InactivityTimeFormat {
-		SECONDS,
-		GAME_TICKS,
+		SECONDS ("seconds"),
+		GAME_TICKS ("ticks");
+
+		private final String formatName;
+
+		InactivityTimeFormat(String formatName) {
+			this.formatName = formatName;
+		}
+
+		public String toString() {
+			return this.formatName;
+		}
 	}
 
 	@ConfigItem(
@@ -63,7 +73,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	}
 
 	@ConfigSection(
-			name = "Display Location Filter",
+			name = "Location Filter",
 			description = "Filter locations where the reminder is shown",
 			position = 6
 	)
@@ -131,5 +141,39 @@ public interface EscapeCrystalNotifyConfig extends Config
 			position = 13
 	)
 	default String includeRegionIds() { return ""; }
+
+	@ConfigSection(
+			name = "Notification Settings",
+			description = "Configure preferences for Runelite notifications",
+			position = 14
+	)
+	String notificationSettings = "notificationSettings";
+
+	@ConfigItem(
+			keyName = "notifyMissing",
+			name = "Missing Crystal",
+			description = "Sends a notification when you are not carrying your escape crystal",
+			section = "notificationSettings",
+			position = 15
+	)
+	default boolean notifyMissing() { return true; }
+
+	@ConfigItem(
+			keyName = "notifyInactive",
+			name = "Inactive Crystal",
+			description = "Sends a notification when your escape crystal is not enabled",
+			section = "notificationSettings",
+			position = 15
+	)
+	default boolean notifyInactive() { return true; }
+
+	@ConfigItem(
+			keyName = "notifyTimeUntilTeleportThreshold",
+			name = "Time Remaining Threshold",
+			description = "Sends a notification when your escape crystal is about to trigger. Note that this respects the time format you specified above (Ticks vs Seconds). A value of 0 will disable the notification.",
+			section = "notificationSettings",
+			position = 16
+	)
+	default int notifyTimeUntilTeleportThreshold() { return 0; }
 }
 
