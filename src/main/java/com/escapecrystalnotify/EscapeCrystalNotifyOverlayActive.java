@@ -60,7 +60,7 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
     }
 
     private BufferedImage generateEscapeCrystalImage() {
-        double targetScale = Math.max(escapeCrystalNotifyConfig.inactiveCrystalScale(), 1);
+        double targetScale = Math.max(escapeCrystalNotifyConfig.activeCrystalScale(), 1);
 
         boolean escapeCrystalImageScaleChanged = previouslyGeneratedImage.scale != targetScale;
         boolean escapeCrystalInactivityTicksChanged = previouslyGeneratedImage.escapeCrystalInactivityTicks != escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTicks();
