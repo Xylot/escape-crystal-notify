@@ -14,15 +14,14 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 
-public class EscapeCrystalNotifyOverlay extends Overlay {
+public class EscapeCrystalNotifyOverlayActive extends Overlay {
     private static final EscapeCrystalImage previouslyGeneratedImage = new EscapeCrystalImage();
-    private static BufferedImage activeEscapeCrystalImage;
-    private static BufferedImage inactiveEscapeCrystalImage;
+    private static BufferedImage escapeCrystalImage;
     private final EscapeCrystalNotifyPlugin escapeCrystalNotifyPlugin;
     private final EscapeCrystalNotifyConfig escapeCrystalNotifyConfig;
 
     @Inject
-    EscapeCrystalNotifyOverlay(EscapeCrystalNotifyPlugin plugin, EscapeCrystalNotifyConfig config) throws PluginInstantiationException {
+    EscapeCrystalNotifyOverlayActive(EscapeCrystalNotifyPlugin plugin, EscapeCrystalNotifyConfig config) throws PluginInstantiationException {
         super(plugin);
         setPriority(OverlayPriority.MED);
         setPosition(OverlayPosition.BOTTOM_LEFT);
@@ -31,25 +30,18 @@ public class EscapeCrystalNotifyOverlay extends Overlay {
         this.escapeCrystalNotifyPlugin = plugin;
         this.escapeCrystalNotifyConfig = config;
 
-        loadEscapeCrystalImages();
+        escapeCrystalImage = loadEscapeCrystalImage();
+
         initializePreviouslyGeneratedImage();
     }
 
-    private static void loadEscapeCrystalImages() {
-        activeEscapeCrystalImage = ImageUtil.loadImageResource(EscapeCrystalNotifyPlugin.class, "/escape-crystal-active.png");
-        inactiveEscapeCrystalImage = ImageUtil.loadImageResource(EscapeCrystalNotifyPlugin.class, "/escape-crystal-inactive.png");
+    private static BufferedImage loadEscapeCrystalImage() {
+        return ImageUtil.loadImageResource(EscapeCrystalNotifyPlugin.class, "/escape-crystal-active.png");
     }
 
     private void initializePreviouslyGeneratedImage() {
         previouslyGeneratedImage.scale = 1;
-        previouslyGeneratedImage.scaledBaseImage = inactiveEscapeCrystalImage;
-        previouslyGeneratedImage.generatedImage = inactiveEscapeCrystalImage;
-        previouslyGeneratedImage.escapeCrystalInactivityTicks = escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTicks();
-        previouslyGeneratedImage.escapeCrystalInactivitySeconds = escapeCrystalNotifyPlugin.getEscapeCrystalInactivitySeconds();
-        previouslyGeneratedImage.expectedServerInactivityTicks = escapeCrystalNotifyPlugin.getExpectedServerInactivityTicks();
-        previouslyGeneratedImage.expectedServerInactivitySeconds = escapeCrystalNotifyPlugin.getExpectedServerInactivitySeconds();
-        previouslyGeneratedImage.expectedTicksUntilTeleport = escapeCrystalNotifyPlugin.getExpectedTicksUntilTeleport();
-        previouslyGeneratedImage.expectedSecondsUntilTeleport = escapeCrystalNotifyPlugin.getExpectedSecondsUntilTeleport();
+        previouslyGeneratedImage.generatedImage = escapeCrystalImage;
     }
     @Override
     public Dimension render(Graphics2D graphics) {
@@ -58,84 +50,43 @@ public class EscapeCrystalNotifyOverlay extends Overlay {
         boolean notAtNotifyRegion = !escapeCrystalNotifyPlugin.isAtNotifyRegionId();
         boolean disabledActivityTimer = active && !escapeCrystalNotifyConfig.displayTimeBeforeTeleport();
 
-        if (notHardcore || notAtNotifyRegion || disabledActivityTimer) {
+        if (notHardcore || notAtNotifyRegion || !active || disabledActivityTimer) {
             return null;
         }
 
-        BufferedImage generatedEscapeCrystalImage = generateEscapeCrystalImage(active);
+        BufferedImage generatedEscapeCrystalImage = generateEscapeCrystalImage();
         ImageComponent imagePanelComponent = new ImageComponent(generatedEscapeCrystalImage);
         return imagePanelComponent.render(graphics);
     }
 
-    private BufferedImage generateEscapeCrystalImage(boolean active) {
-        BufferedImage targetEscapeCrystalImage = determineBaseEscapeCrystalImage(active);
+    private BufferedImage generateEscapeCrystalImage() {
+        double targetScale = Math.max(escapeCrystalNotifyConfig.inactiveCrystalScale(), 1);
 
-        double targetScale = determineEscapeCrystalImageScale(active);
-
-        boolean escapeCrystalActivityChanged = previouslyGeneratedImage.active != active;
+        boolean escapeCrystalImageScaleChanged = previouslyGeneratedImage.scale != targetScale;
         boolean escapeCrystalInactivityTicksChanged = previouslyGeneratedImage.escapeCrystalInactivityTicks != escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTicks();
         boolean expectedServerInactivityTicksChanged = previouslyGeneratedImage.expectedServerInactivityTicks != escapeCrystalNotifyPlugin.getExpectedServerInactivityTicks();
-        boolean escapeCrystalImageScaleChanged = previouslyGeneratedImage.scale != targetScale;
 
-        if (!escapeCrystalActivityChanged && !escapeCrystalInactivityTicksChanged && !expectedServerInactivityTicksChanged && !escapeCrystalImageScaleChanged) {
+        if (!escapeCrystalInactivityTicksChanged && !expectedServerInactivityTicksChanged && !escapeCrystalImageScaleChanged) {
             return previouslyGeneratedImage.generatedImage;
         }
 
         BufferedImage scaledEscapeCrystalImage;
-        if (!escapeCrystalImageScaleChanged && !escapeCrystalActivityChanged) {
+        if (!escapeCrystalImageScaleChanged) {
             scaledEscapeCrystalImage = previouslyGeneratedImage.scaledBaseImage;
         } else {
-            scaledEscapeCrystalImage = scaleImage(targetEscapeCrystalImage, targetScale / 5);
+            scaledEscapeCrystalImage = scaleImage(escapeCrystalImage, targetScale / 5);
         }
 
-        BufferedImage generatedEscapeCrystalImage;
-        if (active) {
-            String overlayText = determineActiveEscapeCrystalOverlayText(escapeCrystalNotifyConfig.inactivityTimeFormat());
-            generatedEscapeCrystalImage = drawInfoTextOnImage(scaledEscapeCrystalImage, targetScale, overlayText);
-        } else {
-            generatedEscapeCrystalImage = scaledEscapeCrystalImage;
-        }
+        String overlayText = determineActiveEscapeCrystalOverlayText(escapeCrystalNotifyConfig.inactivityTimeFormat());
+        BufferedImage generatedEscapeCrystalImage = drawInfoTextOnImage(scaledEscapeCrystalImage, targetScale, overlayText);
 
-        previouslyGeneratedImage.active = active;
         previouslyGeneratedImage.scaledBaseImage = scaledEscapeCrystalImage;
         previouslyGeneratedImage.generatedImage = generatedEscapeCrystalImage;
         previouslyGeneratedImage.scale = targetScale;
         previouslyGeneratedImage.escapeCrystalInactivityTicks = escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTicks();
-        previouslyGeneratedImage.escapeCrystalInactivitySeconds = escapeCrystalNotifyPlugin.getEscapeCrystalInactivitySeconds();
         previouslyGeneratedImage.expectedServerInactivityTicks = escapeCrystalNotifyPlugin.getExpectedServerInactivityTicks();
-        previouslyGeneratedImage.expectedServerInactivitySeconds = escapeCrystalNotifyPlugin.getExpectedServerInactivitySeconds();
-        previouslyGeneratedImage.expectedTicksUntilTeleport = escapeCrystalNotifyPlugin.getExpectedTicksUntilTeleport();
-        previouslyGeneratedImage.expectedSecondsUntilTeleport = escapeCrystalNotifyPlugin.getExpectedSecondsUntilTeleport();
 
         return generatedEscapeCrystalImage;
-    }
-
-    private BufferedImage determineBaseEscapeCrystalImage(boolean active) {
-        if (active) {
-            return activeEscapeCrystalImage;
-        }
-
-        return inactiveEscapeCrystalImage;
-    }
-
-    private int determineEscapeCrystalImageScale(boolean active) {
-        if (active) {
-            return Math.max(escapeCrystalNotifyConfig.activeCrystalScale(), 1);
-        }
-
-        return Math.max(escapeCrystalNotifyConfig.inactiveCrystalScale(), 1);
-    }
-
-    private String determineActiveEscapeCrystalOverlayText(EscapeCrystalNotifyConfig.InactivityTimeFormat timeFormat) {
-        switch (timeFormat) {
-            case SECONDS:
-                return escapeCrystalNotifyPlugin.getExpectedSecondsUntilTeleport() + "s";
-            case GAME_TICKS:
-                return String.valueOf(escapeCrystalNotifyPlugin.getExpectedTicksUntilTeleport());
-            default:
-                return "";
-
-        }
     }
 
     private BufferedImage scaleImage(BufferedImage image, double scale) {
@@ -151,6 +102,18 @@ public class EscapeCrystalNotifyOverlay extends Overlay {
         scaledImage = scaleOp.filter(image, scaledImage);
 
         return scaledImage;
+    }
+
+    private String determineActiveEscapeCrystalOverlayText(EscapeCrystalNotifyConfig.InactivityTimeFormat timeFormat) {
+        switch (timeFormat) {
+            case SECONDS:
+                return escapeCrystalNotifyPlugin.getExpectedSecondsUntilTeleport() + "s";
+            case GAME_TICKS:
+                return String.valueOf(escapeCrystalNotifyPlugin.getExpectedTicksUntilTeleport());
+            default:
+                return "";
+
+        }
     }
 
     private BufferedImage drawInfoTextOnImage(BufferedImage image, double scale, String overlayText) {
@@ -185,16 +148,12 @@ public class EscapeCrystalNotifyOverlay extends Overlay {
     }
 
     private static class EscapeCrystalImage {
-        private boolean active;
         private double scale;
         private BufferedImage scaledBaseImage;
         private BufferedImage generatedImage;
         private int escapeCrystalInactivityTicks;
-        private int escapeCrystalInactivitySeconds;
         private int expectedServerInactivityTicks;
-        private int expectedServerInactivitySeconds;
-        private int expectedTicksUntilTeleport;
-        private int expectedSecondsUntilTeleport;
+
 
     }
 }

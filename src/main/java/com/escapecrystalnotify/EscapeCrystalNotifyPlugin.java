@@ -38,7 +38,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Inject
 	private EscapeCrystalNotifyConfig config;
 
-	@Inject private EscapeCrystalNotifyOverlay escapeCrystalNotifyOverlay;
+	@Inject private EscapeCrystalNotifyOverlayActive escapeCrystalNotifyOverlayActive;
+	@Inject private EscapeCrystalNotifyOverlayInactive escapeCrystalNotifyOverlayInactive;
 
 	@Inject private OverlayManager overlayManager;
 
@@ -72,13 +73,15 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.notifyTimeRemainingThresholdMessage = generateTimeRemainingThresholdMessage();
 		this.timeRemainingThresholdTicks = normalizeTimeRemainingThresholdValue();
 
-		overlayManager.add(escapeCrystalNotifyOverlay);
+		overlayManager.add(escapeCrystalNotifyOverlayActive);
+		overlayManager.add(escapeCrystalNotifyOverlayInactive);
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
-		overlayManager.remove(escapeCrystalNotifyOverlay);
+		overlayManager.remove(escapeCrystalNotifyOverlayActive);
+		overlayManager.remove(escapeCrystalNotifyOverlayInactive);
 	}
 
 	@Subscribe

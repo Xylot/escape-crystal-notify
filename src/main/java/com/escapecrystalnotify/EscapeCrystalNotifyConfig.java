@@ -150,15 +150,6 @@ public interface EscapeCrystalNotifyConfig extends Config
 	String notificationSettings = "notificationSettings";
 
 	@ConfigItem(
-			keyName = "notifyMissing",
-			name = "Missing Crystal",
-			description = "Sends a notification when you are not carrying your escape crystal",
-			section = "notificationSettings",
-			position = 15
-	)
-	default boolean notifyMissing() { return true; }
-
-	@ConfigItem(
 			keyName = "notifyInactive",
 			name = "Inactive Crystal",
 			description = "Sends a notification when your escape crystal is not enabled",
@@ -168,11 +159,20 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default boolean notifyInactive() { return true; }
 
 	@ConfigItem(
+			keyName = "notifyMissing",
+			name = "Missing Crystal",
+			description = "Sends a notification when you are not carrying your escape crystal",
+			section = "notificationSettings",
+			position = 16
+	)
+	default boolean notifyMissing() { return true; }
+
+	@ConfigItem(
 			keyName = "notifyTimeUntilTeleportThreshold",
 			name = "Time Remaining Threshold",
 			description = "Sends a notification when your escape crystal is about to trigger. Note that this respects the time format you specified above (Ticks vs Seconds). A value of 0 will disable the notification.",
 			section = "notificationSettings",
-			position = 16
+			position = 17
 	)
 	default int notifyTimeUntilTeleportThreshold() { return 0; }
 }
