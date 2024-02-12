@@ -38,7 +38,6 @@ public class EscapeCrystalNotifyOverlay extends Overlay {
     private static void loadEscapeCrystalImages() {
         activeEscapeCrystalImage = ImageUtil.loadImageResource(EscapeCrystalNotifyPlugin.class, "/escape-crystal-active.png");
         inactiveEscapeCrystalImage = ImageUtil.loadImageResource(EscapeCrystalNotifyPlugin.class, "/escape-crystal-inactive.png");
-
     }
 
     private void initializePreviouslyGeneratedImage() {
@@ -55,8 +54,11 @@ public class EscapeCrystalNotifyOverlay extends Overlay {
     @Override
     public Dimension render(Graphics2D graphics) {
         boolean active = escapeCrystalNotifyPlugin.isEscapeCrystalInactivityTeleportActive();
+        boolean notHardcore = escapeCrystalNotifyConfig.requireHardcoreAccountType() && !escapeCrystalNotifyPlugin.isHardcoreAccountType();
+        boolean notAtNotifyRegion = !escapeCrystalNotifyPlugin.isAtNotifyRegionId();
+        boolean disabledActivityTimer = active && !escapeCrystalNotifyConfig.displayTimeBeforeTeleport();
 
-        if (active && !escapeCrystalNotifyConfig.displayTimeBeforeTeleport()) {
+        if (notHardcore || notAtNotifyRegion || disabledActivityTimer) {
             return null;
         }
 
@@ -167,13 +169,6 @@ public class EscapeCrystalNotifyOverlay extends Overlay {
         g.dispose();
 
         return imageWithInfoText;
-    }
-
-    private void drawTextBottomRight(Graphics g, Font font, String text, int x, int y) {
-        FontMetrics metrics = g.getFontMetrics(font);
-        int textWidth = metrics.stringWidth(text);
-        int textHeight = metrics.getHeight();
-        g.drawString(text, x - textWidth, y - textHeight / 4);
     }
 
     private void drawTextLowerFourth(Graphics g, Font font, String text, int x, int y) {
