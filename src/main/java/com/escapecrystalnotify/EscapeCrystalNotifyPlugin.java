@@ -35,6 +35,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private Notifier notifier;
 	@Inject
 	private Client client;
+	@Inject
+	private ConfigManager configManager;
 
 	@Inject
 	private EscapeCrystalNotifyConfig config;
@@ -51,11 +53,13 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private boolean notifyMissing = false;
 	private boolean notifyInactive = false;
 	private boolean notifyTimeRemainingThreshold = false;
+	private boolean notifyNonLeftClickTeleport = false;
 	private String notifyTimeRemainingThresholdMessage;
 	private boolean hardcoreAccountType;
 	private boolean escapeCrystalWithPlayer = true;
 	private boolean escapeCrystalActive = true;
 	private boolean escapeCrystalRingOfLifeActive = true;
+	private boolean escapeCrystalLeftClickTeleportEnabled = true;
 	private int escapeCrystalInactivityTicks;
 	private int clientInactivityTicks;
 	private int expectedServerInactivityTicks = 0;
@@ -147,6 +151,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		if (this.expectedTicksUntilTeleport < 0) {
 			this.expectedTicksUntilTeleport = 0;
 		}
+
+		this.escapeCrystalLeftClickTeleportEnabled = configManager.getConfiguration("menuentryswapper", "item_" + ItemID.ESCAPE_CRYSTAL) == null;
 	}
 
 	private void computeNotificationMetrics() {
@@ -170,12 +176,17 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		if (this.inTimeRemainingThreshold && this.enteredTimeRemainingThreshold) {
 			this.notifyTimeRemainingThreshold = true;
 		}
+
+		if (!this.escapeCrystalLeftClickTeleportEnabled && this.enteredNotifyRegionId) {
+			this.notifyNonLeftClickTeleport = true;
+		}
 	}
 
 	private void resetNotificationFlags() {
 		this.notifyMissing = false;
 		this.notifyInactive = false;
 		this.notifyTimeRemainingThreshold = false;
+		this.notifyNonLeftClickTeleport = false;
 	}
 
 	private String generateTimeRemainingThresholdMessage() {
@@ -238,6 +249,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			notifier.notify(this.notifyTimeRemainingThresholdMessage);
 			this.notifyTimeRemainingThreshold = false;
 		}
+
+		if (config.notifyNonLeftClickTeleport() && this.notifyNonLeftClickTeleport) {
+			notifier.notify("Your escape crystal is not set to left click teleport!");
+			this.notifyNonLeftClickTeleport = false;
+		}
 	}
 
 	public boolean isHardcoreAccountType() {
@@ -258,6 +274,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	public boolean isEscapeCrystalRingOfLifeActive() {
 		return escapeCrystalRingOfLifeActive;
+	}
+
+	public boolean isEscapeCrystalLeftClickTeleportEnabled() {
+		return escapeCrystalLeftClickTeleportEnabled;
 	}
 
 	public int getEscapeCrystalInactivityTicks() {

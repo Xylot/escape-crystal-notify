@@ -40,7 +40,7 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
     }
 
     private void initializePreviouslyGeneratedImage() {
-        previouslyGeneratedImage.scale = 1;
+        previouslyGeneratedImage.scale = -1;
         previouslyGeneratedImage.generatedImage = escapeCrystalImage;
     }
     @Override
@@ -63,10 +63,11 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
         double targetScale = Math.max(escapeCrystalNotifyConfig.activeCrystalScale(), 1);
 
         boolean escapeCrystalImageScaleChanged = previouslyGeneratedImage.scale != targetScale;
+        boolean escapeCrystalLeftClickTeleportEnabledChanged = previouslyGeneratedImage.escapeCrystalLeftClickTeleportEnabled != escapeCrystalNotifyPlugin.isEscapeCrystalLeftClickTeleportEnabled();
         boolean escapeCrystalInactivityTicksChanged = previouslyGeneratedImage.escapeCrystalInactivityTicks != escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTicks();
         boolean expectedServerInactivityTicksChanged = previouslyGeneratedImage.expectedServerInactivityTicks != escapeCrystalNotifyPlugin.getExpectedServerInactivityTicks();
 
-        if (!escapeCrystalInactivityTicksChanged && !expectedServerInactivityTicksChanged && !escapeCrystalImageScaleChanged) {
+        if (!escapeCrystalInactivityTicksChanged && !expectedServerInactivityTicksChanged && !escapeCrystalImageScaleChanged && !escapeCrystalLeftClickTeleportEnabledChanged) {
             return previouslyGeneratedImage.generatedImage;
         }
 
@@ -78,11 +79,12 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
         }
 
         String overlayText = determineActiveEscapeCrystalOverlayText(escapeCrystalNotifyConfig.inactivityTimeFormat());
-        BufferedImage generatedEscapeCrystalImage = drawInfoTextOnImage(scaledEscapeCrystalImage, targetScale, overlayText);
+        BufferedImage generatedEscapeCrystalImage = drawInfoTextOnImage(scaledEscapeCrystalImage, targetScale, overlayText, !escapeCrystalNotifyPlugin.isEscapeCrystalLeftClickTeleportEnabled());
 
         previouslyGeneratedImage.scaledBaseImage = scaledEscapeCrystalImage;
         previouslyGeneratedImage.generatedImage = generatedEscapeCrystalImage;
         previouslyGeneratedImage.scale = targetScale;
+        previouslyGeneratedImage.escapeCrystalLeftClickTeleportEnabled = escapeCrystalNotifyPlugin.isEscapeCrystalLeftClickTeleportEnabled();
         previouslyGeneratedImage.escapeCrystalInactivityTicks = escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTicks();
         previouslyGeneratedImage.expectedServerInactivityTicks = escapeCrystalNotifyPlugin.getExpectedServerInactivityTicks();
 
@@ -116,7 +118,7 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
         }
     }
 
-    private BufferedImage drawInfoTextOnImage(BufferedImage image, double scale, String overlayText) {
+    private BufferedImage drawInfoTextOnImage(BufferedImage image, double scale, String overlayText, boolean addLeftClickWarning) {
         BufferedImage imageWithInfoText = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
 
         Graphics g = imageWithInfoText.getGraphics();
@@ -128,6 +130,15 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
         drawTextLowerFourth(g, font, overlayText, imageWithInfoText.getWidth() + 1, imageWithInfoText.getHeight() + 1);
         g.setColor(Color.WHITE);
         drawTextLowerFourth(g, font, overlayText, imageWithInfoText.getWidth() - 1, imageWithInfoText.getHeight() - 1);
+
+        if (addLeftClickWarning){
+            Font warningMessageFont = new Font("Arial", Font.BOLD, (int) (2.5 * Math.ceil(scale)));
+            g.setFont(warningMessageFont);
+            g.setColor(Color.RED);
+            FontMetrics metrics = g.getFontMetrics(warningMessageFont);
+            drawTextBottomMiddle(g, warningMessageFont, "NO LEFT", imageWithInfoText.getWidth(), imageWithInfoText.getHeight() - metrics.getHeight());
+            drawTextBottomMiddle(g, warningMessageFont, "CLICK", imageWithInfoText.getWidth(), imageWithInfoText.getHeight());
+        }
 
         g.dispose();
 
@@ -147,10 +158,18 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
         g.drawString(text, xDrawLocation, yDrawLocation);
     }
 
+    private void drawTextBottomMiddle(Graphics g, Font font, String text, int x, int y) {
+        FontMetrics metrics = g.getFontMetrics(font);
+        int textWidth = metrics.stringWidth(text);
+        int xDrawLocation = (x - textWidth) / 2;
+        g.drawString(text, xDrawLocation, y);
+    }
+
     private static class EscapeCrystalImage {
         private double scale;
         private BufferedImage scaledBaseImage;
         private BufferedImage generatedImage;
+        private boolean escapeCrystalLeftClickTeleportEnabled;
         private int escapeCrystalInactivityTicks;
         private int expectedServerInactivityTicks;
 

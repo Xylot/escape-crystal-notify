@@ -175,5 +175,14 @@ public interface EscapeCrystalNotifyConfig extends Config
 			position = 17
 	)
 	default int notifyTimeUntilTeleportThreshold() { return 0; }
+
+	@ConfigItem(
+			keyName = "notifyNonLeftClickTeleport",
+			name = "Non Left Click Teleport",
+			description = "Sends a notification when the left click option on your escape crystal is not set to teleport",
+			section = "notificationSettings",
+			position = 18
+	)
+	default boolean notifyNonLeftClickTeleport() { return false; }
 }
 
