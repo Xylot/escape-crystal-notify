@@ -29,7 +29,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private static final int ESCAPE_CRYSTAL_INACTIVITY_TICKS_VARBIT = 14849;
 	private static final int ESCAPE_CRYSTAL_RING_OF_LIFE_ACTIVE_VARBIT = 14857;
 	private static final int ITEMS_STORED_VARBIT = 14283;
-	private static final List<Integer> HARDCORE_ACCOUNT_TYPE_VARBIT_VALUES = Arrays.asList(3, 5);
+	private static final int STANDARD_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE = 3;
+	private static final int GROUP_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE = 5;
 
 	@Inject
 	private Notifier notifier;
@@ -55,7 +56,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private boolean notifyTimeRemainingThreshold = false;
 	private boolean notifyNonLeftClickTeleport = false;
 	private String notifyTimeRemainingThresholdMessage;
-	private boolean hardcoreAccountType;
+	private EscapeCrystalNotifyAccountType accountType = EscapeCrystalNotifyAccountType.NON_HARDCORE;
+	private boolean hardcoreAccountType = false;
 	private boolean escapeCrystalWithPlayer = true;
 	private boolean escapeCrystalActive = true;
 	private boolean escapeCrystalRingOfLifeActive = true;
@@ -78,7 +80,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		this.targetRegionIds = getTargetRegionIdsFromConfig();
+		this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
 		this.notifyTimeRemainingThresholdMessage = generateTimeRemainingThresholdMessage();
 		this.timeRemainingThresholdTicks = normalizeTimeRemainingThresholdValue();
 
@@ -95,13 +97,30 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Subscribe
 	public void onGameTick(GameTick event) {
-		this.hardcoreAccountType = HARDCORE_ACCOUNT_TYPE_VARBIT_VALUES.contains(client.getVarbitValue(Varbits.ACCOUNT_TYPE));
-
+		computeAccountTypeMetrics();
 		computeLocationMetrics();
 		computeEscapeCrystalMetrics();
 		computeNotificationMetrics();
 
 		sendRequestedNotifications();
+	}
+
+	private EscapeCrystalNotifyAccountType determineAccountType() {
+		switch (client.getVarbitValue(Varbits.ACCOUNT_TYPE)) {
+			case STANDARD_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE: return EscapeCrystalNotifyAccountType.STANDARD_HARDCORE;
+			case GROUP_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE: return EscapeCrystalNotifyAccountType.GROUP_HARDCORE;
+			default: return EscapeCrystalNotifyAccountType.NON_HARDCORE;
+		}
+	}
+
+	private void computeAccountTypeMetrics() {
+		EscapeCrystalNotifyAccountType previousAccountType = this.accountType;
+		this.accountType = determineAccountType();
+		this.hardcoreAccountType = this.accountType != EscapeCrystalNotifyAccountType.NON_HARDCORE;
+
+		if (this.accountType != previousAccountType) {
+			this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
+		}
 	}
 
 	private void computeLocationMetrics() {
@@ -209,12 +228,12 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event) {
-		this.targetRegionIds = getTargetRegionIdsFromConfig();
+		this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
 		this.notifyTimeRemainingThresholdMessage = generateTimeRemainingThresholdMessage();
 		this.timeRemainingThresholdTicks = normalizeTimeRemainingThresholdValue();
 	}
 
-	private List<Integer> getTargetRegionIdsFromConfig() {
+	private List<Integer> getTargetRegionIdsFromConfig(EscapeCrystalNotifyAccountType accountType) {
 		ArrayList<EscapeCrystalNotifyRegionType> targetRegions = new ArrayList<>();
 
 		if (config.displayBosses()) targetRegions.add(EscapeCrystalNotifyRegionType.BOSSES);
@@ -222,7 +241,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		if (config.displayDungeons()) targetRegions.add(EscapeCrystalNotifyRegionType.DUNGEONS);
 		if (config.displayMinigames()) targetRegions.add(EscapeCrystalNotifyRegionType.MINIGAMES);
 
-		List<Integer> regionIds = EscapeCrystalNotifyRegion.getRegionIdsFromTypes(targetRegions);
+		List<Integer> regionIds = EscapeCrystalNotifyRegion.getRegionIdsFromTypes(targetRegions, getTargetDeathTypes(accountType));
 		List<Integer> includeRegionIds = parseAdditionalConfigRegionIds(config.includeRegionIds());
 		List<Integer> excludeRegionIds = parseAdditionalConfigRegionIds(config.excludeRegionIds());
 
@@ -237,6 +256,13 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		return Arrays.stream(regionIds.split(",")).map(Integer::parseInt).collect(Collectors.toList());
 	}
+
+	private List<EscapeCrystalNotifyRegionDeathType> getTargetDeathTypes(EscapeCrystalNotifyAccountType accountType) {
+		switch (accountType) {
+            case GROUP_HARDCORE: return Arrays.asList(EscapeCrystalNotifyRegionDeathType.UNSAFE, EscapeCrystalNotifyRegionDeathType.UNSAFE_HCGIM);
+			default: return List.of(EscapeCrystalNotifyRegionDeathType.UNSAFE);
+        }
+    }
 
 	private void sendRequestedNotifications() {
 		if (config.notifyMissing() && this.notifyMissing) {

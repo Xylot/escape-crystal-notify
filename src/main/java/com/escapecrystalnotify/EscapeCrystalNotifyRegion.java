@@ -161,10 +161,11 @@ public enum EscapeCrystalNotifyRegion {
                 .collect(Collectors.toList());
     }
 
-    public static List<Integer> getRegionIdsFromTypes(List<EscapeCrystalNotifyRegionType> selectedRegionTypes) {
+    public static List<Integer> getRegionIdsFromTypes(List<EscapeCrystalNotifyRegionType> selectedRegionTypes, List<EscapeCrystalNotifyRegionDeathType> selectedRegionDeathTypes) {
         return Arrays.stream(EscapeCrystalNotifyRegion.values())
-                .filter(subRegionType -> selectedRegionTypes.contains(subRegionType.getRegionType()))
-                .flatMap(subRegionType -> Arrays.stream(subRegionType.getRegionIds()).boxed())
+                .filter(region -> selectedRegionTypes.contains(region.getRegionType()))
+                .filter(region -> selectedRegionDeathTypes.contains(region.getRegionDeathType()))
+                .flatMap(region -> Arrays.stream(region.getRegionIds()).boxed())
                 .collect(Collectors.toList());
     }
 
