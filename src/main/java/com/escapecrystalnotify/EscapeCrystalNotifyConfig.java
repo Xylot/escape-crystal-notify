@@ -31,7 +31,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	)
 	default int activeCrystalScale()
 	{
-		return 1;
+		return 4;
 	}
 
 	@ConfigItem(
@@ -42,7 +42,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	)
 	default int inactiveCrystalScale()
 	{
-		return 1;
+		return 4;
 	}
 
 	@ConfigItem(
