@@ -26,7 +26,7 @@ Useful for HCIM/HCGIM
 ![Widget Enabled](./resources/images/widget-enabled.png) ![Widget Enabled - No Left Click](./resources/images/widget-enabled-no-left-click.png) ![Widget Disabled](./resources/images/widget-disabled.png)
 
 # In Game View - Info Box
-![Info Box Enabled](./resources/images/info-box-enabled.png) ![Info Box Enabled - Tele](./resources/images/info-box-enabled-tele.png) ![Info Box Disabled](./resources/images/info-box-disabled.png)
+![Info Box Enabled](./resources/images/info-box-enabled.png) ![Info Box Enabled - Tele](./resources/images/info-box-enabled-tele.png) ![Info Box Disabled](./resources/images/info-box-disabled.png) ![Info Box Missing](./resources/images/info-box-missing.png)
 
 # Configuration
 ![Settings Panel](./resources/images/settings.png)
