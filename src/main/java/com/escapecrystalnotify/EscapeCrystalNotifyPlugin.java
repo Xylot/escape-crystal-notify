@@ -10,10 +10,15 @@ import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.infobox.InfoBox;
+import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,7 +54,16 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private EscapeCrystalNotifyOverlayInactive escapeCrystalNotifyOverlayInactive;
 
 	@Inject
+	private EscapeCrystalNotifyInventoryOverlay escapeCrystalNotifyInventoryOverlay;
+
+	@Inject
 	private OverlayManager overlayManager;
+
+	@Inject
+	private ItemManager itemManager;
+
+	@Inject
+	private InfoBoxManager infoBoxManager;
 
 	private boolean notifyMissing = false;
 	private boolean notifyInactive = false;
@@ -76,6 +90,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private boolean previouslyInTimeRemainingThreshold = false;
 	private boolean enteredTimeRemainingThreshold = false;
 	private List<Integer> targetRegionIds;
+	private EscapeCrystalNotifyInfoBox activeInfoBox;
 
 	@Override
 	protected void startUp() throws Exception
@@ -86,6 +101,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		overlayManager.add(escapeCrystalNotifyOverlayActive);
 		overlayManager.add(escapeCrystalNotifyOverlayInactive);
+		overlayManager.add(escapeCrystalNotifyInventoryOverlay);
 	}
 
 	@Override
@@ -93,6 +109,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		overlayManager.remove(escapeCrystalNotifyOverlayActive);
 		overlayManager.remove(escapeCrystalNotifyOverlayInactive);
+		overlayManager.remove(escapeCrystalNotifyInventoryOverlay);
+		removeInfoBoxes();
 	}
 
 	@Subscribe
@@ -101,6 +119,12 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		computeLocationMetrics();
 		computeEscapeCrystalMetrics();
 		computeNotificationMetrics();
+
+		if (this.config.enableInfoBox() && isAccountTypeEnabled()) {
+			createInfoBox();
+		} else {
+			removeInfoBoxes();
+		}
 
 		sendRequestedNotifications();
 	}
@@ -192,11 +216,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.inTimeRemainingThreshold = this.expectedTicksUntilTeleport <= this.timeRemainingThresholdTicks;
 		this.enteredTimeRemainingThreshold = !this.previouslyInTimeRemainingThreshold && this.inTimeRemainingThreshold;
 
-		if (this.inTimeRemainingThreshold && this.enteredTimeRemainingThreshold) {
+		if (this.inTimeRemainingThreshold && this.enteredTimeRemainingThreshold && this.escapeCrystalActive && this.escapeCrystalWithPlayer && this.atNotifyRegionId) {
 			this.notifyTimeRemainingThreshold = true;
 		}
 
-		if (!this.escapeCrystalLeftClickTeleportEnabled && this.enteredNotifyRegionId) {
+		if (!this.escapeCrystalLeftClickTeleportEnabled && this.enteredNotifyRegionId && this.escapeCrystalWithPlayer) {
 			this.notifyNonLeftClickTeleport = true;
 		}
 	}
@@ -209,11 +233,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	private String generateTimeRemainingThresholdMessage() {
-		return String.format("Your escape crystal will teleport you in %s %s!", config.notifyTimeUntilTeleportThreshold(), config.inactivityTimeFormat().toString());
+		return String.format("Your escape crystal will teleport you in %s %s!", config.notifyTimeUntilTeleportThreshold(), config.notificationInactivityTimeFormat().toString().toLowerCase());
 	}
 
 	private int normalizeTimeRemainingThresholdValue() {
-		switch (config.inactivityTimeFormat()) {
+		switch (config.onScreenWidgetInactivityTimeFormat()) {
 			case SECONDS:
 				return convertSecondsToTicks(config.notifyTimeUntilTeleportThreshold());
             default: return config.notifyTimeUntilTeleportThreshold();
@@ -282,8 +306,117 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		}
 	}
 
+	private void createInfoBox() {
+		List<InfoBox> currentInfoBoxes = infoBoxManager.getInfoBoxes();
+
+		if (this.isEscapeCrystalActive() && this.escapeCrystalWithPlayer){
+			if (currentInfoBoxes.contains(this.activeInfoBox)) {
+				if (this.activeInfoBox.imageId != ItemID.ESCAPE_CRYSTAL) {
+					this.activeInfoBox.setImage(itemManager.getImage(ItemID.ESCAPE_CRYSTAL));
+					this.activeInfoBox.imageId = ItemID.ESCAPE_CRYSTAL;
+					this.activeInfoBox.setTooltip(getInfoBoxTooltip());
+					infoBoxManager.updateInfoBoxImage(this.activeInfoBox);
+				}
+				return;
+			}
+
+			BufferedImage activeImage = itemManager.getImage(ItemID.ESCAPE_CRYSTAL);
+			this.activeInfoBox = new EscapeCrystalNotifyInfoBox(ItemID.ESCAPE_CRYSTAL, activeImage, this, this.config);
+			this.activeInfoBox.setTooltip(getInfoBoxTooltip());
+			infoBoxManager.addInfoBox(this.activeInfoBox);
+
+		} else {
+			if (currentInfoBoxes.contains(this.activeInfoBox)) {
+				if (this.activeInfoBox.imageId != ItemID.CORRUPTED_ESCAPE_CRYSTAL) {
+					this.activeInfoBox.setImage(itemManager.getImage(ItemID.CORRUPTED_ESCAPE_CRYSTAL));
+					this.activeInfoBox.imageId = ItemID.CORRUPTED_ESCAPE_CRYSTAL;
+					this.activeInfoBox.setTooltip(getInfoBoxTooltip());
+					infoBoxManager.updateInfoBoxImage(this.activeInfoBox);
+				}
+				return;
+			}
+
+			BufferedImage inactiveImage = itemManager.getImage(ItemID.CORRUPTED_ESCAPE_CRYSTAL);
+			this.activeInfoBox = new EscapeCrystalNotifyInfoBox(ItemID.CORRUPTED_ESCAPE_CRYSTAL, inactiveImage, this, this.config);
+			this.activeInfoBox.setTooltip(getInfoBoxTooltip());
+			infoBoxManager.addInfoBox(this.activeInfoBox);
+		}
+	}
+
+	private void removeInfoBoxes() {
+		infoBoxManager.removeIf(b -> b instanceof EscapeCrystalNotifyInfoBox);
+	}
+
+	public String getItemModelDisplayText(EscapeCrystalNotifyConfig.OverlayDisplayType displayFormat, EscapeCrystalNotifyConfig.InactivityTimeFormat timeFormat) {
+		String displayText;
+
+		if (!escapeCrystalWithPlayer) {
+			displayText = "Missing";
+		}
+		else if (displayFormat == EscapeCrystalNotifyConfig.OverlayDisplayType.REMAINING_TIME) {
+			if (!isEscapeCrystalActive()) {
+				displayText = getItemModelCurrentSettingDisplayText(timeFormat);
+			}
+			else if (isTimeExpired()) {
+				displayText = "Tele";
+			}
+			else if (timeFormat == EscapeCrystalNotifyConfig.InactivityTimeFormat.SECONDS) {
+				displayText = this.getExpectedSecondsUntilTeleport() + "s";
+			} else {
+				displayText = Integer.toString(this.getExpectedTicksUntilTeleport());
+			}
+		} else if (displayFormat == EscapeCrystalNotifyConfig.OverlayDisplayType.CURRENT_SETTING) {
+			displayText = getItemModelCurrentSettingDisplayText(timeFormat);
+		} else {
+			displayText = "";
+		}
+
+		return displayText;
+	}
+
+	public String getItemModelCurrentSettingDisplayText(EscapeCrystalNotifyConfig.InactivityTimeFormat timeFormat) {
+		switch (timeFormat) {
+			case GAME_TICKS: return this.getEscapeCrystalInactivityTicks() + "t";
+			case SECONDS: return this.getEscapeCrystalInactivitySeconds() + "s";
+		}
+
+		return "";
+	}
+
+	public String getInfoBoxTooltip() {
+		if (!this.escapeCrystalWithPlayer) {
+			return "Status: MISSING";
+		}
+		else if (this.isEscapeCrystalActive()) {
+			return "Status: ACTIVE (set to " + this.getEscapeCrystalInactivitySeconds() + " seconds / " + this.getEscapeCrystalInactivityTicks() + " ticks)";
+		}
+		else {
+			return "Status: DISABLED (set to " + this.getEscapeCrystalInactivitySeconds() + " seconds / " + this.getEscapeCrystalInactivityTicks() + " ticks)";
+		}
+	}
+
+	public Color getItemModelDisplayTextColor(EscapeCrystalNotifyConfig.OverlayDisplayType displayFormat) {
+		if (!escapeCrystalWithPlayer) {
+			return Color.RED;
+		}
+		else if (displayFormat == EscapeCrystalNotifyConfig.OverlayDisplayType.REMAINING_TIME) {
+			if (isTimeExpired() && isEscapeCrystalActive()) {
+				return Color.RED;
+			}
+		}
+
+		return Color.WHITE;
+	}
+
 	public boolean isHardcoreAccountType() {
 		return hardcoreAccountType;
+	}
+
+	public boolean isAccountTypeEnabled() {
+		if (config.requireHardcoreAccountType()) {
+			return isHardcoreAccountType();
+		}
+		return true;
 	}
 
 	public boolean isEscapeCrystalActive() {
@@ -332,6 +465,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	public int getExpectedSecondsUntilTeleport() {
 		return convertTicksToSeconds(expectedTicksUntilTeleport);
+	}
+
+	public boolean isTimeExpired() {
+		return expectedTicksUntilTeleport == 0;
 	}
 
 	public int getCurrentRegionId() {

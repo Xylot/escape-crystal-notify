@@ -1,16 +1,15 @@
 package com.escapecrystalnotify;
 
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.*;
+
+import java.awt.*;
 
 @ConfigGroup("escapecrystalnotify")
 public interface EscapeCrystalNotifyConfig extends Config
 {
 	enum InactivityTimeFormat {
-		SECONDS ("seconds"),
-		GAME_TICKS ("ticks");
+		SECONDS ("Seconds"),
+		GAME_TICKS ("Ticks");
 
 		private final String formatName;
 
@@ -23,113 +22,362 @@ public interface EscapeCrystalNotifyConfig extends Config
 		}
 	}
 
-	@ConfigItem(
-			keyName = "activeCrystalScale",
-			name = "Active Crystal Scale",
-			description = "The size of the active crystal image",
-			position = 1
-	)
-	default int activeCrystalScale()
-	{
-		return 4;
+	enum OverlayDisplayType {
+		REMAINING_TIME ("Remaining Time"),
+		CURRENT_SETTING ("Current Setting"),
+		DISABLED ("Disabled");
+
+		private final String formatName;
+
+		OverlayDisplayType(String formatName) {
+			this.formatName = formatName;
+		}
+
+		public String toString() {
+			return this.formatName;
+		}
 	}
 
-	@ConfigItem(
-			keyName = "inactiveCrystalScale",
-			name = "Inactive Crystal Scale",
-			description = "The size of the inactive crystal image",
-			position = 2
-	)
-	default int inactiveCrystalScale()
-	{
-		return 4;
+	enum ModelOverlayType {
+		ITEM_FILL ("Item Fill"),
+		BACKGROUND_FILL ("Background Fill");
+
+		private final String formatName;
+
+		ModelOverlayType(String formatName) {
+			this.formatName = formatName;
+		}
+
+		public String toString() {
+			return this.formatName;
+		}
 	}
 
 	@ConfigItem(
 			keyName = "requireHardcoreAccountType",
 			name = "Only display for HCIM/HCGIM",
 			description = "Only display when logged in as a HCIM or HCGIM",
-			position = 3
+			position = 1
 	)
 	default boolean requireHardcoreAccountType() { return true; }
 
-	@ConfigItem(
-			keyName = "displayTimeBeforeTeleport",
-			name = "Display Time Left Before Teleport",
-			description = "Display the time left before triggering the inactivity teleport",
-			position = 4
+	@ConfigSection(
+			name = "On-Screen Widget Display Settings",
+			description = "Settings for the movable and resizable on-screen widget",
+			position = 2
 	)
-	default boolean displayTimeBeforeTeleport() { return true; }
+	String onScreenWidgetSettings = "onScreenWidgetSettings";
 
 	@ConfigItem(
-			keyName = "inactivityTimeFormat",
-			name = "Inactivity Time Format",
-			description = "Format for displaying the time left before triggering the inactivity teleport",
+			keyName = "enableOnScreenWidget",
+			name = "Enable On-Screen Widget",
+			description = "Display the movable and resizable on-screen widget",
+			section = "onScreenWidgetSettings",
+			position = 1
+	)
+	default boolean enableOnScreenWidget() { return true; }
+
+	@ConfigItem(
+			keyName = "alwaysDisplayOnScreenWidget",
+			name = "Display Everywhere",
+			description = "Always enable the on-screen display regardless of location",
+			section = "onScreenWidgetSettings",
+			position = 2
+	)
+	default boolean alwaysDisplayOnScreenWidget() { return false; }
+
+	@ConfigItem(
+			keyName = "onlyDisplayInactiveOnScreenWidget",
+			name = "Only Show When Inactive",
+			description = "Only enable the on-screen display when your crystal is inactive",
+			section = "onScreenWidgetSettings",
+			position = 3
+	)
+	default boolean onlyDisplayInactiveOnScreenWidget() { return false; }
+
+	@ConfigItem(
+			keyName = "displayDisabledLeftClickTeleportText",
+			name = "Display Left Click Disabled",
+			description = "Display text indicating the the crystal is not set to be left click teleport",
+			section = "onScreenWidgetSettings",
+			position = 4
+	)
+	default boolean displayDisabledLeftClickTeleportText() { return true; }
+
+	@ConfigItem(
+			keyName = "onScreenWidgetDisplayFormat",
+			name = "Display Format",
+			description = "Type of information shown on the on-screen widget",
+			section = "onScreenWidgetSettings",
 			position = 5
 	)
-	default InactivityTimeFormat inactivityTimeFormat()
+	default OverlayDisplayType onScreenWidgetDisplayFormat()
+	{
+		return OverlayDisplayType.REMAINING_TIME;
+	}
+
+	@ConfigItem(
+			keyName = "onScreenWidgetInactivityTimeFormat",
+			name = "Time Format",
+			description = "Format for displaying the time information shown on the on-screen widget",
+			section = "onScreenWidgetSettings",
+			position = 6
+	)
+	default InactivityTimeFormat onScreenWidgetInactivityTimeFormat()
+	{
+		return InactivityTimeFormat.SECONDS;
+	}
+
+	@ConfigItem(
+			keyName = "activeCrystalWidgetScale",
+			name = "Active Widget Size",
+			description = "The size of the active crystal widget",
+			section = "onScreenWidgetSettings",
+			position = 7
+	)
+	default int activeCrystalWidgetScale()
+	{
+		return 4;
+	}
+
+	@ConfigItem(
+			keyName = "inactiveCrystalWidgetScale",
+			name = "Inactive Widget Size",
+			description = "The size of the inactive crystal widget",
+			section = "onScreenWidgetSettings",
+			position = 8
+	)
+	default int inactiveCrystalWidgetScale()
+	{
+		return 4;
+	}
+
+	@ConfigSection(
+			name = "Info Box Display Settings",
+			description = "Settings for Info Box",
+			position = 3
+	)
+	String infoBoxDisplaySettings = "infoBoxDisplaySettings";
+
+	@ConfigItem(
+			keyName = "enableInfoBox",
+			name = "Enable Info Box",
+			description = "Enable the info box display",
+			section = "infoBoxDisplaySettings",
+			position = 1
+	)
+	default boolean enableInfoBox() { return true; }
+
+	@ConfigItem(
+			keyName = "alwaysDisplayInfoBox",
+			name = "Display Everywhere",
+			description = "Always enable the info box display regardless of location",
+			section = "infoBoxDisplaySettings",
+			position = 2
+	)
+	default boolean alwaysDisplayInfoBox() { return true; }
+
+	@ConfigItem(
+			keyName = "infoBoxDisplayFormat",
+			name = "Display Format",
+			description = "Type of information shown on the info box",
+			section = "infoBoxDisplaySettings",
+			position = 3
+	)
+	default OverlayDisplayType infoBoxDisplayFormat()
+	{
+		return OverlayDisplayType.REMAINING_TIME;
+	}
+
+	@ConfigItem(
+			keyName = "infoBoxInactivityTimeFormat",
+			name = "Time Format",
+			description = "Format for displaying the time left before triggering the inactivity teleport on the info box",
+			section = "infoBoxDisplaySettings",
+			position = 4
+	)
+	default InactivityTimeFormat infoBoxInactivityTimeFormat()
 	{
 		return InactivityTimeFormat.SECONDS;
 	}
 
 	@ConfigSection(
+			name = "Inventory Display Settings",
+			description = "Settings for inventory & equipment screen",
+			position = 4
+	)
+	String inventoryDisplaySettings = "inventoryDisplaySettings";
+
+	@ConfigItem(
+			keyName = "enableInventoryDisplay",
+			name = "Enable Inventory Display",
+			description = "Enable the Inventory display",
+			section = "inventoryDisplaySettings",
+			position = 1
+	)
+	default boolean enableInventoryDisplay() { return true; }
+
+	@ConfigItem(
+			keyName = "alwaysDisplayInventory",
+			name = "Display Everywhere",
+			description = "Always enable the inventory display regardless of location",
+			section = "inventoryDisplaySettings",
+			position = 2
+	)
+	default boolean alwaysDisplayInventory() { return true; }
+
+	@ConfigItem(
+			keyName = "inventoryDisplayFormat",
+			name = "Display Format",
+			description = "Type of information shown on the inventory model",
+			section = "inventoryDisplaySettings",
+			position = 3
+	)
+	default OverlayDisplayType inventoryDisplayFormat()
+	{
+		return OverlayDisplayType.REMAINING_TIME;
+	}
+
+	@ConfigItem(
+			keyName = "inventoryTimeFormat",
+			name = "Time Format",
+			description = "Format for displaying the time left before triggering the inactivity teleport in the inventory & equipment menus",
+			section = "inventoryDisplaySettings",
+			position = 4
+	)
+	default InactivityTimeFormat inventoryInactivityTimeFormat()
+	{
+		return InactivityTimeFormat.SECONDS;
+	}
+
+	@ConfigItem(
+			keyName = "inventoryOverlayType",
+			name = "Overlay Type",
+			description = "Method of highlighting the crystal's inventory & equipment model",
+			section = "inventoryDisplaySettings",
+			position = 5
+	)
+	default ModelOverlayType inventoryOverlayType()
+	{
+		return ModelOverlayType.ITEM_FILL;
+	}
+
+	@Alpha
+	@ConfigItem(
+			keyName = "inventoryActiveFillColor",
+			name = "Active Fill Color",
+			description = "Color of the background fill to draw onto the crystal's inventory model while active",
+			section = "inventoryDisplaySettings",
+			position = 6
+	)
+	default Color inventoryActiveFillColor() { return new Color(50,205,50,75); }
+
+	@Alpha
+	@ConfigItem(
+			keyName = "inventoryInactiveFillColor",
+			name = "Inactive Fill Color",
+			description = "Color of the background fill to draw onto the crystal's inventory model while inactive",
+			section = "inventoryDisplaySettings",
+			position = 7
+	)
+	default Color inventoryInactiveFillColor() { return new Color(205,50,50,75); }
+
+	@ConfigItem(
+			keyName = "inventoryActiveText",
+			name = "Active Crystal Text",
+			description = "Text to draw onto the crystal's inventory model while active",
+			section = "inventoryDisplaySettings",
+			position = 8
+	)
+	default String inventoryActiveText() { return "Active"; }
+
+	@Alpha
+	@ConfigItem(
+			keyName = "inventoryActiveTextColor",
+			name = "Active Text Color",
+			description = "Color of the text to draw onto the crystal's inventory model while active",
+			section = "inventoryDisplaySettings",
+			position = 9
+	)
+	default Color inventoryActiveTextColor() { return Color.GREEN; }
+
+	@ConfigItem(
+			keyName = "inventoryInactiveText",
+			name = "Inactive Crystal Text",
+			description = "Text to draw onto the crystal's inventory model while inactive",
+			section = "inventoryDisplaySettings",
+			position = 10
+	)
+	default String inventoryInactiveText() { return "Inactive"; }
+
+	@Alpha
+	@ConfigItem(
+			keyName = "inventoryInactiveTextColor",
+			name = "Inactive Text Color",
+			description = "Color of the text to draw onto the crystal's inventory model while inactive",
+			section = "inventoryDisplaySettings",
+			position = 11
+	)
+	default Color inventoryInactiveTextColor() { return Color.RED; }
+
+	@ConfigSection(
 			name = "Location Filter",
 			description = "Filter locations where the reminder is shown",
-			position = 6
+			position = 5
 	)
 	String displayRegionFilter = "displayRegionFilter";
 
 	@ConfigItem(
 			keyName = "displayBosses",
-			name = "Display for Bosses",
-			description = "Display the reminder for bosses",
+			name = "Display for Unsafe Bosses",
+			description = "Display the overlays for unsafe bosses",
 			section = "displayRegionFilter",
-			position = 7
+			position = 1
 	)
 	default boolean displayBosses() { return true; }
 
 	@ConfigItem(
 			keyName = "displayRaids",
-			name = "Display for Raids",
-			description = "Display the reminder for raids",
+			name = "Display in Unsafe Raids",
+			description = "Display the overlays in unsafe raids",
 			section = "displayRegionFilter",
-			position = 8
+			position = 2
 	)
 	default boolean displayRaids() { return true; }
 
 	@ConfigItem(
 			keyName = "displayDungeons",
-			name = "Display in Dungeons",
-			description = "Display the reminder when inside dungeons",
+			name = "Display in Unsafe Dungeons",
+			description = "Display the overlays when inside unsafe dungeons",
 			section = "displayRegionFilter",
-			position = 9
+			position = 3
 	)
 	default boolean displayDungeons() { return true; }
 
 	@ConfigItem(
 			keyName = "displayMinigames",
-			name = "Display in Minigames",
-			description = "Display the reminder when in minigames",
+			name = "Display in Unsafe Minigames",
+			description = "Display the overlays when in unsafe minigames",
 			section = "displayRegionFilter",
-			position = 10
+			position = 4
 	)
 	default boolean displayMinigames() { return true; }
 
 	@ConfigItem(
 			keyName = "displayEverywhere",
 			name = "Always display at all times",
-			description = "Display the reminder at all times",
+			description = "Display the overlays at all times",
 			section = "displayRegionFilter",
-			position = 11
+			position = 5
 	)
-	default boolean displayEverywhere() { return true; }
+	default boolean displayEverywhere() { return false; }
 
 	@ConfigItem(
 			keyName = "excludeRegionIds",
 			name = "Exclude Region IDs",
 			description = "A comma separated list of Region IDs to exclude",
 			section = "displayRegionFilter",
-			position = 12
+			position = 6
 	)
 	default String excludeRegionIds() { return ""; }
 
@@ -138,23 +386,35 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Include Region IDs",
 			description = "A comma separated list of Region IDs to include",
 			section = "displayRegionFilter",
-			position = 13
+			position = 7
 	)
 	default String includeRegionIds() { return ""; }
 
 	@ConfigSection(
 			name = "Notification Settings",
 			description = "Configure preferences for Runelite notifications",
-			position = 14
+			position = 6
 	)
 	String notificationSettings = "notificationSettings";
+
+	@ConfigItem(
+			keyName = "notificationInactivityTimeFormat",
+			name = "Time Format",
+			description = "Format for displaying the time information shown in your RuneLite notifications",
+			section = "notificationSettings",
+			position = 1
+	)
+	default InactivityTimeFormat notificationInactivityTimeFormat()
+	{
+		return InactivityTimeFormat.SECONDS;
+	}
 
 	@ConfigItem(
 			keyName = "notifyInactive",
 			name = "Inactive Crystal",
 			description = "Sends a notification when your escape crystal is not enabled",
 			section = "notificationSettings",
-			position = 15
+			position = 2
 	)
 	default boolean notifyInactive() { return true; }
 
@@ -163,7 +423,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Missing Crystal",
 			description = "Sends a notification when you are not carrying your escape crystal",
 			section = "notificationSettings",
-			position = 16
+			position = 3
 	)
 	default boolean notifyMissing() { return true; }
 
@@ -172,7 +432,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Time Remaining Threshold",
 			description = "Sends a notification when your escape crystal is about to trigger. Note that this respects the time format you specified above (Ticks vs Seconds). A value of 0 will disable the notification.",
 			section = "notificationSettings",
-			position = 17
+			position = 4
 	)
 	default int notifyTimeUntilTeleportThreshold() { return 0; }
 
@@ -181,8 +441,8 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Non Left Click Teleport",
 			description = "Sends a notification when the left click option on your escape crystal is not set to teleport",
 			section = "notificationSettings",
-			position = 18
+			position = 5
 	)
-	default boolean notifyNonLeftClickTeleport() { return false; }
+	default boolean notifyNonLeftClickTeleport() { return true; }
 }
 

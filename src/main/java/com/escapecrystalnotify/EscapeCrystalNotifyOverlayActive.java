@@ -13,12 +13,13 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.util.Objects;
 
 public class EscapeCrystalNotifyOverlayActive extends Overlay {
     private static final EscapeCrystalImage previouslyGeneratedImage = new EscapeCrystalImage();
     private static BufferedImage escapeCrystalImage;
-    private final EscapeCrystalNotifyPlugin escapeCrystalNotifyPlugin;
-    private final EscapeCrystalNotifyConfig escapeCrystalNotifyConfig;
+    private final EscapeCrystalNotifyPlugin plugin;
+    private final EscapeCrystalNotifyConfig config;
 
     @Inject
     EscapeCrystalNotifyOverlayActive(EscapeCrystalNotifyPlugin plugin, EscapeCrystalNotifyConfig config) throws PluginInstantiationException {
@@ -27,8 +28,8 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
         setPosition(OverlayPosition.BOTTOM_LEFT);
         setLayer(OverlayLayer.ALWAYS_ON_TOP);
 
-        this.escapeCrystalNotifyPlugin = plugin;
-        this.escapeCrystalNotifyConfig = config;
+        this.plugin = plugin;
+        this.config = config;
 
         escapeCrystalImage = loadEscapeCrystalImage();
 
@@ -45,12 +46,20 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
     }
     @Override
     public Dimension render(Graphics2D graphics) {
-        boolean active = escapeCrystalNotifyPlugin.isEscapeCrystalInactivityTeleportActive();
-        boolean notHardcore = escapeCrystalNotifyConfig.requireHardcoreAccountType() && !escapeCrystalNotifyPlugin.isHardcoreAccountType();
-        boolean notAtNotifyRegion = !escapeCrystalNotifyPlugin.isAtNotifyRegionId();
-        boolean disabledActivityTimer = active && !escapeCrystalNotifyConfig.displayTimeBeforeTeleport();
+        boolean enabled = config.enableOnScreenWidget();
+        boolean active = plugin.isEscapeCrystalInactivityTeleportActive();
+        boolean notHardcore = config.requireHardcoreAccountType() && !plugin.isHardcoreAccountType();
+        boolean inactiveOnly = config.onlyDisplayInactiveOnScreenWidget();
 
-        if (notHardcore || notAtNotifyRegion || !active || disabledActivityTimer) {
+        boolean atNotifyRegion;
+
+        if (this.plugin.isAtNotifyRegionId()) {
+            atNotifyRegion = true;
+        } else {
+            atNotifyRegion = this.config.alwaysDisplayOnScreenWidget();
+        }
+
+        if (!enabled || notHardcore || !atNotifyRegion || !active || inactiveOnly) {
             return null;
         }
 
@@ -60,12 +69,12 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
     }
 
     private BufferedImage generateEscapeCrystalImage() {
-        double targetScale = Math.max(escapeCrystalNotifyConfig.activeCrystalScale(), 1);
+        double targetScale = Math.max(config.activeCrystalWidgetScale(), 1);
 
         boolean escapeCrystalImageScaleChanged = previouslyGeneratedImage.scale != targetScale;
-        boolean escapeCrystalLeftClickTeleportEnabledChanged = previouslyGeneratedImage.escapeCrystalLeftClickTeleportEnabled != escapeCrystalNotifyPlugin.isEscapeCrystalLeftClickTeleportEnabled();
-        boolean escapeCrystalInactivityTicksChanged = previouslyGeneratedImage.escapeCrystalInactivityTicks != escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTicks();
-        boolean expectedServerInactivityTicksChanged = previouslyGeneratedImage.expectedServerInactivityTicks != escapeCrystalNotifyPlugin.getExpectedServerInactivityTicks();
+        boolean escapeCrystalLeftClickTeleportEnabledChanged = previouslyGeneratedImage.escapeCrystalLeftClickTeleportEnabled != plugin.isEscapeCrystalLeftClickTeleportEnabled();
+        boolean escapeCrystalInactivityTicksChanged = previouslyGeneratedImage.escapeCrystalInactivityTicks != plugin.getEscapeCrystalInactivityTicks();
+        boolean expectedServerInactivityTicksChanged = previouslyGeneratedImage.expectedServerInactivityTicks != plugin.getExpectedServerInactivityTicks();
 
         if (!escapeCrystalInactivityTicksChanged && !expectedServerInactivityTicksChanged && !escapeCrystalImageScaleChanged && !escapeCrystalLeftClickTeleportEnabledChanged) {
             return previouslyGeneratedImage.generatedImage;
@@ -78,15 +87,16 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
             scaledEscapeCrystalImage = scaleImage(escapeCrystalImage, targetScale / 5);
         }
 
-        String overlayText = determineActiveEscapeCrystalOverlayText(escapeCrystalNotifyConfig.inactivityTimeFormat());
-        BufferedImage generatedEscapeCrystalImage = drawInfoTextOnImage(scaledEscapeCrystalImage, targetScale, overlayText, !escapeCrystalNotifyPlugin.isEscapeCrystalLeftClickTeleportEnabled());
+        String overlayText = determineActiveEscapeCrystalOverlayText();
+        boolean displayLeftClickWarning = !plugin.isEscapeCrystalLeftClickTeleportEnabled() && config.displayDisabledLeftClickTeleportText();
+        BufferedImage generatedEscapeCrystalImage = drawInfoTextOnImage(scaledEscapeCrystalImage, targetScale, overlayText, displayLeftClickWarning);
 
         previouslyGeneratedImage.scaledBaseImage = scaledEscapeCrystalImage;
         previouslyGeneratedImage.generatedImage = generatedEscapeCrystalImage;
         previouslyGeneratedImage.scale = targetScale;
-        previouslyGeneratedImage.escapeCrystalLeftClickTeleportEnabled = escapeCrystalNotifyPlugin.isEscapeCrystalLeftClickTeleportEnabled();
-        previouslyGeneratedImage.escapeCrystalInactivityTicks = escapeCrystalNotifyPlugin.getEscapeCrystalInactivityTicks();
-        previouslyGeneratedImage.expectedServerInactivityTicks = escapeCrystalNotifyPlugin.getExpectedServerInactivityTicks();
+        previouslyGeneratedImage.escapeCrystalLeftClickTeleportEnabled = plugin.isEscapeCrystalLeftClickTeleportEnabled();
+        previouslyGeneratedImage.escapeCrystalInactivityTicks = plugin.getEscapeCrystalInactivityTicks();
+        previouslyGeneratedImage.expectedServerInactivityTicks = plugin.getExpectedServerInactivityTicks();
 
         return generatedEscapeCrystalImage;
     }
@@ -106,16 +116,8 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
         return scaledImage;
     }
 
-    private String determineActiveEscapeCrystalOverlayText(EscapeCrystalNotifyConfig.InactivityTimeFormat timeFormat) {
-        switch (timeFormat) {
-            case SECONDS:
-                return escapeCrystalNotifyPlugin.getExpectedSecondsUntilTeleport() + "s";
-            case GAME_TICKS:
-                return String.valueOf(escapeCrystalNotifyPlugin.getExpectedTicksUntilTeleport());
-            default:
-                return "";
-
-        }
+    private String determineActiveEscapeCrystalOverlayText() {
+        return plugin.getItemModelDisplayText(config.onScreenWidgetDisplayFormat(), config.onScreenWidgetInactivityTimeFormat());
     }
 
     private BufferedImage drawInfoTextOnImage(BufferedImage image, double scale, String overlayText, boolean addLeftClickWarning) {
@@ -123,12 +125,22 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
 
         Graphics g = imageWithInfoText.getGraphics();
         g.drawImage(image, 0, 0, null);
-        Font font = new Font("Arial", Font.BOLD, 6 * (int) Math.ceil(scale));
+
+        int fontSize;
+        if (overlayText.length() >= 4) {
+            fontSize = 5;
+        } else {
+            fontSize = 6;
+        }
+
+        Font font = new Font("Arial", Font.BOLD, fontSize * (int) Math.ceil(scale));
 
         g.setFont(font);
         g.setColor(Color.BLACK);
         drawTextLowerFourth(g, font, overlayText, imageWithInfoText.getWidth() + 1, imageWithInfoText.getHeight() + 1);
-        g.setColor(Color.WHITE);
+
+        g.setColor(plugin.getItemModelDisplayTextColor(config.onScreenWidgetDisplayFormat()));
+
         drawTextLowerFourth(g, font, overlayText, imageWithInfoText.getWidth() - 1, imageWithInfoText.getHeight() - 1);
 
         if (addLeftClickWarning){

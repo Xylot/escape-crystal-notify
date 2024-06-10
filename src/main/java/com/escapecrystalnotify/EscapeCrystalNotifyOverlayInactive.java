@@ -17,18 +17,18 @@ import java.awt.image.BufferedImage;
 public class EscapeCrystalNotifyOverlayInactive extends Overlay {
     private static final EscapeCrystalImage previouslyGeneratedImage = new EscapeCrystalImage();
     private static BufferedImage escapeCrystalImage;
-    private final EscapeCrystalNotifyPlugin escapeCrystalNotifyPlugin;
-    private final EscapeCrystalNotifyConfig escapeCrystalNotifyConfig;
+    private final EscapeCrystalNotifyPlugin plugin;
+    private final EscapeCrystalNotifyConfig config;
 
     @Inject
     EscapeCrystalNotifyOverlayInactive(EscapeCrystalNotifyPlugin plugin, EscapeCrystalNotifyConfig config) throws PluginInstantiationException {
         super(plugin);
-        setPriority(OverlayPriority.MED);
+        setPriority(OverlayPriority.LOW);
         setPosition(OverlayPosition.BOTTOM_LEFT);
-        setLayer(OverlayLayer.ALWAYS_ON_TOP);
+        setLayer(OverlayLayer.ABOVE_SCENE);
 
-        this.escapeCrystalNotifyPlugin = plugin;
-        this.escapeCrystalNotifyConfig = config;
+        this.plugin = plugin;
+        this.config = config;
 
         escapeCrystalImage = loadEscapeCrystalImage();
 
@@ -45,11 +45,18 @@ public class EscapeCrystalNotifyOverlayInactive extends Overlay {
     }
     @Override
     public Dimension render(Graphics2D graphics) {
-        boolean active = escapeCrystalNotifyPlugin.isEscapeCrystalInactivityTeleportActive();
-        boolean notHardcore = escapeCrystalNotifyConfig.requireHardcoreAccountType() && !escapeCrystalNotifyPlugin.isHardcoreAccountType();
-        boolean notAtNotifyRegion = !escapeCrystalNotifyPlugin.isAtNotifyRegionId();
+        boolean enabled = config.enableOnScreenWidget();
+        boolean active = plugin.isEscapeCrystalInactivityTeleportActive();
+        boolean notHardcore = config.requireHardcoreAccountType() && !plugin.isHardcoreAccountType();
 
-        if (notHardcore || notAtNotifyRegion || active) {
+        boolean atNotifyRegion;
+        if (this.plugin.isAtNotifyRegionId()) {
+            atNotifyRegion = true;
+        } else {
+            atNotifyRegion = this.config.alwaysDisplayOnScreenWidget();
+        }
+
+        if (!enabled || notHardcore || !atNotifyRegion || active) {
             return null;
         }
 
@@ -59,7 +66,7 @@ public class EscapeCrystalNotifyOverlayInactive extends Overlay {
     }
 
     private BufferedImage generateEscapeCrystalImage() {
-        double targetScale = Math.max(escapeCrystalNotifyConfig.inactiveCrystalScale(), 1);
+        double targetScale = Math.max(config.inactiveCrystalWidgetScale(), 1);
         boolean escapeCrystalImageScaleChanged = previouslyGeneratedImage.scale != targetScale;
 
         if (!escapeCrystalImageScaleChanged) {
