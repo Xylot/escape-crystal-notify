@@ -40,7 +40,8 @@ public interface EscapeCrystalNotifyConfig extends Config
 
 	enum ModelOverlayType {
 		ITEM_FILL ("Item Fill"),
-		BACKGROUND_FILL ("Background Fill");
+		BACKGROUND_FILL ("Background Fill"),
+		DISABLED ("Disabled");
 
 		private final String formatName;
 
