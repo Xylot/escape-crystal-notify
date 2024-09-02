@@ -13,6 +13,7 @@ public enum EscapeCrystalNotifyRegion {
      */
 
     BOSS_ABYSSAL_SIRE("Abyssal Sire", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 11851, 11850, 12363, 12362),
+    BOSS_ARAXXOR("Araxxor", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 14489),
     BOSS_BARROWS("Barrows", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 14131, 14231),
     BOSS_CERBERUS("Cerberus", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 4883, 5140, 5395),
     BOSS_COMMANDER_ZILYANA("Commander Zilyana", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 11601, 11602, 11858),
@@ -49,6 +50,7 @@ public enum EscapeCrystalNotifyRegion {
     BOSS_ZALCANO("Zalcano", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 12126),
     BOSS_ZULRAH("Zulrah", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 9007, 9008),
     DUNGEON_ANCIENT_CAVERN("Ancient Cavern", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 6483, 6995),
+    DUNGEON_ANCIENT_GUTHIXIAN_TEMPLE("Ancient Guthixian Temple", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 15943, 16199, 16455, 16196, 16197, 16452, 16453),
     DUNGEON_APE_ATOLL("Ape Atoll Dungeon", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 11150, 10894),
     DUNGEON_ASGARNIAN_ICE_CAVES("Asgarnian Ice Caves", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 11925, 12181),
     DUNGEON_BRIMHAVEN("Brimhaven Dungeon", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 10901, 10900, 10899, 10645, 10644, 10643),
