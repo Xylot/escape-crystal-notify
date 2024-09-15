@@ -14,6 +14,9 @@ Useful for HCIM/HCGIM
   - Carrying an inactive escape crystal
   - Close to triggering the inactivity teleport
   - Do not have your escape crystal set to left-click teleport
+- Safeguards to prevent deaths due to Leviathan's logout bug
+  - Option to disable left-click logouts while inside of Leviathan's arena
+  - Warning message when approaching a 6-hour logout while at Leviathan's entry boat
 
 # In Game View - Inventory Highlighting
 ![Inventory Enabled](./resources/images/inventory-enabled-model-fill.png) ![Inventory Enabled - Teleport Queued](./resources/images/inventory-enabled-model-fill-tele.png) ![Inventory Disabled](./resources/images/inventory-disabled-model-fill.png) ![Inventory Enabled](./resources/images/inventory-enabled-background-fill.png) ![Inventory Enabled](./resources/images/inventory-enabled-background-fill-tele.png)
