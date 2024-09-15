@@ -13,7 +13,6 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.util.Objects;
 
 public class EscapeCrystalNotifyOverlayActive extends Overlay {
     private static final EscapeCrystalImage previouslyGeneratedImage = new EscapeCrystalImage();
@@ -117,7 +116,7 @@ public class EscapeCrystalNotifyOverlayActive extends Overlay {
     }
 
     private String determineActiveEscapeCrystalOverlayText() {
-        return plugin.getItemModelDisplayText(config.onScreenWidgetDisplayFormat(), config.onScreenWidgetInactivityTimeFormat());
+        return plugin.getItemModelDisplayText(config.onScreenWidgetDisplayFormat(), config.onScreenWidgetInactivityTimeFormat(), config.onScreenWidgetTimeExpiredText());
     }
 
     private BufferedImage drawInfoTextOnImage(BufferedImage image, double scale, String overlayText, boolean addLeftClickWarning) {

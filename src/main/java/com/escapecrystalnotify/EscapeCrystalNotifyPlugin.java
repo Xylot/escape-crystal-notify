@@ -2,10 +2,13 @@ package com.escapecrystalnotify;
 
 import com.google.inject.Provides;
 import javax.inject.Inject;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.events.GameTick;
+import net.runelite.api.events.*;
+import net.runelite.api.widgets.InterfaceID;
+import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -19,9 +22,11 @@ import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -36,6 +41,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private static final int ITEMS_STORED_VARBIT = 14283;
 	private static final int STANDARD_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE = 3;
 	private static final int GROUP_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE = 5;
+	private static final int LEVIATHAN_ROWBOAT_ID = 49212;
+	private static final int LEVIATHAN_ROWBOAT_REGION_ID = 8292;
+	private static final int SIX_HOUR_LOG_WARNING_THRESHOLD_TICKS = 34000;
 
 	@Inject
 	private Notifier notifier;
@@ -57,6 +65,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private EscapeCrystalNotifyInventoryOverlay escapeCrystalNotifyInventoryOverlay;
 
 	@Inject
+	private EscapeCrystalNotifyTextOverlayPanel escapeCrystalNotifyTextOverlayPanel;
+
+	@Inject
 	private OverlayManager overlayManager;
 
 	@Inject
@@ -65,6 +76,17 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Inject
 	private InfoBoxManager infoBoxManager;
 
+	@Getter
+	private GameObject leviathanRowboat;
+
+	@Getter
+	private Instant loginTime;
+
+	@Getter
+	private int ticksSinceLogin;
+
+	private boolean ready;
+
 	private boolean notifyMissing = false;
 	private boolean notifyInactive = false;
 	private boolean notifyTimeRemainingThreshold = false;
@@ -72,6 +94,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private String notifyTimeRemainingThresholdMessage;
 	private EscapeCrystalNotifyAccountType accountType = EscapeCrystalNotifyAccountType.NON_HARDCORE;
 	private boolean hardcoreAccountType = false;
+	private boolean completedWesternEliteDiary = false;
 	private boolean escapeCrystalWithPlayer = true;
 	private boolean escapeCrystalActive = true;
 	private boolean escapeCrystalRingOfLifeActive = true;
@@ -80,16 +103,25 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private int clientInactivityTicks;
 	private int expectedServerInactivityTicks = 0;
 	private int expectedTicksUntilTeleport;
+	private WorldPoint currentWorldPoint;
 	private int currentRegionId;
+	private int currentPlaneId;
+	private int currentChunkId;
 	private int previousRegionId;
 	private boolean enteredNotifyRegionId = false;
 	private boolean atNotifyRegionId = false;
 	private boolean previouslyAtNotifyRegionId = false;
+	private boolean atLeviathanRegionId = false;
 	private int timeRemainingThresholdTicks;
 	private boolean inTimeRemainingThreshold = false;
 	private boolean previouslyInTimeRemainingThreshold = false;
 	private boolean enteredTimeRemainingThreshold = false;
 	private List<Integer> targetRegionIds;
+	private final List<Integer> excludedRegionIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedRegionIds();
+	private final List<Integer> excludedChunkIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedChunkIds();
+	private final Map<Integer, Integer> planeRequirements = EscapeCrystalNotifyRegionPlaneRequirements.getRegionPlaneMap();
+	private final List<Integer> leviathanRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_LEVIATHAN.getRegionIds()).boxed().collect(Collectors.toList());
+	private final List<Integer> zulrahRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH.getRegionIds()).boxed().collect(Collectors.toList());
 	private EscapeCrystalNotifyInfoBox activeInfoBox;
 
 	@Override
@@ -102,6 +134,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		overlayManager.add(escapeCrystalNotifyOverlayActive);
 		overlayManager.add(escapeCrystalNotifyOverlayInactive);
 		overlayManager.add(escapeCrystalNotifyInventoryOverlay);
+		overlayManager.add(escapeCrystalNotifyTextOverlayPanel);
 	}
 
 	@Override
@@ -110,11 +143,13 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		overlayManager.remove(escapeCrystalNotifyOverlayActive);
 		overlayManager.remove(escapeCrystalNotifyOverlayInactive);
 		overlayManager.remove(escapeCrystalNotifyInventoryOverlay);
+		overlayManager.remove(escapeCrystalNotifyTextOverlayPanel);
 		removeInfoBoxes();
 	}
 
 	@Subscribe
 	public void onGameTick(GameTick event) {
+		ticksSinceLogin++;
 		computeAccountTypeMetrics();
 		computeLocationMetrics();
 		computeEscapeCrystalMetrics();
@@ -129,6 +164,46 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		sendRequestedNotifications();
 	}
 
+	@Subscribe
+	public void onPostMenuSort(PostMenuSort e) {
+		if (config.deprioritizeLeviathanLogout() && this.atLeviathanRegionId) {
+			deprioritizeLogoutButton();
+		}
+	}
+
+	@Subscribe
+	public void onGameObjectSpawned(GameObjectSpawned event)
+	{
+		if (config.disableLeviathanSafeguardPanelPopup()) return;
+
+		int currentRegion = WorldPoint.fromLocalInstance(client, client.getLocalPlayer().getLocalLocation()).getRegionID();
+
+        if (event.getGameObject().getId() == LEVIATHAN_ROWBOAT_ID && currentRegion == LEVIATHAN_ROWBOAT_REGION_ID) {
+            leviathanRowboat = event.getGameObject();
+        }
+	}
+
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event) {
+		GameState state = event.getGameState();
+
+		switch (state)
+		{
+			case LOGGING_IN:
+			case HOPPING:
+				ready = true;
+				break;
+			case LOGGED_IN:
+				if (ready)
+				{
+					loginTime = Instant.now();
+					ticksSinceLogin = 0;
+					ready = false;
+				}
+				break;
+		}
+	}
+
 	private EscapeCrystalNotifyAccountType determineAccountType() {
 		switch (client.getVarbitValue(Varbits.ACCOUNT_TYPE)) {
 			case STANDARD_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE: return EscapeCrystalNotifyAccountType.STANDARD_HARDCORE;
@@ -141,6 +216,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		EscapeCrystalNotifyAccountType previousAccountType = this.accountType;
 		this.accountType = determineAccountType();
 		this.hardcoreAccountType = this.accountType != EscapeCrystalNotifyAccountType.NON_HARDCORE;
+		this.completedWesternEliteDiary = client.getVarbitValue(Varbits.DIARY_WESTERN_ELITE) == 1;
 
 		if (this.accountType != previousAccountType) {
 			this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
@@ -150,9 +226,36 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private void computeLocationMetrics() {
 		this.previousRegionId = this.currentRegionId;
 		this.previouslyAtNotifyRegionId = this.atNotifyRegionId;
-		this.currentRegionId = WorldPoint.fromLocalInstance(client, client.getLocalPlayer().getLocalLocation()).getRegionID();
-		this.atNotifyRegionId = config.displayEverywhere() || this.targetRegionIds.contains(this.currentRegionId);
+
+		computeWorldPointMetrics();
+
+		this.atNotifyRegionId = checkAtNotifyLocation();
 		this.enteredNotifyRegionId = !this.previouslyAtNotifyRegionId && this.atNotifyRegionId;
+		this.atLeviathanRegionId = this.leviathanRegionIds.contains(this.currentRegionId);
+	}
+
+	private void computeWorldPointMetrics() {
+		this.currentWorldPoint = WorldPoint.fromLocalInstance(client, client.getLocalPlayer().getLocalLocation());
+		this.currentRegionId = this.currentWorldPoint.getRegionID();
+		this.currentPlaneId = this.currentWorldPoint.getPlane();
+
+		int currentTileX = this.currentWorldPoint.getX();
+		int currentTileY = this.currentWorldPoint.getY();
+		final int currentChunkX = currentTileX >> 3;
+		final int currentChunkY = currentTileY >> 3;
+
+		this.currentChunkId = (currentChunkX << 11) | currentChunkY;
+	}
+
+	private boolean checkAtNotifyLocation() {
+		if (config.displayEverywhere()) return true;
+
+		if (!targetRegionIds.contains(this.currentRegionId)) return false;
+
+		if (excludedChunkIds.contains(this.currentChunkId)) return false;
+
+		int planeRequirement = this.planeRequirements.getOrDefault(this.currentRegionId, this.currentPlaneId);
+		return this.currentPlaneId == planeRequirement;
 	}
 
 	private boolean checkEscapeCrystalWithPlayer() {
@@ -272,6 +375,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		regionIds.addAll(includeRegionIds);
 		regionIds.removeAll(excludeRegionIds);
 
+		if (config.excludeZulrahWithEliteDiary() && this.completedWesternEliteDiary) {
+			regionIds.removeAll(this.zulrahRegionIds);
+		}
+
 		return regionIds;
 	}
 
@@ -347,22 +454,52 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		infoBoxManager.removeIf(b -> b instanceof EscapeCrystalNotifyInfoBox);
 	}
 
-	public String getItemModelDisplayText(EscapeCrystalNotifyConfig.OverlayDisplayType displayFormat, EscapeCrystalNotifyConfig.InactivityTimeFormat timeFormat) {
+	private void deprioritizeLogoutButton() {
+		MenuEntry[] menuEntries = client.getMenuEntries();
+
+		if (menuEntries.length == 0) return;
+
+		int topEntryIndex = menuEntries.length - 1;
+		MenuEntry topEntry = menuEntries[topEntryIndex];
+		boolean isLogoutOption = topEntry.getOption().equals("Logout");
+		boolean isWorldSwitchOption = topEntry.getOption().equals("Switch") && WidgetUtil.componentToInterface(topEntry.getWidget().getId()) == InterfaceID.WORLD_SWITCHER;
+
+		if (!isLogoutOption && !isWorldSwitchOption) return;
+
+		if (menuEntries.length == 1) {
+			client.getMenu().createMenuEntry(0).setType(MenuAction.CANCEL);
+		}
+		else {
+			MenuEntry cancelEntry = menuEntries[0];
+			menuEntries[topEntryIndex] = cancelEntry;
+			menuEntries[0] = topEntry;
+			client.setMenuEntries(menuEntries);
+		}
+	}
+
+	public String getItemModelDisplayText(EscapeCrystalNotifyConfig.OverlayDisplayType displayFormat, EscapeCrystalNotifyConfig.InactivityTimeFormat timeFormat, String timeExpiredText) {
 		String displayText;
 
 		if (!escapeCrystalWithPlayer) {
-			displayText = "Missing";
+			displayText = this.config.infoBoxMissingCrystalText();
 		}
 		else if (displayFormat == EscapeCrystalNotifyConfig.OverlayDisplayType.REMAINING_TIME) {
 			if (!isEscapeCrystalActive()) {
 				displayText = getItemModelCurrentSettingDisplayText(timeFormat);
 			}
 			else if (isTimeExpired()) {
-				displayText = "Tele";
+				displayText = timeExpiredText;
 			}
 			else if (timeFormat == EscapeCrystalNotifyConfig.InactivityTimeFormat.SECONDS) {
 				displayText = this.getExpectedSecondsUntilTeleport() + "s";
-			} else {
+			}
+			else if (timeFormat == EscapeCrystalNotifyConfig.InactivityTimeFormat.SECONDS_MMSS) {
+				int minutes = (this.getEscapeCrystalInactivitySeconds() % 3600) / 60;
+				int seconds = this.getEscapeCrystalInactivitySeconds() % 60;
+
+				displayText = String.format("%02d:%02d", minutes, seconds);
+			}
+			else {
 				displayText = Integer.toString(this.getExpectedTicksUntilTeleport());
 			}
 		} else if (displayFormat == EscapeCrystalNotifyConfig.OverlayDisplayType.CURRENT_SETTING) {
@@ -378,6 +515,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		switch (timeFormat) {
 			case GAME_TICKS: return this.getEscapeCrystalInactivityTicks() + "t";
 			case SECONDS: return this.getEscapeCrystalInactivitySeconds() + "s";
+			case SECONDS_MMSS: {
+				if (this.getEscapeCrystalInactivitySeconds() < 0) return "00:00";
+
+				int minutes = (this.getEscapeCrystalInactivitySeconds() % 3600) / 60;
+				int seconds = this.getEscapeCrystalInactivitySeconds() % 60;
+
+				return String.format("%02d:%02d", minutes, seconds);
+			}
 		}
 
 		return "";
@@ -477,6 +622,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	public boolean isAtNotifyRegionId() {
 		return atNotifyRegionId;
+	}
+
+	public boolean isLeviathanSafeguardPanelEnabled() {
+		return this.currentRegionId == LEVIATHAN_ROWBOAT_REGION_ID && !config.disableLeviathanSafeguardPanelPopup();
+	}
+
+	public boolean isCloseToSixHourLogout() {
+		return ticksSinceLogin >= SIX_HOUR_LOG_WARNING_THRESHOLD_TICKS;
 	}
 
 	private int convertTicksToSeconds(int ticks) {

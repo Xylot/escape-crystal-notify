@@ -1,6 +1,5 @@
 package com.escapecrystalnotify;
 
-import net.runelite.api.ItemID;
 import net.runelite.client.ui.overlay.infobox.InfoBox;
 
 import java.awt.*;
@@ -20,7 +19,7 @@ public class EscapeCrystalNotifyInfoBox extends InfoBox {
 
     @Override
     public String getText() {
-        return this.plugin.getItemModelDisplayText(this.config.infoBoxDisplayFormat(), this.config.infoBoxInactivityTimeFormat());
+        return this.plugin.getItemModelDisplayText(this.config.infoBoxDisplayFormat(), this.config.infoBoxInactivityTimeFormat(), this.config.infoBoxTimeExpiredText());
     }
 
     @Override

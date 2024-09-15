@@ -9,6 +9,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 {
 	enum InactivityTimeFormat {
 		SECONDS ("Seconds"),
+		SECONDS_MMSS ("Seconds (MM:SS)"),
 		GAME_TICKS ("Ticks");
 
 		private final String formatName;
@@ -153,6 +154,15 @@ public interface EscapeCrystalNotifyConfig extends Config
 		return 4;
 	}
 
+	@ConfigItem(
+			keyName = "onScreenWidgetTimeExpiredText",
+			name = "Time Expired Text",
+			description = "Text to draw onto the crystal's inventory model when the inactivity time has been reached",
+			section = "onScreenWidgetSettings",
+			position = 9
+	)
+	default String onScreenWidgetTimeExpiredText() { return "Tele"; }
+
 	@ConfigSection(
 			name = "Info Box Display Settings",
 			description = "Settings for Info Box",
@@ -201,6 +211,24 @@ public interface EscapeCrystalNotifyConfig extends Config
 	{
 		return InactivityTimeFormat.SECONDS;
 	}
+
+	@ConfigItem(
+			keyName = "infoBoxTimeExpiredText",
+			name = "Time Expired Text",
+			description = "Text to draw onto the crystal's inventory model when the inactivity time has been reached",
+			section = "infoBoxDisplaySettings",
+			position = 5
+	)
+	default String infoBoxTimeExpiredText() { return "Tele"; }
+
+	@ConfigItem(
+			keyName = "infoBoxMissingCrystalText",
+			name = "Missing Crystal Text",
+			description = "Text to draw onto the crystal's inventory model when you are missing an Escape Crystal",
+			section = "infoBoxDisplaySettings",
+			position = 6
+	)
+	default String infoBoxMissingCrystalText() { return "Missing"; }
 
 	@ConfigSection(
 			name = "Inventory Display Settings",
@@ -321,6 +349,15 @@ public interface EscapeCrystalNotifyConfig extends Config
 	)
 	default Color inventoryInactiveTextColor() { return Color.RED; }
 
+	@ConfigItem(
+			keyName = "inventoryTimeExpiredText",
+			name = "Time Expired Text",
+			description = "Text to draw onto the crystal's inventory model when the inactivity time has been reached",
+			section = "inventoryDisplaySettings",
+			position = 12
+	)
+	default String inventoryTimeExpiredText() { return "Tele"; }
+
 	@ConfigSection(
 			name = "Location Filter",
 			description = "Filter locations where the reminder is shown",
@@ -374,11 +411,20 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default boolean displayEverywhere() { return false; }
 
 	@ConfigItem(
+			keyName = "excludeZulrahWithEliteDiary",
+			name = "Exclude Zulrah With Elite Diary",
+			description = "Don't display at Zulrah when you have completed the Western Elite Diary",
+			section = "displayRegionFilter",
+			position = 6
+	)
+	default boolean excludeZulrahWithEliteDiary() { return true; }
+
+	@ConfigItem(
 			keyName = "excludeRegionIds",
 			name = "Exclude Region IDs",
 			description = "A comma separated list of Region IDs to exclude",
 			section = "displayRegionFilter",
-			position = 6
+			position = 7
 	)
 	default String excludeRegionIds() { return ""; }
 
@@ -387,7 +433,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Include Region IDs",
 			description = "A comma separated list of Region IDs to include",
 			section = "displayRegionFilter",
-			position = 7
+			position = 8
 	)
 	default String includeRegionIds() { return ""; }
 
@@ -445,5 +491,66 @@ public interface EscapeCrystalNotifyConfig extends Config
 			position = 5
 	)
 	default boolean notifyNonLeftClickTeleport() { return true; }
+
+	@ConfigSection(
+			name = "Leviathan Safeguards",
+			description = "Configure safeguards to prevent deaths due to Leviathan logout bugs",
+			position = 7
+	)
+	String leviathanSafeguardSettings = "leviathanSafeguardSettings";
+
+	@ConfigItem(
+			keyName = "disableLeviathanSafeguardPanelPopup",
+			name = "Disable Panel Popup",
+			description = "Disables the panel that appears when near Leviathan's entry boat",
+			section = "leviathanSafeguardSettings",
+			position = 1
+	)
+	default boolean disableLeviathanSafeguardPanelPopup() { return false; }
+
+	@ConfigItem(
+			keyName = "hideLeviathanBugInfoText",
+			name = "Hide Bug Info Text",
+			description = "Hides the information about Leviathan's logout bug",
+			section = "leviathanSafeguardSettings",
+			position = 2
+	)
+	default boolean hideLeviathanBugInfoText() { return false; }
+
+	@ConfigItem(
+			keyName = "deprioritizeLeviathanLogout",
+			name = "Deprioritize Logout in Leviathan Arena",
+			description = "Deprioritizes the logout menu entry while inside Leviathan's arena to disallow accidental logouts",
+			section = "leviathanSafeguardSettings",
+			position = 3
+	)
+	default boolean deprioritizeLeviathanLogout() { return false; }
+
+	@ConfigItem(
+			keyName = "hideLeviathanLogoutSettingText",
+			name = "Hide Current Logout Setting Text",
+			description = "Hides the information about the current configured logout setting",
+			section = "leviathanSafeguardSettings",
+			position = 4
+	)
+	default boolean hideLeviathanLogoutSettingText() { return false; }
+
+	@ConfigItem(
+			keyName = "warnSixHourLogout",
+			name = "Warn When Close to a 6-Hour Logout",
+			description = "Warns you when you are close to getting 6-hour logged",
+			section = "leviathanSafeguardSettings",
+			position = 5
+	)
+	default boolean warnLeviathanLogoutTimer() { return true; }
+
+	@ConfigItem(
+			keyName = "hideLeviathanSettingsInstructionText",
+			name = "Hide Bottom Instruction Info",
+			description = "Hides the text at the bottom of the panel that explains how to enable/disable the Leviathan safeguard features",
+			section = "leviathanSafeguardSettings",
+			position = 6
+	)
+	default boolean hideLeviathanSettingsInstructionText() { return false; }
 }
 

@@ -36,7 +36,7 @@ public enum EscapeCrystalNotifyRegion {
     BOSS_KRIL_TSUTSAROTH("K'ril Tsutsaroth", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 11603),
     BOSS_NEX("Nex", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 11344, 11345, 11600),
     BOSS_NIGHTMARE("Nightmare of Ashihama", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 15515),
-    BOSS_PERILOUS_MOONS("Perilous Moons", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 5525, 5526, 5527, 5528, 5781, 5782, 5783, 6037, 6038, 6039),
+    BOSS_PERILOUS_MOONS("Perilous Moons", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 5525, 5526, 5527, 5528, 5782, 5783, 6037, 6038, 6039),
     BOSS_PHANTOM_MUSPAH("Phantom Muspah", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 11330),
     BOSS_SARACHNIS("Sarachnis", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 7322),
     BOSS_SKOTIZO("Skotizo", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 9048),

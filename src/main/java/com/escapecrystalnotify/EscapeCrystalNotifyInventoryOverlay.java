@@ -104,7 +104,7 @@ public class EscapeCrystalNotifyInventoryOverlay extends WidgetItemOverlay {
     }
 
     private void renderCrystalModelInfoText(Graphics2D graphics, Rectangle modelBounds) {
-        String infoText = this.plugin.getItemModelDisplayText(this.config.inventoryDisplayFormat(), this.config.inventoryInactivityTimeFormat());
+        String infoText = this.plugin.getItemModelDisplayText(this.config.inventoryDisplayFormat(), this.config.inventoryInactivityTimeFormat(), this.config.inventoryTimeExpiredText());
 
         final TextComponent textComponent = new TextComponent();
 
