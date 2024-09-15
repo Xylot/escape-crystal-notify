@@ -104,7 +104,7 @@ public enum EscapeCrystalNotifyRegion {
     DUNGEON_SHAYZIEN_CRYPTS("Shayzien Crypts", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 6043),
     DUNGEON_SISTERHOOD_SANCTUARY("Sisterhood Sanctuary", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 14999, 15000, 15001, 15255, 15256, 15257, 15511, 15512, 15513),
     DUNGEON_SLAYER_TOWER("Slayer Tower", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 13623, 13723),
-    DUNGEON_SMOKE("Smoke Dungeon", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 12946, 13202),
+    DUNGEON_SMOKE("Smoke Dungeon", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 12690, 12946, 13202),
     DUNGEON_SOPHANEM("Sophanem Dungeon", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 13200),
     DUNGEON_SOURHOG_CAVE("Sourhog Cave", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 12695),
     DUNGEON_STRONGHOLD_SECURITY("Stronghold of Security", EscapeCrystalNotifyRegionType.DUNGEONS, EscapeCrystalNotifyRegionDeathType.UNSAFE, 7505, 8017, 8530, 9297),
