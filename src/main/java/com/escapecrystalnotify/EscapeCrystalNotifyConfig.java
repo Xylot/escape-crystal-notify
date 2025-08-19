@@ -552,5 +552,66 @@ public interface EscapeCrystalNotifyConfig extends Config
 			position = 6
 	)
 	default boolean hideLeviathanSettingsInstructionText() { return false; }
+
+	@ConfigSection(
+			name = "Doom Safeguards",
+			description = "Configure safeguards to prevent deaths due to Doom logout bugs",
+			position = 8
+	)
+	String doomSafeguardSettings = "doomSafeguardSettings";
+
+	@ConfigItem(
+			keyName = "disableDoomSafeguardPanelPopup",
+			name = "Disable Panel Popup",
+			description = "Disables the panel that appears when near Doom's arena",
+			section = "doomSafeguardSettings",
+			position = 1
+	)
+	default boolean disableDoomSafeguardPanelPopup() { return false; }
+
+	@ConfigItem(
+			keyName = "hideDoomBugInfoText",
+			name = "Hide Bug Info Text",
+			description = "Hides the information about Doom's logout bug",
+			section = "doomSafeguardSettings",
+			position = 2
+	)
+	default boolean hideDoomBugInfoText() { return false; }
+
+	@ConfigItem(
+			keyName = "deprioritizeDoomLogout",
+			name = "Deprioritize Logout in Doom's Arena",
+			description = "Deprioritizes the logout menu entry while inside Doom's arena to disallow accidental logouts. The logout is ENABLED between floors.",
+			section = "doomSafeguardSettings",
+			position = 3
+	)
+	default boolean deprioritizeDoomLogout() { return false; }
+
+	@ConfigItem(
+			keyName = "hideDoomLogoutSettingText",
+			name = "Hide Current Logout Setting Text",
+			description = "Hides the information about the current configured logout setting",
+			section = "doomSafeguardSettings",
+			position = 4
+	)
+	default boolean hideDoomLogoutSettingText() { return false; }
+
+	@ConfigItem(
+			keyName = "warnDoomSixHourLogout",
+			name = "Warn When Close to a 6-Hour Logout",
+			description = "Warns you when you are close to getting 6-hour logged",
+			section = "doomSafeguardSettings",
+			position = 5
+	)
+	default boolean warnDoomLogoutTimer() { return true; }
+
+	@ConfigItem(
+			keyName = "hideDoomSettingsInstructionText",
+			name = "Hide Bottom Instruction Info",
+			description = "Hides the text at the bottom of the panel that explains how to enable/disable the Doom safeguard features",
+			section = "doomSafeguardSettings",
+			position = 6
+	)
+	default boolean hideDoomSettingsInstructionText() { return false; }
 }
 

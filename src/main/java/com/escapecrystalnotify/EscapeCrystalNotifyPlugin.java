@@ -23,10 +23,8 @@ import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,8 +39,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private static final int ITEMS_STORED_VARBIT = 14283;
 	private static final int STANDARD_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE = 3;
 	private static final int GROUP_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE = 5;
-	private static final int LEVIATHAN_ROWBOAT_ID = 49212;
-	private static final int LEVIATHAN_ROWBOAT_REGION_ID = 8292;
+	private static final List<Integer> LEVIATHAN_LOBBY_CHUNK_IDS = List.of(525092, 525093, 527139, 527140, 527141, 529188);
+	private static final List<Integer> DOOM_LOBBY_CHUNK_IDS = List.of(335016, 335017, 335018, 337064, 337065, 337066);
+	private static final List<Integer> DOOM_BURROW_HOLE_IDS = List.of(ObjectID.BURROW_HOLE, ObjectID.BURROW_HOLE_57285);
+	private static final List<Integer> DOOM_NPC_IDS = List.of(NpcID.DOOM_OF_MOKHAIOTL, NpcID.DOOM_OF_MOKHAIOTL_SHIELDED, NpcID.DOOM_OF_MOKHAIOTL_BURROWED);
 	private static final int SIX_HOUR_LOG_WARNING_THRESHOLD_TICKS = 34000;
 
 	@Inject
@@ -77,9 +77,6 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private InfoBoxManager infoBoxManager;
 
 	@Getter
-	private GameObject leviathanRowboat;
-
-	@Getter
 	private Instant loginTime;
 
 	@Getter
@@ -112,6 +109,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private boolean atNotifyRegionId = false;
 	private boolean previouslyAtNotifyRegionId = false;
 	private boolean atLeviathanRegionId = false;
+	private boolean atLeviathanLobby = false;
+	private boolean atDoomRegionId = false;
+	private boolean atDoomLobby = false;
+	private boolean doomFloorCleared = false;
 	private int timeRemainingThresholdTicks;
 	private boolean inTimeRemainingThreshold = false;
 	private boolean previouslyInTimeRemainingThreshold = false;
@@ -121,6 +122,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private final List<Integer> excludedChunkIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedChunkIds();
 	private final Map<Integer, Integer> planeRequirements = EscapeCrystalNotifyRegionPlaneRequirements.getRegionPlaneMap();
 	private final List<Integer> leviathanRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_LEVIATHAN.getRegionIds()).boxed().collect(Collectors.toList());
+	private final List<Integer> doomRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_DOOM_OF_MOKHAIOTL.getRegionIds()).boxed().collect(Collectors.toList());
+	private List<Integer> logoutBugRegionIds = new ArrayList<>();
 	private final List<Integer> zulrahRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH.getRegionIds()).boxed().collect(Collectors.toList());
 	private EscapeCrystalNotifyInfoBox activeInfoBox;
 
@@ -130,6 +133,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
 		this.notifyTimeRemainingThresholdMessage = generateTimeRemainingThresholdMessage();
 		this.timeRemainingThresholdTicks = normalizeTimeRemainingThresholdValue();
+
+		this.logoutBugRegionIds.addAll(leviathanRegionIds);
+		this.logoutBugRegionIds.addAll(doomRegionIds);
 
 		overlayManager.add(escapeCrystalNotifyOverlayActive);
 		overlayManager.add(escapeCrystalNotifyOverlayInactive);
@@ -166,7 +172,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Subscribe
 	public void onPostMenuSort(PostMenuSort e) {
-		if (config.deprioritizeLeviathanLogout() && this.atLeviathanRegionId) {
+		if (config.deprioritizeLeviathanLogout() && this.atLeviathanRegionId && !this.atLeviathanLobby) {
+			deprioritizeLogoutButton();
+		}
+		if (config.deprioritizeDoomLogout() && this.atDoomRegionId && !this.atDoomLobby && !this.doomFloorCleared) {
 			deprioritizeLogoutButton();
 		}
 	}
@@ -174,13 +183,25 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Subscribe
 	public void onGameObjectSpawned(GameObjectSpawned event)
 	{
-		if (config.disableLeviathanSafeguardPanelPopup()) return;
+		if (!this.doomRegionIds.contains(this.currentRegionId)) return;
 
-		int currentRegion = WorldPoint.fromLocalInstance(client, client.getLocalPlayer().getLocalLocation()).getRegionID();
+		GameObject spawnedObject = event.getGameObject();
+		int spawnedObjectId = spawnedObject.getId();
 
-        if (event.getGameObject().getId() == LEVIATHAN_ROWBOAT_ID && currentRegion == LEVIATHAN_ROWBOAT_REGION_ID) {
-            leviathanRowboat = event.getGameObject();
-        }
+        if (DOOM_BURROW_HOLE_IDS.contains(spawnedObjectId)) this.doomFloorCleared = true;
+	}
+
+	@Subscribe
+	public void onNpcSpawned(NpcSpawned npc)
+	{
+		if (!this.doomRegionIds.contains(this.currentRegionId)) {
+			this.doomFloorCleared = true;
+			return;
+		}
+
+		NPC spawnedNpc = npc.getNpc();
+		int spawnedNpcId = spawnedNpc.getId();
+		if (DOOM_NPC_IDS.contains(spawnedNpcId)) this.doomFloorCleared = false;
 	}
 
 	@Subscribe
@@ -232,6 +253,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.atNotifyRegionId = checkAtNotifyLocation();
 		this.enteredNotifyRegionId = !this.previouslyAtNotifyRegionId && this.atNotifyRegionId;
 		this.atLeviathanRegionId = this.leviathanRegionIds.contains(this.currentRegionId);
+		this.atLeviathanLobby = LEVIATHAN_LOBBY_CHUNK_IDS.contains(this.currentChunkId);
+		this.atDoomRegionId = this.doomRegionIds.contains(this.currentRegionId);
+		this.atDoomLobby = DOOM_LOBBY_CHUNK_IDS.contains(this.currentChunkId);
 	}
 
 	private void computeWorldPointMetrics() {
@@ -625,7 +649,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	public boolean isLeviathanSafeguardPanelEnabled() {
-		return this.currentRegionId == LEVIATHAN_ROWBOAT_REGION_ID && !config.disableLeviathanSafeguardPanelPopup();
+		return this.atLeviathanLobby && !config.disableLeviathanSafeguardPanelPopup();
+	}
+
+	public boolean isDoomSafeguardPanelEnabled() {
+		return this.atDoomLobby && !config.disableDoomSafeguardPanelPopup();
 	}
 
 	public boolean isCloseToSixHourLogout() {
