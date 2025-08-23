@@ -95,25 +95,39 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private boolean notifyNonLeftClickTeleport = false;
 	private String notifyTimeRemainingThresholdMessage;
 	private EscapeCrystalNotifyAccountType accountType = EscapeCrystalNotifyAccountType.NON_HARDCORE;
+	@Getter
 	private boolean hardcoreAccountType = false;
 	private boolean completedWesternEliteDiary = false;
+	@Getter
 	private boolean escapeCrystalWithPlayer = true;
+	@Getter
 	private boolean escapeCrystalActive = true;
+	@Getter
 	private boolean escapeCrystalRingOfLifeActive = true;
+	@Getter
 	private boolean escapeCrystalLeftClickTeleportEnabled = true;
+	@Getter
 	private int escapeCrystalInactivityTicks;
+	@Getter
 	private int clientInactivityTicks;
+	@Getter
 	private int expectedServerInactivityTicks = 0;
+	@Getter
 	private int expectedTicksUntilTeleport;
+	@Getter
 	private WorldPoint currentWorldPoint;
+	@Getter
 	private int currentRegionId;
 	private int currentPlaneId;
 	private int currentChunkId;
 	private int previousRegionId;
 	private boolean enteredNotifyRegionId = false;
+	@Getter
 	private boolean atNotifyRegionId = false;
 	private boolean previouslyAtNotifyRegionId = false;
+	@Getter
 	private boolean atNotifyRegionEntrance = false;
+	@Getter
 	private EscapeCrystalNotifyLocatedEntrance locatedEntrance;
 	private EscapeCrystalNotifyRegionEntranceObject regionEntrance;
 	private EscapeCrystalNotifyRegionEntranceDirection regionEntranceDirection;
@@ -480,19 +494,13 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		}
 
 		EscapeCrystalNotifyLocatedEntrance potentialEntrance = this.possibleEntrances.get(this.currentRegionId);
-//		log.debug("{}", this.possibleEntrances);
-//		log.debug("{}", potentialEntrance);
 
 		if (potentialEntrance == null) {
-//			log.debug("Potential entrance is null");
 			this.locatedEntrance = null;
 			return;
 		}
 
 		if (potentialEntrance.hasMoved()) {
-//			log.debug("Potential entrance has moved");
-//			log.debug("Initial WP: {}", potentialEntrance.getInitialWorldPoint());
-//			log.debug("New WP: {}", potentialEntrance.getTarget().getWorldLocation());
 			this.locatedEntrance = null;
 			return;
 		}
@@ -861,10 +869,6 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		return Color.WHITE;
 	}
 
-	public boolean isHardcoreAccountType() {
-		return hardcoreAccountType;
-	}
-
 	public boolean isAccountTypeEnabled() {
 		if (config.requireHardcoreAccountType()) {
 			return isHardcoreAccountType();
@@ -872,48 +876,16 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		return true;
 	}
 
-	public boolean isEscapeCrystalActive() {
-		return escapeCrystalActive;
-	}
-
-	public boolean isEscapeCrystalWithPlayer() {
-		return escapeCrystalWithPlayer;
-	}
-
 	public boolean isEscapeCrystalInactivityTeleportActive() {
 		return escapeCrystalWithPlayer && escapeCrystalActive;
-	}
-
-	public boolean isEscapeCrystalRingOfLifeActive() {
-		return escapeCrystalRingOfLifeActive;
-	}
-
-	public boolean isEscapeCrystalLeftClickTeleportEnabled() {
-		return escapeCrystalLeftClickTeleportEnabled;
-	}
-
-	public int getEscapeCrystalInactivityTicks() {
-		return escapeCrystalInactivityTicks;
 	}
 
 	public int getEscapeCrystalInactivitySeconds() {
 		return convertTicksToSeconds(escapeCrystalInactivityTicks);
 	}
 
-	public int getClientInactivityTicks() {
-		return clientInactivityTicks;
-	}
-
-	public int getExpectedServerInactivityTicks() {
-		return expectedServerInactivityTicks;
-	}
-
 	public int getExpectedServerInactivitySeconds() {
 		return convertTicksToSeconds(expectedServerInactivityTicks);
-	}
-
-	public int getExpectedTicksUntilTeleport() {
-		return expectedTicksUntilTeleport;
 	}
 
 	public int getExpectedSecondsUntilTeleport() {
@@ -924,32 +896,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		return expectedTicksUntilTeleport == 0;
 	}
 
-	public int getCurrentRegionId() {
-		return currentRegionId;
-	}
-
-	public boolean isAtNotifyRegionId() {
-		return atNotifyRegionId;
-	}
-
-	public boolean isAtNotifyRegionEntrance() {
-		return atNotifyRegionEntrance;
-	}
-
-//	public EscapeCrystalNotifyRegionEntranceObject getRegionEntrance() {
-//		return regionEntrance;
-//	}
-
-	public EscapeCrystalNotifyLocatedEntrance getLocatedEntrance() {
-		return locatedEntrance;
-	}
-
 	public void resetLocatedEntrance() {
 		locatedEntrance = null;
-	}
-
-	public WorldPoint getCurrentWorldPoint() {
-		return currentWorldPoint;
 	}
 
 	public BufferedImage getInactiveEscapeCrystalImage() {
