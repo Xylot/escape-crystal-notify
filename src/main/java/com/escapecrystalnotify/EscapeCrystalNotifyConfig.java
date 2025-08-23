@@ -359,9 +359,56 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default String inventoryTimeExpiredText() { return "Tele"; }
 
 	@ConfigSection(
+			name = "Entrance Overlay & Menu Swap",
+			description = "Add a reminder overlay to boss/dungeon entrances and optional deprioritization of the enter menu option",
+			position = 5
+	)
+	String entranceOverlaySettings = "entranceOverlaySettings";
+
+	@ConfigItem(
+			keyName = "displayEntranceOverlay",
+			name = "Display Entrance Overlay",
+			description = "Display the reminder overlay for entrances to dangerous regions when you do not have an active Escape Crystal",
+			section = "entranceOverlaySettings",
+			position = 1
+	)
+	default boolean displayEntranceOverlay() { return true; }
+
+	@Alpha
+	@ConfigItem(
+			keyName = "entranceOverlayFillColor",
+			name = "Entrance Overlay Fill Color",
+			description = "Fill color of the entrance reminder overlay",
+			section = "entranceOverlaySettings",
+			position = 2
+	)
+	default Color entranceOverlayFillColor() { return new Color(205,50,50,75); }
+
+	@ConfigItem(
+			keyName = "entranceOverlayImageScale",
+			name = "Image Scale",
+			description = "The scale of the inactive Escape Crystal image",
+			section = "entranceOverlaySettings",
+			position = 3
+	)
+	default double entranceOverlayImageScale()
+	{
+		return 1.0;
+	}
+
+	@ConfigItem(
+			keyName = "deprioritizeEntranceEnterOption",
+			name = "Deprioritize Entrance Enter Option",
+			description = "Deprioritize the enter menu option when you do not have an active Escape Crystal",
+			section = "entranceOverlaySettings",
+			position = 4
+	)
+	default boolean deprioritizeEntranceEnterOption() { return true; }
+
+	@ConfigSection(
 			name = "Location Filter",
 			description = "Filter locations where the reminder is shown",
-			position = 5
+			position = 6
 	)
 	String displayRegionFilter = "displayRegionFilter";
 
@@ -440,7 +487,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigSection(
 			name = "Notification Settings",
 			description = "Configure preferences for Runelite notifications",
-			position = 6
+			position = 7
 	)
 	String notificationSettings = "notificationSettings";
 
@@ -495,7 +542,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigSection(
 			name = "Leviathan Safeguards",
 			description = "Configure safeguards to prevent deaths due to Leviathan logout bugs",
-			position = 7
+			position = 8
 	)
 	String leviathanSafeguardSettings = "leviathanSafeguardSettings";
 
@@ -556,7 +603,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigSection(
 			name = "Doom Safeguards",
 			description = "Configure safeguards to prevent deaths due to Doom logout bugs",
-			position = 8
+			position = 9
 	)
 	String doomSafeguardSettings = "doomSafeguardSettings";
 

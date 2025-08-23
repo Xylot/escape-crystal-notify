@@ -19,6 +19,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ui.overlay.infobox.InfoBox;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
+import net.runelite.client.util.ColorUtil;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -43,6 +44,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private static final List<Integer> DOOM_LOBBY_CHUNK_IDS = List.of(335016, 335017, 335018, 337064, 337065, 337066);
 	private static final List<Integer> DOOM_BURROW_HOLE_IDS = List.of(ObjectID.BURROW_HOLE, ObjectID.BURROW_HOLE_57285);
 	private static final List<Integer> DOOM_NPC_IDS = List.of(NpcID.DOOM_OF_MOKHAIOTL, NpcID.DOOM_OF_MOKHAIOTL_SHIELDED, NpcID.DOOM_OF_MOKHAIOTL_BURROWED);
+	private static final List<Integer> HYDRA_ENTRANCE_IDS = List.of(34553, 34554);
 	private static final int SIX_HOUR_LOG_WARNING_THRESHOLD_TICKS = 34000;
 
 	@Inject
@@ -66,6 +68,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Inject
 	private EscapeCrystalNotifyTextOverlayPanel escapeCrystalNotifyTextOverlayPanel;
+
+	@Inject
+	private EscapeCrystalNotifyRegionEntranceOverlay escapeCrystalNotifyRegionEntranceOverlay;
 
 	@Inject
 	private OverlayManager overlayManager;
@@ -108,6 +113,13 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private boolean enteredNotifyRegionId = false;
 	private boolean atNotifyRegionId = false;
 	private boolean previouslyAtNotifyRegionId = false;
+	private boolean atNotifyRegionEntrance = false;
+	private EscapeCrystalNotifyLocatedEntrance locatedEntrance;
+	private EscapeCrystalNotifyRegionEntranceObject regionEntrance;
+	private EscapeCrystalNotifyRegionEntranceDirection regionEntranceDirection;
+	private EscapeCrystalNotifyRegionEntranceOverlayType regionEntranceOverlayType;
+	private WorldPoint regionEntranceOriginalLocation;
+	private boolean playerPastRegionEntrance;
 	private boolean atLeviathanRegionId = false;
 	private boolean atLeviathanLobby = false;
 	private boolean atDoomRegionId = false;
@@ -121,10 +133,22 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private final List<Integer> excludedRegionIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedRegionIds();
 	private final List<Integer> excludedChunkIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedChunkIds();
 	private final Map<Integer, Integer> planeRequirements = EscapeCrystalNotifyRegionPlaneRequirements.getRegionPlaneMap();
+	private final Map<Integer, List<Integer>> chunkRequirements = EscapeCrystalNotifyRegion.getRegionChunkRequirementsMap();
+	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> chunkEntranceMap = EscapeCrystalNotifyRegion.getChunkEntranceMap();
+	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> regionEntranceMap = EscapeCrystalNotifyRegion.getRegionEntranceMap();
+	private final Map<Integer, EscapeCrystalNotifyLocatedEntrance> possibleEntrances = new HashMap<>();
+	private final List<Integer> allEntranceIds = EscapeCrystalNotifyRegion.getAllEntranceIds();
 	private final List<Integer> leviathanRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_LEVIATHAN.getRegionIds()).boxed().collect(Collectors.toList());
 	private final List<Integer> doomRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_DOOM_OF_MOKHAIOTL.getRegionIds()).boxed().collect(Collectors.toList());
+	private final List<Integer> infernoEntranceRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_INFERNO_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList());
+	private final List<Integer> whispererEntranceRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_WHISPERER.getRegionIds()).boxed().collect(Collectors.toList());
+	private final List<Integer> hydraEntranceRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_HYDRA.getRegionIds()).boxed().collect(Collectors.toList());
 	private List<Integer> logoutBugRegionIds = new ArrayList<>();
 	private final List<Integer> zulrahRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH.getRegionIds()).boxed().collect(Collectors.toList());
+	private BufferedImage inactiveEscapeCrystalImage;
+	private BufferedImage activeEscapeCrystalImage;
+	private BufferedImage bankFillerImage;
+	private BufferedImage entranceOverlayImage;
 	private EscapeCrystalNotifyInfoBox activeInfoBox;
 
 	@Override
@@ -137,19 +161,24 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.logoutBugRegionIds.addAll(leviathanRegionIds);
 		this.logoutBugRegionIds.addAll(doomRegionIds);
 
+		this.possibleEntrances.clear();
+
 		overlayManager.add(escapeCrystalNotifyOverlayActive);
 		overlayManager.add(escapeCrystalNotifyOverlayInactive);
 		overlayManager.add(escapeCrystalNotifyInventoryOverlay);
 		overlayManager.add(escapeCrystalNotifyTextOverlayPanel);
+		overlayManager.add(escapeCrystalNotifyRegionEntranceOverlay);
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
+		this.possibleEntrances.clear();
 		overlayManager.remove(escapeCrystalNotifyOverlayActive);
 		overlayManager.remove(escapeCrystalNotifyOverlayInactive);
 		overlayManager.remove(escapeCrystalNotifyInventoryOverlay);
 		overlayManager.remove(escapeCrystalNotifyTextOverlayPanel);
+		overlayManager.remove(escapeCrystalNotifyRegionEntranceOverlay);
 		removeInfoBoxes();
 	}
 
@@ -172,36 +201,212 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Subscribe
 	public void onPostMenuSort(PostMenuSort e) {
-		if (config.deprioritizeLeviathanLogout() && this.atLeviathanRegionId && !this.atLeviathanLobby) {
+		boolean inLeviathanEncounter = config.deprioritizeLeviathanLogout() && this.atLeviathanRegionId && !this.atLeviathanLobby;
+		boolean inDoomEncounter = config.deprioritizeDoomLogout() && this.atDoomRegionId && !this.atDoomLobby && !this.doomFloorCleared;
+
+		if (inLeviathanEncounter || inDoomEncounter) {
 			deprioritizeLogoutButton();
 		}
-		if (config.deprioritizeDoomLogout() && this.atDoomRegionId && !this.atDoomLobby && !this.doomFloorCleared) {
-			deprioritizeLogoutButton();
+
+		if (this.shouldDeprioritizeEntranceEnterOption()) {
+			deprioritizeEnterOption();
 		}
 	}
 
 	@Subscribe
 	public void onGameObjectSpawned(GameObjectSpawned event)
 	{
-		if (!this.doomRegionIds.contains(this.currentRegionId)) return;
-
 		GameObject spawnedObject = event.getGameObject();
 		int spawnedObjectId = spawnedObject.getId();
+
+		if (this.allEntranceIds.contains(spawnedObjectId)) {
+			WorldPoint locatedWorldPoint = spawnedObject.getWorldLocation();
+			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
+
+			if (this.infernoEntranceRegionIds.contains(locatedWorldPoint.getRegionID())) {
+				for (int regionId : this.infernoEntranceRegionIds) {
+					possibleEntrances.put(
+							regionId,
+							new EscapeCrystalNotifyLocatedEntrance(
+									new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
+									EscapeCrystalNotifyRegion.BOSS_INFERNO_ENTRANCE.getRegionEntrance(),
+									locatedWorldPoint
+							)
+					);
+				}
+			} else {
+				possibleEntrances.put(
+						locatedWorldPoint.getRegionID(),
+						new EscapeCrystalNotifyLocatedEntrance(
+								new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
+								this.chunkEntranceMap.get(locatedChunkId),
+								locatedWorldPoint
+						)
+				);
+			}
+		}
+
+		if (!this.doomRegionIds.contains(this.currentRegionId)) return;
 
         if (DOOM_BURROW_HOLE_IDS.contains(spawnedObjectId)) this.doomFloorCleared = true;
 	}
 
 	@Subscribe
+	public void onGameObjectDespawned(GameObjectDespawned event)
+	{
+		GameObject despawnedObject = event.getGameObject();
+
+		if (this.allEntranceIds.contains(despawnedObject.getId())) {
+			WorldPoint locatedWorldPoint = despawnedObject.getWorldLocation();
+			this.possibleEntrances.remove(locatedWorldPoint.getRegionID());
+		}
+	}
+
+	@Subscribe
 	public void onNpcSpawned(NpcSpawned npc)
 	{
+		NPC spawnedNpc = npc.getNpc();
+		int spawnedNpcId = spawnedNpc.getId();
+
+		if (this.allEntranceIds.contains(spawnedNpcId)) {
+			WorldPoint locatedWorldPoint = spawnedNpc.getWorldLocation();
+			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
+
+			if (this.infernoEntranceRegionIds.contains(locatedWorldPoint.getRegionID())) {
+				for (int regionId : this.infernoEntranceRegionIds) {
+					possibleEntrances.put(
+							regionId,
+							new EscapeCrystalNotifyLocatedEntrance(
+									new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
+									this.chunkEntranceMap.get(locatedChunkId),
+									locatedWorldPoint
+							)
+					);
+				}
+			} else if (spawnedNpcId == NpcID.ODD_FIGURE) {
+				for (int regionId : this.whispererEntranceRegionIds) {
+					possibleEntrances.put(
+							regionId,
+							new EscapeCrystalNotifyLocatedEntrance(
+									new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
+									EscapeCrystalNotifyRegion.BOSS_THE_WHISPERER.getRegionEntrance(),
+									locatedWorldPoint
+							)
+					);
+				}
+			} else {
+				possibleEntrances.put(
+						locatedWorldPoint.getRegionID(),
+						new EscapeCrystalNotifyLocatedEntrance(
+								new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
+								this.chunkEntranceMap.get(locatedChunkId),
+								locatedWorldPoint
+						)
+				);
+			}
+		}
+
 		if (!this.doomRegionIds.contains(this.currentRegionId)) {
 			this.doomFloorCleared = true;
 			return;
 		}
-
-		NPC spawnedNpc = npc.getNpc();
-		int spawnedNpcId = spawnedNpc.getId();
 		if (DOOM_NPC_IDS.contains(spawnedNpcId)) this.doomFloorCleared = false;
+	}
+
+	@Subscribe
+	public void onNpcDespawned(NpcDespawned npc)
+	{
+		NPC despawnedNpc = npc.getNpc();
+
+		if (this.allEntranceIds.contains(despawnedNpc.getId())) {
+			WorldPoint locatedWorldPoint = despawnedNpc.getWorldLocation();
+			this.possibleEntrances.remove(locatedWorldPoint.getRegionID());
+		}
+	}
+
+	@Subscribe
+	public void onNpcChanged(NpcChanged npc)
+	{
+		if (npc.getNpc().getId() == NpcID.THE_WHISPERER) {
+			for (int regionId : EscapeCrystalNotifyRegion.BOSS_THE_WHISPERER.getRegionIds()) {
+				this.possibleEntrances.remove(regionId);
+			}
+		}
+	}
+
+	@Subscribe
+	public void onDecorativeObjectSpawned(DecorativeObjectSpawned event)
+	{
+		DecorativeObject spawnedObject = event.getDecorativeObject();
+
+		if (this.allEntranceIds.contains(spawnedObject.getId())) {
+			WorldPoint locatedWorldPoint = spawnedObject.getWorldLocation();
+			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
+
+			possibleEntrances.put(
+					locatedWorldPoint.getRegionID(),
+					new EscapeCrystalNotifyLocatedEntrance(
+							new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
+							this.chunkEntranceMap.get(locatedChunkId),
+							locatedWorldPoint
+					)
+			);
+		}
+	}
+
+	@Subscribe
+	public void onDecorativeObjectDespawned(DecorativeObjectDespawned event)
+	{
+		DecorativeObject despawnedObject = event.getDecorativeObject();
+
+		if (this.allEntranceIds.contains(despawnedObject.getId())) {
+			WorldPoint locatedWorldPoint = despawnedObject.getWorldLocation();
+			this.possibleEntrances.remove(locatedWorldPoint.getRegionID());
+		}
+	}
+
+	@Subscribe
+	public void onWallObjectSpawned(WallObjectSpawned event)
+	{
+		WallObject spawnedObject = event.getWallObject();
+
+		if (this.allEntranceIds.contains(spawnedObject.getId())) {
+			WorldPoint locatedWorldPoint = spawnedObject.getWorldLocation();
+			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
+
+			if (HYDRA_ENTRANCE_IDS.contains(spawnedObject.getId())) {
+				for (int regionId : this.hydraEntranceRegionIds) {
+					possibleEntrances.put(
+							regionId,
+							new EscapeCrystalNotifyLocatedEntrance(
+									new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
+									EscapeCrystalNotifyRegion.BOSS_HYDRA.getRegionEntrance(),
+									locatedWorldPoint
+							)
+					);
+				}
+			} else {
+				possibleEntrances.put(
+						locatedWorldPoint.getRegionID(),
+						new EscapeCrystalNotifyLocatedEntrance(
+								new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
+								this.chunkEntranceMap.get(locatedChunkId),
+								locatedWorldPoint
+						)
+				);
+			}
+		}
+	}
+
+	@Subscribe
+	public void onWallObjectDespawned(WallObjectDespawned event)
+	{
+		WallObject despawnedObject = event.getWallObject();
+
+		if (this.allEntranceIds.contains(despawnedObject.getId())) {
+			WorldPoint locatedWorldPoint = despawnedObject.getWorldLocation();
+			this.possibleEntrances.remove(locatedWorldPoint.getRegionID());
+		}
 	}
 
 	@Subscribe
@@ -248,27 +453,53 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.previousRegionId = this.currentRegionId;
 		this.previouslyAtNotifyRegionId = this.atNotifyRegionId;
 
-		computeWorldPointMetrics();
+		this.computeWorldPointMetrics();
 
-		this.atNotifyRegionId = checkAtNotifyLocation();
+		this.atNotifyRegionId = this.checkAtNotifyLocation();
 		this.enteredNotifyRegionId = !this.previouslyAtNotifyRegionId && this.atNotifyRegionId;
+
 		this.atLeviathanRegionId = this.leviathanRegionIds.contains(this.currentRegionId);
 		this.atLeviathanLobby = LEVIATHAN_LOBBY_CHUNK_IDS.contains(this.currentChunkId);
 		this.atDoomRegionId = this.doomRegionIds.contains(this.currentRegionId);
 		this.atDoomLobby = DOOM_LOBBY_CHUNK_IDS.contains(this.currentChunkId);
+
+		this.computeEntranceObjectMetrics();
 	}
 
 	private void computeWorldPointMetrics() {
 		this.currentWorldPoint = WorldPoint.fromLocalInstance(client, client.getLocalPlayer().getLocalLocation());
 		this.currentRegionId = this.currentWorldPoint.getRegionID();
 		this.currentPlaneId = this.currentWorldPoint.getPlane();
+		this.currentChunkId = this.computeChunkIdFromWorldPoint(this.currentWorldPoint);
+	}
 
-		int currentTileX = this.currentWorldPoint.getX();
-		int currentTileY = this.currentWorldPoint.getY();
-		final int currentChunkX = currentTileX >> 3;
-		final int currentChunkY = currentTileY >> 3;
+	private void computeEntranceObjectMetrics() {
+		if (!this.atNotifyRegionId) {
+			this.locatedEntrance = null;
+			return;
+		}
 
-		this.currentChunkId = (currentChunkX << 11) | currentChunkY;
+		EscapeCrystalNotifyLocatedEntrance potentialEntrance = this.possibleEntrances.get(this.currentRegionId);
+//		log.debug("{}", this.possibleEntrances);
+//		log.debug("{}", potentialEntrance);
+
+		if (potentialEntrance == null) {
+//			log.debug("Potential entrance is null");
+			this.locatedEntrance = null;
+			return;
+		}
+
+		if (potentialEntrance.hasMoved()) {
+//			log.debug("Potential entrance has moved");
+//			log.debug("Initial WP: {}", potentialEntrance.getInitialWorldPoint());
+//			log.debug("New WP: {}", potentialEntrance.getTarget().getWorldLocation());
+			this.locatedEntrance = null;
+			return;
+		}
+
+		if (potentialEntrance.isEntranceInValidChunk()) {
+			this.locatedEntrance = potentialEntrance;
+		}
 	}
 
 	private boolean checkAtNotifyLocation() {
@@ -277,6 +508,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		if (!targetRegionIds.contains(this.currentRegionId)) return false;
 
 		if (excludedChunkIds.contains(this.currentChunkId)) return false;
+
+		if (this.chunkRequirements.containsKey(this.currentRegionId)) {
+			if (!this.chunkRequirements.get(this.currentRegionId).contains(this.currentChunkId)) return false;
+		}
 
 		int planeRequirement = this.planeRequirements.getOrDefault(this.currentRegionId, this.currentPlaneId);
 		return this.currentPlaneId == planeRequirement;
@@ -443,7 +678,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		if (this.isEscapeCrystalActive() && this.escapeCrystalWithPlayer){
 			if (currentInfoBoxes.contains(this.activeInfoBox)) {
 				if (this.activeInfoBox.imageId != ItemID.ESCAPE_CRYSTAL) {
-					this.activeInfoBox.setImage(itemManager.getImage(ItemID.ESCAPE_CRYSTAL));
+					this.activeInfoBox.setImage(this.getActiveEscapeCrystalImage());
 					this.activeInfoBox.imageId = ItemID.ESCAPE_CRYSTAL;
 					this.activeInfoBox.setTooltip(getInfoBoxTooltip());
 					infoBoxManager.updateInfoBoxImage(this.activeInfoBox);
@@ -451,7 +686,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 				return;
 			}
 
-			BufferedImage activeImage = itemManager.getImage(ItemID.ESCAPE_CRYSTAL);
+			BufferedImage activeImage = this.getActiveEscapeCrystalImage();
 			this.activeInfoBox = new EscapeCrystalNotifyInfoBox(ItemID.ESCAPE_CRYSTAL, activeImage, this, this.config);
 			this.activeInfoBox.setTooltip(getInfoBoxTooltip());
 			infoBoxManager.addInfoBox(this.activeInfoBox);
@@ -459,7 +694,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		} else {
 			if (currentInfoBoxes.contains(this.activeInfoBox)) {
 				if (this.activeInfoBox.imageId != ItemID.CORRUPTED_ESCAPE_CRYSTAL) {
-					this.activeInfoBox.setImage(itemManager.getImage(ItemID.CORRUPTED_ESCAPE_CRYSTAL));
+					this.activeInfoBox.setImage(this.getInactiveEscapeCrystalImage());
 					this.activeInfoBox.imageId = ItemID.CORRUPTED_ESCAPE_CRYSTAL;
 					this.activeInfoBox.setTooltip(getInfoBoxTooltip());
 					infoBoxManager.updateInfoBoxImage(this.activeInfoBox);
@@ -467,7 +702,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 				return;
 			}
 
-			BufferedImage inactiveImage = itemManager.getImage(ItemID.CORRUPTED_ESCAPE_CRYSTAL);
+			BufferedImage inactiveImage = this.getInactiveEscapeCrystalImage();
 			this.activeInfoBox = new EscapeCrystalNotifyInfoBox(ItemID.CORRUPTED_ESCAPE_CRYSTAL, inactiveImage, this, this.config);
 			this.activeInfoBox.setTooltip(getInfoBoxTooltip());
 			infoBoxManager.addInfoBox(this.activeInfoBox);
@@ -499,6 +734,55 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			menuEntries[0] = topEntry;
 			client.setMenuEntries(menuEntries);
 		}
+	}
+
+	private void deprioritizeEnterOption() {
+		MenuEntry[] menuEntries = client.getMenuEntries();
+
+		if (menuEntries.length == 0) return;
+
+		int topEntryIndex = menuEntries.length - 1;
+		MenuEntry topEntry = menuEntries[topEntryIndex];
+
+		if (this.locatedEntrance == null) return;
+
+		int entryId;
+		if (topEntry.getNpc() != null)  {
+			entryId = topEntry.getNpc().getId();
+		} else {
+			entryId = topEntry.getIdentifier();
+		}
+		if (entryId != this.locatedEntrance.getTarget().getId()) return;
+
+		MenuEntry[] newEntries = new MenuEntry[menuEntries.length + 1];
+		System.arraycopy(menuEntries, 0, newEntries, 0, menuEntries.length);
+
+		String optionText = ColorUtil.wrapWithColorTag("Where's Your Crystal?", Color.MAGENTA);
+		MenuEntry escapeCrystalReminderEntry = client.createMenuEntry(0).setType(MenuAction.CANCEL).setOption(optionText).setTarget("");
+
+		newEntries[newEntries.length - 1] = escapeCrystalReminderEntry;
+
+		client.setMenuEntries(newEntries);
+	}
+
+	private BufferedImage combineItemImages(BufferedImage... images) {
+		BufferedImage backgroundImage = images[0];
+
+		BufferedImage result = new BufferedImage(backgroundImage.getWidth(), backgroundImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+		Graphics2D graphics = result.createGraphics();
+
+		graphics.setComposite(AlphaComposite.SrcOver);
+		graphics.drawImage(backgroundImage, 0, 0, null);
+
+		for (int i = 1; i < images.length; i++) {
+			graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+			graphics.drawImage(images[i], 0, 0, null);
+		}
+
+		graphics.dispose();
+
+		return result;
 	}
 
 	public String getItemModelDisplayText(EscapeCrystalNotifyConfig.OverlayDisplayType displayFormat, EscapeCrystalNotifyConfig.InactivityTimeFormat timeFormat, String timeExpiredText) {
@@ -648,6 +932,54 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		return atNotifyRegionId;
 	}
 
+	public boolean isAtNotifyRegionEntrance() {
+		return atNotifyRegionEntrance;
+	}
+
+//	public EscapeCrystalNotifyRegionEntranceObject getRegionEntrance() {
+//		return regionEntrance;
+//	}
+
+	public EscapeCrystalNotifyLocatedEntrance getLocatedEntrance() {
+		return locatedEntrance;
+	}
+
+	public void resetLocatedEntrance() {
+		locatedEntrance = null;
+	}
+
+	public WorldPoint getCurrentWorldPoint() {
+		return currentWorldPoint;
+	}
+
+	public BufferedImage getInactiveEscapeCrystalImage() {
+		if (inactiveEscapeCrystalImage == null) {
+			inactiveEscapeCrystalImage = itemManager.getImage(ItemID.CORRUPTED_ESCAPE_CRYSTAL);
+		}
+		return inactiveEscapeCrystalImage;
+	}
+
+	public BufferedImage getActiveEscapeCrystalImage() {
+		if (activeEscapeCrystalImage == null) {
+			activeEscapeCrystalImage = itemManager.getImage(ItemID.ESCAPE_CRYSTAL);
+		}
+		return activeEscapeCrystalImage;
+	}
+
+	public BufferedImage getBankFillerImage() {
+		if (bankFillerImage == null) {
+			bankFillerImage = itemManager.getImage(ItemID.BANK_FILLER);
+		}
+		return bankFillerImage;
+	}
+
+	public BufferedImage getEntranceOverlayImage() {
+		if (entranceOverlayImage == null) {
+			entranceOverlayImage = combineItemImages(this.getActiveEscapeCrystalImage(), this.getBankFillerImage());
+		}
+		return entranceOverlayImage;
+	}
+
 	public boolean isLeviathanSafeguardPanelEnabled() {
 		return this.atLeviathanLobby && !config.disableLeviathanSafeguardPanelPopup();
 	}
@@ -658,6 +990,29 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	public boolean isCloseToSixHourLogout() {
 		return ticksSinceLogin >= SIX_HOUR_LOG_WARNING_THRESHOLD_TICKS;
+	}
+
+	public boolean shouldDeprioritizeEntranceEnterOption() {
+		boolean enabled = config.deprioritizeEntranceEnterOption();
+		boolean active = this.isEscapeCrystalInactivityTeleportActive();
+		boolean notHardcore = config.requireHardcoreAccountType() && !this.isHardcoreAccountType();
+		boolean atNotifyRegion = this.isAtNotifyRegionId();
+
+		if (!enabled || active || notHardcore || !atNotifyRegion) return false;
+
+		if (this.locatedEntrance == null) return false;
+		if (this.locatedEntrance.isPlayerPastEntrance(this.currentWorldPoint)) return false;
+
+		return this.locatedEntrance.canDeprioritize();
+	}
+
+	public int computeChunkIdFromWorldPoint(WorldPoint worldPoint) {
+		int currentTileX = worldPoint.getX();
+		int currentTileY = worldPoint.getY();
+		final int currentChunkX = currentTileX >> 3;
+		final int currentChunkY = currentTileY >> 3;
+
+		return (currentChunkX << 11) | currentChunkY;
 	}
 
 	private int convertTicksToSeconds(int ticks) {
