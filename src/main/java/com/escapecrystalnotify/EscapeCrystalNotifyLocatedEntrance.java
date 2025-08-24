@@ -39,6 +39,10 @@ public class EscapeCrystalNotifyLocatedEntrance {
         return this.definition.getOverlayType().canDeprioritize();
     }
 
+    public boolean matchesPlayerPlane(int playerPlane) {
+        return this.definition.getPlaneLevel().matchesPlane(playerPlane);
+    }
+
     public boolean isPlayerPastEntrance(WorldPoint playerWorldPoint) {
         if (this.definition.getEntranceDirection() == null) return false;
 

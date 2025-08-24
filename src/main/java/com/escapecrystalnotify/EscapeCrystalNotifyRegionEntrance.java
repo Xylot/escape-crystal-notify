@@ -14,13 +14,14 @@ public class EscapeCrystalNotifyRegionEntrance {
     public List<Integer> chunkIds;
     public EscapeCrystalNotifyRegionEntranceDirection entranceDirection;
     public int[] entranceIds;
-
+    public EscapeCrystalNotifyRegionEntrancePlaneLevel planeLevel;
 
     EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType overlayType, List<Integer> chunkIds, int...entranceIds) {
         this.overlayType = overlayType;
         this.chunkIds = chunkIds;
         this.entranceDirection = null;
         this.entranceIds = entranceIds;
+        this.planeLevel = EscapeCrystalNotifyRegionEntrancePlaneLevel.ANY;
     }
 
     EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType overlayType, EscapeCrystalNotifyRegionEntranceDirection entranceDirection, List<Integer> chunkIds, int...entranceIds) {
@@ -28,5 +29,22 @@ public class EscapeCrystalNotifyRegionEntrance {
         this.chunkIds = chunkIds;
         this.entranceDirection = entranceDirection;
         this.entranceIds = entranceIds;
+        this.planeLevel = EscapeCrystalNotifyRegionEntrancePlaneLevel.ANY;
+    }
+
+    EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType overlayType, List<Integer> chunkIds, EscapeCrystalNotifyRegionEntrancePlaneLevel planeLevel, int...entranceIds) {
+        this.overlayType = overlayType;
+        this.chunkIds = chunkIds;
+        this.entranceDirection = null;
+        this.entranceIds = entranceIds;
+        this.planeLevel = planeLevel;
+    }
+
+    EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType overlayType, EscapeCrystalNotifyRegionEntranceDirection entranceDirection, List<Integer> chunkIds, EscapeCrystalNotifyRegionEntrancePlaneLevel planeLevel, int...entranceIds) {
+        this.overlayType = overlayType;
+        this.chunkIds = chunkIds;
+        this.entranceDirection = entranceDirection;
+        this.entranceIds = entranceIds;
+        this.planeLevel = planeLevel;
     }
 }

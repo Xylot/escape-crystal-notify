@@ -540,7 +540,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.validEntrances.clear();
 		for (List<EscapeCrystalNotifyLocatedEntrance> entrances : this.possibleEntrances.values()) {
 			for (EscapeCrystalNotifyLocatedEntrance entrance : entrances) {
-				if (entrance.isEntranceInValidChunk() && !entrance.hasMoved() && !entrance.isPlayerPastEntrance(this.currentWorldPoint)) {
+				if (entrance.isEntranceInValidChunk() && 
+					!entrance.hasMoved() && 
+					!entrance.isPlayerPastEntrance(this.currentWorldPoint) &&
+					entrance.matchesPlayerPlane(this.currentPlaneId)) {
 					this.validEntrances.add(entrance);
 				}
 			}
