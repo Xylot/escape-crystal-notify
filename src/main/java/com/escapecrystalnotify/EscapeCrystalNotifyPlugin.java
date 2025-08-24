@@ -816,7 +816,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		MenuEntry[] newEntries = new MenuEntry[menuEntries.length + 1];
 		System.arraycopy(menuEntries, 0, newEntries, 0, menuEntries.length);
 
-		String optionText = ColorUtil.wrapWithColorTag("Where's Your Crystal?", Color.MAGENTA);
+		String optionText = ColorUtil.wrapWithColorTag(config.deprioritizedMenuText(), config.deprioritizedMenuTextColor());
 		MenuEntry escapeCrystalReminderEntry = client.createMenuEntry(0).setType(MenuAction.CANCEL).setOption(optionText).setTarget("");
 
 		newEntries[newEntries.length - 1] = escapeCrystalReminderEntry;

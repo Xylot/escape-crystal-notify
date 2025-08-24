@@ -415,6 +415,25 @@ public interface EscapeCrystalNotifyConfig extends Config
 		return 1.0;
 	}
 
+	@ConfigItem(
+		keyName = "deprioritizedMenuText",
+		name = "Deprioritized Menu Text",
+		description = "Text to display in the deprioritized menu option for entrances",
+		section = "entranceOverlaySettings",
+		position = 6
+	)
+	default String deprioritizedMenuText() { return "Where's Your Crystal?"; }
+
+	@Alpha
+	@ConfigItem(
+		keyName = "deprioritizedMenuTextColor",
+		name = "Deprioritized Menu Text Color",
+		description = "Color of the deprioritized menu option text",
+		section = "entranceOverlaySettings",
+		position = 7
+	)
+	default Color deprioritizedMenuTextColor() { return new Color(255,106,213,255); }
+
 	@ConfigSection(
 			name = "Location Filter",
 			description = "Filter locations where the reminder is shown",
