@@ -366,11 +366,20 @@ public interface EscapeCrystalNotifyConfig extends Config
 	String entranceOverlaySettings = "entranceOverlaySettings";
 
 	@ConfigItem(
+			keyName = "deprioritizeEntranceEnterOption",
+			name = "Deprioritize Entrance Enter Option",
+			description = "Deprioritize the enter menu option when you do not have an active Escape Crystal",
+			section = "entranceOverlaySettings",
+			position = 1
+	)
+	default boolean deprioritizeEntranceEnterOption() { return true; }
+
+	@ConfigItem(
 			keyName = "displayEntranceOverlay",
 			name = "Display Entrance Overlay",
 			description = "Display the reminder overlay for entrances to dangerous regions when you do not have an active Escape Crystal",
 			section = "entranceOverlaySettings",
-			position = 1
+			position = 2
 	)
 	default boolean displayEntranceOverlay() { return true; }
 
@@ -380,7 +389,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Entrance Overlay Fill Color",
 			description = "Fill color of the entrance reminder overlay",
 			section = "entranceOverlaySettings",
-			position = 2
+			position = 3
 	)
 	default Color entranceOverlayFillColor() { return new Color(205,50,50,75); }
 
@@ -389,21 +398,12 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Image Scale",
 			description = "The scale of the inactive Escape Crystal image",
 			section = "entranceOverlaySettings",
-			position = 3
+			position = 4
 	)
 	default double entranceOverlayImageScale()
 	{
 		return 1.0;
 	}
-
-	@ConfigItem(
-			keyName = "deprioritizeEntranceEnterOption",
-			name = "Deprioritize Entrance Enter Option",
-			description = "Deprioritize the enter menu option when you do not have an active Escape Crystal",
-			section = "entranceOverlaySettings",
-			position = 4
-	)
-	default boolean deprioritizeEntranceEnterOption() { return true; }
 
 	@ConfigSection(
 			name = "Location Filter",
