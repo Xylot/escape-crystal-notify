@@ -68,10 +68,14 @@ public class EscapeCrystalNotifyRegionEntranceOverlay extends Overlay {
                 continue;
             }
 
-            graphics.setColor(config.entranceOverlayFillColor());
+            Color fillColor = entrance.isPrioritized()
+                ? config.prioritizedEntranceOverlayFillColor() 
+                : config.entranceOverlayFillColor();
+
+            graphics.setColor(fillColor);
             graphics.fill(entranceClickbox);
 
-            graphics.setColor(config.entranceOverlayFillColor().darker());
+            graphics.setColor(fillColor.darker());
             graphics.draw(entranceClickbox);
 
             Point baseImageLocation = entrance.getTarget().getCanvasTextLocation(graphics, "", 125);

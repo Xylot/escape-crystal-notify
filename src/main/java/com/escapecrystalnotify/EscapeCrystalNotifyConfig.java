@@ -387,18 +387,28 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 			keyName = "entranceOverlayFillColor",
 			name = "Entrance Overlay Fill Color",
-			description = "Fill color of the entrance reminder overlay",
+			description = "Fill color of the entrance reminder overlay for deprioritized entrances",
 			section = "entranceOverlaySettings",
 			position = 3
 	)
 	default Color entranceOverlayFillColor() { return new Color(205,50,50,75); }
+
+	@Alpha
+	@ConfigItem(
+			keyName = "prioritizedEntranceOverlayFillColor",
+			name = "Prioritized Entrance Overlay Fill Color",
+			description = "Fill color of the entrance reminder overlay for prioritized entrances",
+			section = "entranceOverlaySettings",
+			position = 4
+	)
+	default Color prioritizedEntranceOverlayFillColor() { return new Color(255,140,0,75); }
 
 	@ConfigItem(
 			keyName = "entranceOverlayImageScale",
 			name = "Image Scale",
 			description = "The scale of the inactive Escape Crystal image",
 			section = "entranceOverlaySettings",
-			position = 4
+			position = 5
 	)
 	default double entranceOverlayImageScale()
 	{
