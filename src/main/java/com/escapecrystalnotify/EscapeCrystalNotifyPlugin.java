@@ -5,6 +5,7 @@ import javax.inject.Inject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.api.widgets.InterfaceID;
@@ -128,7 +129,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Getter
 	private boolean atNotifyRegionEntrance = false;
 	@Getter
-	private EscapeCrystalNotifyLocatedEntrance locatedEntrance;
+	private List<EscapeCrystalNotifyLocatedEntrance> validEntrances = new ArrayList<>();
 	private EscapeCrystalNotifyRegionEntranceObject regionEntrance;
 	private EscapeCrystalNotifyRegionEntranceDirection regionEntranceDirection;
 	private EscapeCrystalNotifyRegionEntranceOverlayType regionEntranceOverlayType;
@@ -150,11 +151,12 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private final Map<Integer, List<Integer>> chunkRequirements = EscapeCrystalNotifyRegion.getRegionChunkRequirementsMap();
 	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> chunkEntranceMap = EscapeCrystalNotifyRegion.getChunkEntranceMap();
 	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> regionEntranceMap = EscapeCrystalNotifyRegion.getRegionEntranceMap();
-	private final Map<Integer, EscapeCrystalNotifyLocatedEntrance> possibleEntrances = new HashMap<>();
+	private final Map<Integer, List<EscapeCrystalNotifyLocatedEntrance>> possibleEntrances = new HashMap<>();
 	private final List<Integer> allEntranceIds = EscapeCrystalNotifyRegion.getAllEntranceIds();
 	private final List<Integer> leviathanRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_LEVIATHAN.getRegionIds()).boxed().collect(Collectors.toList());
 	private final List<Integer> doomRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_DOOM_OF_MOKHAIOTL.getRegionIds()).boxed().collect(Collectors.toList());
 	private final List<Integer> infernoEntranceRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_INFERNO_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList());
+	private final List<Integer> fightCavesEntranceRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_TZHAAR_FIGHT_CAVES_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList());
 	private final List<Integer> whispererEntranceRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_WHISPERER.getRegionIds()).boxed().collect(Collectors.toList());
 	private final List<Integer> hydraEntranceRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_HYDRA.getRegionIds()).boxed().collect(Collectors.toList());
 	private List<Integer> logoutBugRegionIds = new ArrayList<>();
@@ -234,13 +236,12 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		int spawnedObjectId = spawnedObject.getId();
 
 		if (this.allEntranceIds.contains(spawnedObjectId)) {
-			WorldPoint locatedWorldPoint = spawnedObject.getWorldLocation();
+			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
 			if (this.infernoEntranceRegionIds.contains(locatedWorldPoint.getRegionID())) {
 				for (int regionId : this.infernoEntranceRegionIds) {
-					possibleEntrances.put(
-							regionId,
+					possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(
 							new EscapeCrystalNotifyLocatedEntrance(
 									new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
 									EscapeCrystalNotifyRegion.BOSS_INFERNO_ENTRANCE.getRegionEntrance(),
@@ -248,9 +249,18 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 							)
 					);
 				}
+
+				for (int regionId : this.fightCavesEntranceRegionIds) {
+					possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(
+							new EscapeCrystalNotifyLocatedEntrance(
+									new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
+									EscapeCrystalNotifyRegion.BOSS_TZHAAR_FIGHT_CAVES_ENTRANCE.getRegionEntrance(),
+									locatedWorldPoint
+							)
+					);
+				}
 			} else {
-				possibleEntrances.put(
-						locatedWorldPoint.getRegionID(),
+				possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
 						new EscapeCrystalNotifyLocatedEntrance(
 								new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
 								this.chunkEntranceMap.get(locatedChunkId),
@@ -271,8 +281,18 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		GameObject despawnedObject = event.getGameObject();
 
 		if (this.allEntranceIds.contains(despawnedObject.getId())) {
-			WorldPoint locatedWorldPoint = despawnedObject.getWorldLocation();
-			this.possibleEntrances.remove(locatedWorldPoint.getRegionID());
+			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedObject.getWorldLocation(), despawnedObject.getLocalLocation());
+			int regionId = locatedWorldPoint.getRegionID();
+			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
+
+			if (entrances != null) {
+				entrances.removeIf(entrance ->
+					entrance.getTarget().getId() == despawnedObject.getId());
+
+				if (entrances.isEmpty()) {
+					possibleEntrances.remove(regionId);
+				}
+			}
 		}
 	}
 
@@ -283,13 +303,12 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		int spawnedNpcId = spawnedNpc.getId();
 
 		if (this.allEntranceIds.contains(spawnedNpcId)) {
-			WorldPoint locatedWorldPoint = spawnedNpc.getWorldLocation();
+			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedNpc.getWorldLocation(), spawnedNpc.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
 			if (this.infernoEntranceRegionIds.contains(locatedWorldPoint.getRegionID())) {
 				for (int regionId : this.infernoEntranceRegionIds) {
-					possibleEntrances.put(
-							regionId,
+					possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(
 							new EscapeCrystalNotifyLocatedEntrance(
 									new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
 									this.chunkEntranceMap.get(locatedChunkId),
@@ -299,8 +318,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 				}
 			} else if (spawnedNpcId == NpcID.ODD_FIGURE) {
 				for (int regionId : this.whispererEntranceRegionIds) {
-					possibleEntrances.put(
-							regionId,
+					possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(
 							new EscapeCrystalNotifyLocatedEntrance(
 									new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
 									EscapeCrystalNotifyRegion.BOSS_THE_WHISPERER.getRegionEntrance(),
@@ -309,8 +327,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 					);
 				}
 			} else {
-				possibleEntrances.put(
-						locatedWorldPoint.getRegionID(),
+				possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
 						new EscapeCrystalNotifyLocatedEntrance(
 								new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
 								this.chunkEntranceMap.get(locatedChunkId),
@@ -333,8 +350,18 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		NPC despawnedNpc = npc.getNpc();
 
 		if (this.allEntranceIds.contains(despawnedNpc.getId())) {
-			WorldPoint locatedWorldPoint = despawnedNpc.getWorldLocation();
-			this.possibleEntrances.remove(locatedWorldPoint.getRegionID());
+			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedNpc.getWorldLocation(), despawnedNpc.getLocalLocation());
+			int regionId = locatedWorldPoint.getRegionID();
+			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
+			
+			if (entrances != null) {
+				entrances.removeIf(entrance -> 
+					entrance.getTarget().getId() == despawnedNpc.getId());
+				
+				if (entrances.isEmpty()) {
+					possibleEntrances.remove(regionId);
+				}
+			}
 		}
 	}
 
@@ -343,7 +370,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		if (npc.getNpc().getId() == NpcID.THE_WHISPERER) {
 			for (int regionId : EscapeCrystalNotifyRegion.BOSS_THE_WHISPERER.getRegionIds()) {
-				this.possibleEntrances.remove(regionId);
+				possibleEntrances.remove(regionId);
 			}
 		}
 	}
@@ -354,11 +381,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		DecorativeObject spawnedObject = event.getDecorativeObject();
 
 		if (this.allEntranceIds.contains(spawnedObject.getId())) {
-			WorldPoint locatedWorldPoint = spawnedObject.getWorldLocation();
+			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
-			possibleEntrances.put(
-					locatedWorldPoint.getRegionID(),
+			possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
 					new EscapeCrystalNotifyLocatedEntrance(
 							new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
 							this.chunkEntranceMap.get(locatedChunkId),
@@ -374,8 +400,18 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		DecorativeObject despawnedObject = event.getDecorativeObject();
 
 		if (this.allEntranceIds.contains(despawnedObject.getId())) {
-			WorldPoint locatedWorldPoint = despawnedObject.getWorldLocation();
-			this.possibleEntrances.remove(locatedWorldPoint.getRegionID());
+			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedObject.getWorldLocation(), despawnedObject.getLocalLocation());
+			int regionId = locatedWorldPoint.getRegionID();
+			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
+			
+			if (entrances != null) {
+				entrances.removeIf(entrance -> 
+					entrance.getTarget().getId() == despawnedObject.getId());
+				
+				if (entrances.isEmpty()) {
+					possibleEntrances.remove(regionId);
+				}
+			}
 		}
 	}
 
@@ -385,13 +421,12 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		WallObject spawnedObject = event.getWallObject();
 
 		if (this.allEntranceIds.contains(spawnedObject.getId())) {
-			WorldPoint locatedWorldPoint = spawnedObject.getWorldLocation();
+			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
 			if (HYDRA_ENTRANCE_IDS.contains(spawnedObject.getId())) {
 				for (int regionId : this.hydraEntranceRegionIds) {
-					possibleEntrances.put(
-							regionId,
+					possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(
 							new EscapeCrystalNotifyLocatedEntrance(
 									new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
 									EscapeCrystalNotifyRegion.BOSS_HYDRA.getRegionEntrance(),
@@ -400,8 +435,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 					);
 				}
 			} else {
-				possibleEntrances.put(
-						locatedWorldPoint.getRegionID(),
+				possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
 						new EscapeCrystalNotifyLocatedEntrance(
 								new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
 								this.chunkEntranceMap.get(locatedChunkId),
@@ -418,8 +452,18 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		WallObject despawnedObject = event.getWallObject();
 
 		if (this.allEntranceIds.contains(despawnedObject.getId())) {
-			WorldPoint locatedWorldPoint = despawnedObject.getWorldLocation();
-			this.possibleEntrances.remove(locatedWorldPoint.getRegionID());
+			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedObject.getWorldLocation(), despawnedObject.getLocalLocation());
+			int regionId = locatedWorldPoint.getRegionID();
+			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
+			
+			if (entrances != null) {
+				entrances.removeIf(entrance -> 
+					entrance.getTarget().getId() == despawnedObject.getId());
+				
+				if (entrances.isEmpty()) {
+					possibleEntrances.remove(regionId);
+				}
+			}
 		}
 	}
 
@@ -489,24 +533,17 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	private void computeEntranceObjectMetrics() {
 		if (!this.atNotifyRegionId) {
-			this.locatedEntrance = null;
+			this.validEntrances.clear();
 			return;
 		}
 
-		EscapeCrystalNotifyLocatedEntrance potentialEntrance = this.possibleEntrances.get(this.currentRegionId);
-
-		if (potentialEntrance == null) {
-			this.locatedEntrance = null;
-			return;
-		}
-
-		if (potentialEntrance.hasMoved()) {
-			this.locatedEntrance = null;
-			return;
-		}
-
-		if (potentialEntrance.isEntranceInValidChunk()) {
-			this.locatedEntrance = potentialEntrance;
+		this.validEntrances.clear();
+		for (List<EscapeCrystalNotifyLocatedEntrance> entrances : this.possibleEntrances.values()) {
+			for (EscapeCrystalNotifyLocatedEntrance entrance : entrances) {
+				if (entrance.isEntranceInValidChunk() && !entrance.hasMoved() && !entrance.isPlayerPastEntrance(this.currentWorldPoint)) {
+					this.validEntrances.add(entrance);
+				}
+			}
 		}
 	}
 
@@ -752,15 +789,26 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		int topEntryIndex = menuEntries.length - 1;
 		MenuEntry topEntry = menuEntries[topEntryIndex];
 
-		if (this.locatedEntrance == null) return;
+		if (this.validEntrances.isEmpty()) return;
 
+		EscapeCrystalNotifyLocatedEntrance entranceToDeprioritize = null;
 		int entryId;
 		if (topEntry.getNpc() != null)  {
 			entryId = topEntry.getNpc().getId();
 		} else {
 			entryId = topEntry.getIdentifier();
 		}
-		if (entryId != this.locatedEntrance.getTarget().getId()) return;
+
+		for (EscapeCrystalNotifyLocatedEntrance entrance : this.validEntrances) {
+			if (entrance.canDeprioritize() && 
+				!entrance.isPlayerPastEntrance(this.currentWorldPoint) &&
+				entryId == entrance.getTarget().getId()) {
+				entranceToDeprioritize = entrance;
+				break;
+			}
+		}
+
+		if (entranceToDeprioritize == null) return;
 
 		MenuEntry[] newEntries = new MenuEntry[menuEntries.length + 1];
 		System.arraycopy(menuEntries, 0, newEntries, 0, menuEntries.length);
@@ -897,7 +945,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	public void resetLocatedEntrance() {
-		locatedEntrance = null;
+		this.validEntrances.clear();
 	}
 
 	public BufferedImage getInactiveEscapeCrystalImage() {
@@ -948,10 +996,16 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		if (!enabled || active || notHardcore || !atNotifyRegion) return false;
 
-		if (this.locatedEntrance == null) return false;
-		if (this.locatedEntrance.isPlayerPastEntrance(this.currentWorldPoint)) return false;
+		if (this.validEntrances.isEmpty()) return false;
 
-		return this.locatedEntrance.canDeprioritize();
+		return this.validEntrances.stream().anyMatch(EscapeCrystalNotifyLocatedEntrance::canDeprioritize);
+	}
+
+	public WorldPoint resolvePossiblyInstancedWorldPoint(WorldPoint worldPoint, LocalPoint localPoint) {
+		if (client.isInInstancedRegion()) {
+			return WorldPoint.fromLocalInstance(client, localPoint);
+		}
+		return worldPoint;
 	}
 
 	public int computeChunkIdFromWorldPoint(WorldPoint worldPoint) {

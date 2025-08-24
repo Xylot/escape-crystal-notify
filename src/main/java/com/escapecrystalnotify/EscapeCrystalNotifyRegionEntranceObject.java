@@ -1,14 +1,11 @@
 package com.escapecrystalnotify;
 
 import lombok.Getter;
-import net.runelite.api.DecorativeObject;
-import net.runelite.api.GameObject;
-import net.runelite.api.NPC;
-import net.runelite.api.WallObject;
+import net.runelite.api.*;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 
 import java.awt.*;
-import java.util.List;
 
 @Getter
 public class EscapeCrystalNotifyRegionEntranceObject {
@@ -47,20 +44,55 @@ public class EscapeCrystalNotifyRegionEntranceObject {
     }
 
     public WorldPoint getWorldLocation() {
+        WorldPoint worldPoint = null;
+        WorldView worldView = null;
+        
         if (this.gameObject != null) {
-            return this.gameObject.getWorldLocation();
+            worldPoint = this.gameObject.getWorldLocation();
+            worldView = this.gameObject.getWorldView();
         }
 
         if (this.npc != null) {
-            return this.npc.getWorldLocation();
+            worldPoint = this.npc.getWorldLocation();
+            worldView = this.npc.getWorldView();
         }
 
         if (this.decorativeObject != null) {
-            return this.decorativeObject.getWorldLocation();
+            worldPoint = this.decorativeObject.getWorldLocation();
+            worldView = this.decorativeObject.getWorldView();
         }
 
         if (this.wallObject != null) {
-            return this.wallObject.getWorldLocation();
+            worldPoint = this.wallObject.getWorldLocation();
+            worldView = this.wallObject.getWorldView();
+        }
+
+        if (worldPoint == null) {
+            return null;
+        }
+
+        if (worldView != null && worldView.isInstance()) {
+            worldPoint = WorldPoint.fromLocalInstance(worldView.getScene(), this.getLocalLocation(), worldView.getPlane());
+        }
+
+        return worldPoint;
+    }
+
+    public LocalPoint getLocalLocation() {
+        if (this.gameObject != null) {
+            return this.gameObject.getLocalLocation();
+        }
+
+        if (this.npc != null) {
+            return this.npc.getLocalLocation();
+        }
+
+        if (this.decorativeObject != null) {
+            return this.decorativeObject.getLocalLocation();
+        }
+
+        if (this.wallObject != null) {
+            return this.wallObject.getLocalLocation();
         }
 
         return null;

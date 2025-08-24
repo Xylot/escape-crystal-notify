@@ -12,6 +12,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 public class EscapeCrystalNotifyRegionEntranceOverlay extends Overlay {
     private static final EntranceOverlayImage previouslyGeneratedImage = new EntranceOverlayImage();
@@ -48,40 +49,43 @@ public class EscapeCrystalNotifyRegionEntranceOverlay extends Overlay {
             return null;
         }
 
-        EscapeCrystalNotifyLocatedEntrance entrance = plugin.getLocatedEntrance();
-        if (entrance == null) return null;
-        if (!entrance.canHighlight() || entrance.isPlayerPastEntrance(plugin.getCurrentWorldPoint())) return null;
+        List<EscapeCrystalNotifyLocatedEntrance> validEntrances = plugin.getValidEntrances();
+        if (validEntrances.isEmpty()) return null;
 
         if (entranceOverlayImage == null) {
             entranceOverlayImage = plugin.getEntranceOverlayImage();
             initializePreviouslyGeneratedImage();
         }
 
-        Shape entranceClickbox = entrance.getTarget().getConvexHull();
+        for (EscapeCrystalNotifyLocatedEntrance entrance : validEntrances) {
+            if (!entrance.canHighlight() || entrance.isPlayerPastEntrance(plugin.getCurrentWorldPoint())) {
+                continue;
+            }
 
-        if (entranceClickbox == null) {
-            plugin.resetLocatedEntrance();
-            return null;
+            Shape entranceClickbox = entrance.getTarget().getConvexHull();
+
+            if (entranceClickbox == null) {
+                continue;
+            }
+
+            graphics.setColor(config.entranceOverlayFillColor());
+            graphics.fill(entranceClickbox);
+
+            graphics.setColor(config.entranceOverlayFillColor().darker());
+            graphics.draw(entranceClickbox);
+
+            Point baseImageLocation = entrance.getTarget().getCanvasTextLocation(graphics, "", 125);
+
+            if (baseImageLocation == null) {
+                continue;
+            }
+
+            BufferedImage generatedEntranceOverlayImage = generateEntranceOverlayImage();
+            int xOffset = generatedEntranceOverlayImage.getWidth() / 2;
+            int yOffset = generatedEntranceOverlayImage.getHeight() / 2;
+            Point imageLocation = new Point(baseImageLocation.getX() - xOffset, baseImageLocation.getY() - yOffset);
+            OverlayUtil.renderImageLocation(graphics, imageLocation, generatedEntranceOverlayImage);
         }
-
-        graphics.setColor(config.entranceOverlayFillColor());
-        graphics.fill(entranceClickbox);
-
-        graphics.setColor(config.entranceOverlayFillColor().darker());
-        graphics.draw(entranceClickbox);
-
-        Point baseImageLocation = entrance.getTarget().getCanvasTextLocation(graphics, "", 125);
-
-        if (baseImageLocation == null) {
-            plugin.resetLocatedEntrance();
-            return null;
-        }
-
-        BufferedImage generatedEntranceOverlayImage = generateEntranceOverlayImage();
-        int xOffset = generatedEntranceOverlayImage.getWidth() / 2;
-        int yOffset = generatedEntranceOverlayImage.getHeight() / 2;
-        Point imageLocation = new Point(baseImageLocation.getX() - xOffset, baseImageLocation.getY() - yOffset);
-        OverlayUtil.renderImageLocation(graphics, imageLocation, generatedEntranceOverlayImage);
 
         return null;
     }

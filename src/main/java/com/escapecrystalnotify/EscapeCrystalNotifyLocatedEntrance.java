@@ -42,8 +42,8 @@ public class EscapeCrystalNotifyLocatedEntrance {
     public boolean isPlayerPastEntrance(WorldPoint playerWorldPoint) {
         if (this.definition.getEntranceDirection() == null) return false;
 
-        int entranceTileX = this.initialWorldPoint.getX();
-        int entranceTileY = this.initialWorldPoint.getY();
+        int entranceTileX = this.target.getWorldLocation().getX();
+        int entranceTileY = this.target.getWorldLocation().getY();
         int playerTileX = playerWorldPoint.getX();
         int playerTileY = playerWorldPoint.getY();
 
