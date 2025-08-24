@@ -489,7 +489,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 			keyName = "excludeZulrahWithEliteDiary",
 			name = "Exclude Zulrah With Elite Diary",
-			description = "Don't display at Zulrah when you have completed the Western Elite Diary",
+			description = "Don't display at Zulrah when you have completed the Western Elite Diary. Note: This exclusion is removed if you die and proc the revival.",
 			section = "displayRegionFilter",
 			position = 6
 	)

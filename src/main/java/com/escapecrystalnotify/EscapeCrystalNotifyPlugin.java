@@ -41,6 +41,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private static final int ITEMS_STORED_VARBIT = 14283;
 	private static final int STANDARD_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE = 3;
 	private static final int GROUP_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE = 5;
+	private static final int ZULRAH_REVIVE_VARBIT = net.runelite.api.gameval.VarbitID.ZULRAH_REVIVE;
+	private static final int ZULRAH_ENTRANCE_REGION_ID = 8751;
 	private static final List<Integer> LEVIATHAN_LOBBY_CHUNK_IDS = List.of(525092, 525093, 527139, 527140, 527141, 529188);
 	private static final List<Integer> DOOM_LOBBY_CHUNK_IDS = List.of(335016, 335017, 335018, 337064, 337065, 337066);
 	private static final List<Integer> DOOM_BURROW_HOLE_IDS = List.of(ObjectID.BURROW_HOLE, ObjectID.BURROW_HOLE_57285);
@@ -161,6 +163,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private final Set<Integer> hydraEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_HYDRA.getRegionIds()).boxed().collect(Collectors.toList()));
 	private Set<Integer> logoutBugRegionIds = new HashSet<>();
 	private final Set<Integer> zulrahRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH.getRegionIds()).boxed().collect(Collectors.toList()));
+	private final Set<Integer> zulrahEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList()));
 	private BufferedImage inactiveEscapeCrystalImage;
 	private BufferedImage activeEscapeCrystalImage;
 	private BufferedImage bankFillerImage;
@@ -552,6 +555,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	private boolean checkAtNotifyLocation() {
 		if (config.displayEverywhere()) return true;
+
+		if (this.currentRegionId == ZULRAH_ENTRANCE_REGION_ID) this.updateZulrahRegionsInSet();
 
 		if (!targetRegionIds.contains(this.currentRegionId)) return false;
 
@@ -989,6 +994,22 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	public boolean isCloseToSixHourLogout() {
 		return ticksSinceLogin >= SIX_HOUR_LOG_WARNING_THRESHOLD_TICKS;
+	}
+
+	private boolean hasDiedAtZulrah() {
+		return client.getVarbitValue(ZULRAH_REVIVE_VARBIT) == 1;
+	}
+
+	private void updateZulrahRegionsInSet() {
+		if (config.excludeZulrahWithEliteDiary() && this.completedWesternEliteDiary) {
+			if (hasDiedAtZulrah()) {
+				this.targetRegionIds.addAll(this.zulrahRegionIds);
+				this.targetRegionIds.addAll(this.zulrahEntranceRegionIds);
+			} else {
+				this.targetRegionIds.removeAll(this.zulrahRegionIds);
+				this.targetRegionIds.removeAll(this.zulrahEntranceRegionIds);
+			}
+		}
 	}
 
 	public boolean shouldDeprioritizeEntranceEnterOption() {
