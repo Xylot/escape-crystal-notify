@@ -144,7 +144,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private boolean inTimeRemainingThreshold = false;
 	private boolean previouslyInTimeRemainingThreshold = false;
 	private boolean enteredTimeRemainingThreshold = false;
-	private List<Integer> targetRegionIds;
+	private Set<Integer> targetRegionIds;
 	private final List<Integer> excludedRegionIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedRegionIds();
 	private final List<Integer> excludedChunkIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedChunkIds();
 	private final Map<Integer, Integer> planeRequirements = EscapeCrystalNotifyRegionPlaneRequirements.getRegionPlaneMap();
@@ -152,15 +152,15 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> chunkEntranceMap = EscapeCrystalNotifyRegion.getChunkEntranceMap();
 	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> regionEntranceMap = EscapeCrystalNotifyRegion.getRegionEntranceMap();
 	private final Map<Integer, List<EscapeCrystalNotifyLocatedEntrance>> possibleEntrances = new HashMap<>();
-	private final List<Integer> allEntranceIds = EscapeCrystalNotifyRegion.getAllEntranceIds();
-	private final List<Integer> leviathanRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_LEVIATHAN.getRegionIds()).boxed().collect(Collectors.toList());
-	private final List<Integer> doomRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_DOOM_OF_MOKHAIOTL.getRegionIds()).boxed().collect(Collectors.toList());
-	private final List<Integer> infernoEntranceRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_INFERNO_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList());
-	private final List<Integer> fightCavesEntranceRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_TZHAAR_FIGHT_CAVES_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList());
-	private final List<Integer> whispererEntranceRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_WHISPERER.getRegionIds()).boxed().collect(Collectors.toList());
-	private final List<Integer> hydraEntranceRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_HYDRA.getRegionIds()).boxed().collect(Collectors.toList());
-	private List<Integer> logoutBugRegionIds = new ArrayList<>();
-	private final List<Integer> zulrahRegionIds = Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH.getRegionIds()).boxed().collect(Collectors.toList());
+	private final Set<Integer> allEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getAllEntranceIds());
+	private final Set<Integer> leviathanRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_LEVIATHAN.getRegionIds()).boxed().collect(Collectors.toList()));
+	private final Set<Integer> doomRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_DOOM_OF_MOKHAIOTL.getRegionIds()).boxed().collect(Collectors.toList()));
+	private final Set<Integer> infernoEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_INFERNO_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList()));
+	private final Set<Integer> fightCavesEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_TZHAAR_FIGHT_CAVES_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList()));
+	private final Set<Integer> whispererEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_WHISPERER.getRegionIds()).boxed().collect(Collectors.toList()));
+	private final Set<Integer> hydraEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_HYDRA.getRegionIds()).boxed().collect(Collectors.toList()));
+	private Set<Integer> logoutBugRegionIds = new HashSet<>();
+	private final Set<Integer> zulrahRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH.getRegionIds()).boxed().collect(Collectors.toList()));
 	private BufferedImage inactiveEscapeCrystalImage;
 	private BufferedImage activeEscapeCrystalImage;
 	private BufferedImage bankFillerImage;
@@ -667,7 +667,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.timeRemainingThresholdTicks = normalizeTimeRemainingThresholdValue();
 	}
 
-	private List<Integer> getTargetRegionIdsFromConfig(EscapeCrystalNotifyAccountType accountType) {
+	private Set<Integer> getTargetRegionIdsFromConfig(EscapeCrystalNotifyAccountType accountType) {
 		ArrayList<EscapeCrystalNotifyRegionType> targetRegions = new ArrayList<>();
 
 		if (config.displayBosses()) targetRegions.add(EscapeCrystalNotifyRegionType.BOSSES);
@@ -675,7 +675,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		if (config.displayDungeons()) targetRegions.add(EscapeCrystalNotifyRegionType.DUNGEONS);
 		if (config.displayMinigames()) targetRegions.add(EscapeCrystalNotifyRegionType.MINIGAMES);
 
-		List<Integer> regionIds = EscapeCrystalNotifyRegion.getRegionIdsFromTypes(targetRegions, getTargetDeathTypes(accountType));
+		Set<Integer> regionIds = new HashSet<>(EscapeCrystalNotifyRegion.getRegionIdsFromTypes(targetRegions, getTargetDeathTypes(accountType)));
 		List<Integer> includeRegionIds = parseAdditionalConfigRegionIds(config.includeRegionIds());
 		List<Integer> excludeRegionIds = parseAdditionalConfigRegionIds(config.excludeRegionIds());
 
