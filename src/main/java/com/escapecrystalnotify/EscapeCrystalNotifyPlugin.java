@@ -297,6 +297,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 				}
 			}
 		}
+
+		// Special handling for Leviathan boat despawning as a different ID
+		else if (despawnedObject.getId() == net.runelite.api.gameval.ObjectID.DT2_SCAR_BOAT_ISLAND) {
+			possibleEntrances.remove(8292);
+		}
 	}
 
 	@Subscribe
@@ -488,6 +493,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 					ready = false;
 				}
 				break;
+			case LOGIN_SCREEN:
+				this.possibleEntrances.clear();
 		}
 	}
 
