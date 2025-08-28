@@ -681,13 +681,118 @@ public interface EscapeCrystalNotifyConfig extends Config
 	)
 	default boolean warnDoomLogoutTimer() { return true; }
 
-	@ConfigItem(
-			keyName = "hideDoomSettingsInstructionText",
-			name = "Hide Bottom Instruction Info",
-			description = "Hides the text at the bottom of the panel that explains how to enable/disable the Doom safeguard features",
-			section = "doomSafeguardSettings",
-			position = 6
+		@ConfigItem(
+		keyName = "hideDoomSettingsInstructionText",
+		name = "Hide Bottom Instruction Info",
+		description = "Hides the text at the bottom of the panel that explains how to enable/disable the Doom safeguard features",
+		section = "doomSafeguardSettings",
+		position = 6
 	)
 	default boolean hideDoomSettingsInstructionText() { return false; }
+
+	@ConfigSection(
+		name = "Debug",
+		description = "Settings for testing and debugging the plugin",
+		position = 10
+	)
+	String debugSettings = "debugSettings";
+
+	@ConfigItem(
+		keyName = "enableDebugMode",
+		name = "Enable Testing Mode",
+		description = "Shows a comprehensive overlay with all plugin state information for debugging",
+		section = "debugSettings",
+		position = 1
+	)
+	default boolean enableDebugMode() { return false; }
+
+	@ConfigItem(
+		keyName = "showPlayerLocationSection",
+		name = "Show Player Location Section",
+		description = "Display player location information in the testing overlay",
+		section = "debugSettings",
+		position = 2
+	)
+	default boolean showPlayerLocationSection() { return true; }
+
+	@ConfigItem(
+		keyName = "showEscapeCrystalSection",
+		name = "Show Escape Crystal Section",
+		description = "Display escape crystal status information in the testing overlay",
+		section = "debugSettings",
+		position = 3
+	)
+	default boolean showEscapeCrystalSection() { return true; }
+
+	@ConfigItem(
+		keyName = "showAccountInfoSection",
+		name = "Show Account Info Section",
+		description = "Display account information in the testing overlay",
+		section = "debugSettings",
+		position = 4
+	)
+	default boolean showAccountInfoSection() { return true; }
+
+	@ConfigItem(
+		keyName = "showPossibleEntrancesSection",
+		name = "Show Possible Entrances Section",
+		description = "Display possible entrances information in the testing overlay",
+		section = "debugSettings",
+		position = 5
+	)
+	default boolean showPossibleEntrancesSection() { return true; }
+
+	@ConfigItem(
+		keyName = "showValidEntrancesSection",
+		name = "Show Valid Entrances Section",
+		description = "Display valid entrances information in the testing overlay",
+		section = "debugSettings",
+		position = 6
+	)
+	default boolean showValidEntrancesSection() { return true; }
+
+	@ConfigItem(
+		keyName = "showSpecialRegionSection",
+		name = "Show Special Region Section",
+		description = "Display special region status information in the testing overlay",
+		section = "debugSettings",
+		position = 7
+	)
+	default boolean showSpecialRegionSection() { return true; }
+
+	@ConfigItem(
+		keyName = "showNotificationSection",
+		name = "Show Notification Section",
+		description = "Display notification status information in the testing overlay",
+		section = "debugSettings",
+		position = 8
+	)
+	default boolean showNotificationSection() { return true; }
+
+	@ConfigItem(
+		keyName = "testingAccountTypeOverride",
+		name = "Testing Account Type Override",
+		description = "Override the detected account type for testing purposes. Set to 'Default' to use the actual account type.",
+		section = "debugSettings",
+		position = 9
+	)
+	default TestingAccountType testingAccountTypeOverride() { return TestingAccountType.DEFAULT; }
+
+	enum TestingAccountType {
+		DEFAULT ("Default (Actual Account Type)"),
+		NON_HARDCORE ("Non-Hardcore"),
+		STANDARD_HARDCORE ("Standard Hardcore"),
+		GROUP_HARDCORE ("Group Hardcore");
+
+		private final String displayName;
+
+		TestingAccountType(String displayName) {
+			this.displayName = displayName;
+		}
+
+		public String toString() {
+			return this.displayName;
+		}
+	}
 }
 
