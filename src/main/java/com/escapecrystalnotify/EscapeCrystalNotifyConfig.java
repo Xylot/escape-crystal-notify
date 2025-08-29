@@ -64,10 +64,167 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default boolean requireHardcoreAccountType() { return true; }
 
 	@ConfigSection(
+			name = "Location Filter",
+			description = "Filter locations where the reminder is shown",
+			closedByDefault = true,
+			position = 2
+	)
+	String displayRegionFilter = "displayRegionFilter";
+
+	@ConfigItem(
+			keyName = "displayBosses",
+			name = "Enable for Unsafe Bosses",
+			description = "Enable the overlays for unsafe bosses",
+			section = "displayRegionFilter",
+			position = 1
+	)
+	default boolean displayBosses() { return true; }
+
+	@ConfigItem(
+			keyName = "displayRaids",
+			name = "Enable in Unsafe Raids",
+			description = "Enable the overlays in unsafe raids",
+			section = "displayRegionFilter",
+			position = 2
+	)
+	default boolean displayRaids() { return true; }
+
+	@ConfigItem(
+			keyName = "displayDungeons",
+			name = "Enable in Unsafe Dungeons",
+			description = "Enable the overlays when inside unsafe dungeons",
+			section = "displayRegionFilter",
+			position = 3
+	)
+	default boolean displayDungeons() { return true; }
+
+	@ConfigItem(
+			keyName = "displayMinigames",
+			name = "Enable in Unsafe Minigames",
+			description = "Enable the overlays when in unsafe minigames",
+			section = "displayRegionFilter",
+			position = 4
+	)
+	default boolean displayMinigames() { return true; }
+
+	@ConfigItem(
+			keyName = "displayEverywhere",
+			name = "Enable Everywhere",
+			description = "Enable the overlays at all times",
+			section = "displayRegionFilter",
+			position = 5
+	)
+	default boolean displayEverywhere() { return false; }
+
+	@ConfigItem(
+			keyName = "excludeZulrahWithEliteDiary",
+			name = "Exclude Zulrah With Elite Diary",
+			description = "Don't display at Zulrah when you have completed the Western Elite Diary. Note: This exclusion is removed if you die and proc the revival.",
+			section = "displayRegionFilter",
+			position = 6
+	)
+	default boolean excludeZulrahWithEliteDiary() { return true; }
+
+	@ConfigItem(
+			keyName = "excludeRegionIds",
+			name = "Exclude Region IDs",
+			description = "A comma separated list of Region IDs to exclude",
+			section = "displayRegionFilter",
+			position = 7
+	)
+	default String excludeRegionIds() { return ""; }
+
+	@ConfigItem(
+			keyName = "includeRegionIds",
+			name = "Include Region IDs",
+			description = "A comma separated list of Region IDs to include",
+			section = "displayRegionFilter",
+			position = 8
+	)
+	default String includeRegionIds() { return ""; }
+
+	@ConfigSection(
+			name = "Entrance Overlay & Menu Swap",
+			description = "Add a reminder overlay to boss/dungeon entrances and optional deprioritization of the enter menu option",
+			closedByDefault = true,
+			position = 3
+	)
+	String entranceOverlaySettings = "entranceOverlaySettings";
+
+	@ConfigItem(
+			keyName = "deprioritizeEntranceEnterOption",
+			name = "Deprioritize Entrance Enter Option",
+			description = "Deprioritize the enter menu option when you do not have an active Escape Crystal",
+			section = "entranceOverlaySettings",
+			position = 1
+	)
+	default boolean deprioritizeEntranceEnterOption() { return true; }
+
+	@ConfigItem(
+			keyName = "displayEntranceOverlay",
+			name = "Display Entrance Overlay",
+			description = "Display the reminder overlay for entrances to dangerous regions when you do not have an active Escape Crystal",
+			section = "entranceOverlaySettings",
+			position = 2
+	)
+	default boolean displayEntranceOverlay() { return true; }
+
+	@Alpha
+	@ConfigItem(
+			keyName = "entranceOverlayFillColor",
+			name = "Entrance Overlay Fill Color",
+			description = "Fill color of the entrance reminder overlay for deprioritized entrances",
+			section = "entranceOverlaySettings",
+			position = 3
+	)
+	default Color entranceOverlayFillColor() { return new Color(205,50,50,75); }
+
+	@Alpha
+	@ConfigItem(
+			keyName = "prioritizedEntranceOverlayFillColor",
+			name = "Prioritized Entrance Overlay Fill Color",
+			description = "Fill color of the entrance reminder overlay for prioritized entrances",
+			section = "entranceOverlaySettings",
+			position = 4
+	)
+	default Color prioritizedEntranceOverlayFillColor() { return new Color(255,140,0,75); }
+
+	@ConfigItem(
+			keyName = "entranceOverlayImageScale",
+			name = "Image Scale",
+			description = "The scale of the inactive Escape Crystal image",
+			section = "entranceOverlaySettings",
+			position = 5
+	)
+	default double entranceOverlayImageScale()
+	{
+		return 1.0;
+	}
+
+	@ConfigItem(
+			keyName = "deprioritizedMenuText",
+			name = "Deprioritized Menu Text",
+			description = "Text to display in the deprioritized menu option for entrances",
+			section = "entranceOverlaySettings",
+			position = 6
+	)
+	default String deprioritizedMenuText() { return "Where's Your Crystal?"; }
+
+	@Alpha
+	@ConfigItem(
+			keyName = "deprioritizedMenuTextColor",
+			name = "Deprioritized Menu Text Color",
+			description = "Color of the deprioritized menu option text",
+			section = "entranceOverlaySettings",
+			position = 7
+	)
+	default Color deprioritizedMenuTextColor() { return new Color(255,106,213,255); }
+
+	@ConfigSection(
 		name = "On-Screen Widget Display Settings",
 		description = "Settings for the movable and resizable on-screen widget",
 		closedByDefault = true,
-		position = 2
+		position = 4
 	)
 	String onScreenWidgetSettings = "onScreenWidgetSettings";
 
@@ -168,7 +325,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Info Box Display Settings",
 		description = "Settings for Info Box",
 		closedByDefault = true,
-		position = 3
+		position = 5
 )
 	String infoBoxDisplaySettings = "infoBoxDisplaySettings";
 
@@ -236,7 +393,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Inventory Display Settings",
 		description = "Settings for inventory & equipment screen",
 		closedByDefault = true,
-		position = 4
+		position = 6
 	)
 	String inventoryDisplaySettings = "inventoryDisplaySettings";
 
@@ -360,163 +517,6 @@ public interface EscapeCrystalNotifyConfig extends Config
 		position = 12
 	)
 	default String inventoryTimeExpiredText() { return "Tele"; }
-
-	@ConfigSection(
-		name = "Entrance Overlay & Menu Swap",
-		description = "Add a reminder overlay to boss/dungeon entrances and optional deprioritization of the enter menu option",
-		closedByDefault = true,
-		position = 5
-	)
-	String entranceOverlaySettings = "entranceOverlaySettings";
-
-	@ConfigItem(
-		keyName = "deprioritizeEntranceEnterOption",
-		name = "Deprioritize Entrance Enter Option",
-		description = "Deprioritize the enter menu option when you do not have an active Escape Crystal",
-		section = "entranceOverlaySettings",
-		position = 1
-	)
-	default boolean deprioritizeEntranceEnterOption() { return true; }
-
-	@ConfigItem(
-		keyName = "displayEntranceOverlay",
-		name = "Display Entrance Overlay",
-		description = "Display the reminder overlay for entrances to dangerous regions when you do not have an active Escape Crystal",
-		section = "entranceOverlaySettings",
-		position = 2
-	)
-	default boolean displayEntranceOverlay() { return true; }
-
-	@Alpha
-	@ConfigItem(
-		keyName = "entranceOverlayFillColor",
-		name = "Entrance Overlay Fill Color",
-		description = "Fill color of the entrance reminder overlay for deprioritized entrances",
-		section = "entranceOverlaySettings",
-		position = 3
-	)
-	default Color entranceOverlayFillColor() { return new Color(205,50,50,75); }
-
-	@Alpha
-	@ConfigItem(
-		keyName = "prioritizedEntranceOverlayFillColor",
-		name = "Prioritized Entrance Overlay Fill Color",
-		description = "Fill color of the entrance reminder overlay for prioritized entrances",
-		section = "entranceOverlaySettings",
-		position = 4
-	)
-	default Color prioritizedEntranceOverlayFillColor() { return new Color(255,140,0,75); }
-
-	@ConfigItem(
-		keyName = "entranceOverlayImageScale",
-		name = "Image Scale",
-		description = "The scale of the inactive Escape Crystal image",
-		section = "entranceOverlaySettings",
-		position = 5
-	)
-	default double entranceOverlayImageScale()
-	{
-		return 1.0;
-	}
-
-	@ConfigItem(
-		keyName = "deprioritizedMenuText",
-		name = "Deprioritized Menu Text",
-		description = "Text to display in the deprioritized menu option for entrances",
-		section = "entranceOverlaySettings",
-		position = 6
-	)
-	default String deprioritizedMenuText() { return "Where's Your Crystal?"; }
-
-	@Alpha
-	@ConfigItem(
-		keyName = "deprioritizedMenuTextColor",
-		name = "Deprioritized Menu Text Color",
-		description = "Color of the deprioritized menu option text",
-		section = "entranceOverlaySettings",
-		position = 7
-	)
-	default Color deprioritizedMenuTextColor() { return new Color(255,106,213,255); }
-
-	@ConfigSection(
-		name = "Location Filter",
-		description = "Filter locations where the reminder is shown",
-		closedByDefault = true,
-		position = 6
-	)
-	String displayRegionFilter = "displayRegionFilter";
-
-	@ConfigItem(
-		keyName = "displayBosses",
-		name = "Display for Unsafe Bosses",
-		description = "Display the overlays for unsafe bosses",
-		section = "displayRegionFilter",
-		position = 1
-	)
-	default boolean displayBosses() { return true; }
-
-	@ConfigItem(
-		keyName = "displayRaids",
-		name = "Display in Unsafe Raids",
-		description = "Display the overlays in unsafe raids",
-		section = "displayRegionFilter",
-		position = 2
-	)
-	default boolean displayRaids() { return true; }
-
-	@ConfigItem(
-		keyName = "displayDungeons",
-		name = "Display in Unsafe Dungeons",
-		description = "Display the overlays when inside unsafe dungeons",
-		section = "displayRegionFilter",
-		position = 3
-	)
-	default boolean displayDungeons() { return true; }
-
-	@ConfigItem(
-		keyName = "displayMinigames",
-		name = "Display in Unsafe Minigames",
-		description = "Display the overlays when in unsafe minigames",
-		section = "displayRegionFilter",
-		position = 4
-	)
-	default boolean displayMinigames() { return true; }
-
-	@ConfigItem(
-		keyName = "displayEverywhere",
-		name = "Always display at all times",
-		description = "Display the overlays at all times",
-		section = "displayRegionFilter",
-		position = 5
-	)
-	default boolean displayEverywhere() { return false; }
-
-	@ConfigItem(
-		keyName = "excludeZulrahWithEliteDiary",
-		name = "Exclude Zulrah With Elite Diary",
-		description = "Don't display at Zulrah when you have completed the Western Elite Diary. Note: This exclusion is removed if you die and proc the revival.",
-		section = "displayRegionFilter",
-		position = 6
-	)
-	default boolean excludeZulrahWithEliteDiary() { return true; }
-
-	@ConfigItem(
-		keyName = "excludeRegionIds",
-		name = "Exclude Region IDs",
-		description = "A comma separated list of Region IDs to exclude",
-		section = "displayRegionFilter",
-		position = 7
-	)
-	default String excludeRegionIds() { return ""; }
-
-	@ConfigItem(
-		keyName = "includeRegionIds",
-		name = "Include Region IDs",
-		description = "A comma separated list of Region IDs to include",
-		section = "displayRegionFilter",
-		position = 8
-	)
-	default String includeRegionIds() { return ""; }
 
 	@ConfigSection(
 		name = "Notification Settings",
