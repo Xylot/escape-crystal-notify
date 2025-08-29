@@ -58,12 +58,20 @@ public class EscapeCrystalNotifyLocatedEntrance {
         switch (this.definition.getEntranceDirection()) {
             case NORTHWARD:
                 return playerTileY > entranceTileY;
+            case NORTHWARD_INCLUSIVE:
+                return playerTileY >= entranceTileY;
             case SOUTHWARD:
                 return playerTileY < entranceTileY;
+            case SOUTHWARD_INCLUSIVE:
+                return playerTileY <= entranceTileY;
             case EASTWARD:
                 return playerTileX > entranceTileX;
+            case EASTWARD_INCLUSIVE:
+                return playerTileX >= entranceTileX;
             case WESTWARD:
                 return playerTileX < entranceTileX;
+            case WESTWARD_INCLUSIVE:
+                return playerTileX <= entranceTileX;
             default:
                 return false;
         }
