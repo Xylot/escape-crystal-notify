@@ -94,6 +94,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Getter
 	private int ticksSinceLogin;
 
+	@Getter
+	private Instant lastCombatTime;
+
 	private boolean ready;
 	private boolean notifyMissing = false;
 	private boolean notifyInactive = false;
@@ -497,12 +500,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			case LOGGING_IN:
 			case HOPPING:
 				ready = true;
+				lastCombatTime = null;
 				break;
 			case LOGGED_IN:
 				if (ready)
 				{
 					loginTime = Instant.now();
 					ticksSinceLogin = 0;
+					lastCombatTime = null;
 					ready = false;
 				}
 				break;
@@ -651,6 +656,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			return;
 		}
 
+		if (client.getLocalPlayer().getHealthScale() != -1) {
+			this.lastCombatTime = Instant.now();
+		}
+
 		if (!this.escapeCrystalWithPlayer && this.enteredNotifyRegionId) {
 			this.notifyMissing = true;
 		}
@@ -740,6 +749,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
     }
 
 	private void sendRequestedNotifications() {
+		if (config.requireCombatForNotifications() && this.getTimeSinceLastCombat() > config.combatGracePeriodSeconds()) {
+			return;
+		}
+
 		if (config.notifyMissing() && this.notifyMissing) {
 			notifier.notify("You are missing an escape crystal!");
 			this.notifyMissing = false;
@@ -1098,5 +1111,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	private int convertSecondsToTicks(int seconds) {
 		return (int) Math.round(seconds * 1.6);
+	}
+
+	private int getTimeSinceLastCombat() {
+		if (this.lastCombatTime == null) {
+			return 0;
+		}
+
+		long timeSinceCombat = System.currentTimeMillis() - this.lastCombatTime.toEpochMilli();	
+		return (int) Math.round(timeSinceCombat / 1000.0);
 	}
 }

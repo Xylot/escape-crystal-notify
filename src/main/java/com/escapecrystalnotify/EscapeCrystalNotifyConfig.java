@@ -527,11 +527,29 @@ public interface EscapeCrystalNotifyConfig extends Config
 	String notificationSettings = "notificationSettings";
 
 	@ConfigItem(
+		keyName = "requireCombatForNotifications",
+		name = "Only Send in Combat",
+		description = "Only show notifications when in combat or recently in combat",
+		section = "notificationSettings",
+		position = 1
+	)
+	default boolean requireCombatForNotifications() { return false; }
+
+	@ConfigItem(
+		keyName = "combatGracePeriodSeconds",
+		name = "Combat Grace Period",
+		description = "How many seconds after combat to enable notifications (0 = only during combat)",
+		section = "notificationSettings",
+		position = 2
+	)
+	default int combatGracePeriodSeconds() { return 10; }
+
+	@ConfigItem(
 		keyName = "notificationInactivityTimeFormat",
 		name = "Time Format",
 		description = "Format for displaying the time information shown in your RuneLite notifications",
 		section = "notificationSettings",
-		position = 1
+		position = 3
 	)
 	default InactivityTimeFormat notificationInactivityTimeFormat()
 	{
@@ -543,7 +561,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Inactive Crystal",
 		description = "Sends a notification when your escape crystal is not enabled",
 		section = "notificationSettings",
-		position = 2
+		position = 4
 	)
 	default boolean notifyInactive() { return true; }
 
@@ -552,7 +570,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Missing Crystal",
 		description = "Sends a notification when you are not carrying your escape crystal",
 		section = "notificationSettings",
-		position = 3
+		position = 5
 	)
 	default boolean notifyMissing() { return true; }
 
@@ -561,7 +579,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Time Remaining Threshold",
 		description = "Sends a notification when your escape crystal is about to trigger. Note that this respects the time format you specified above (Ticks vs Seconds). A value of 0 will disable the notification.",
 		section = "notificationSettings",
-		position = 4
+		position = 6
 	)
 	default int notifyTimeUntilTeleportThreshold() { return 0; }
 
@@ -570,7 +588,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Non Left Click Teleport",
 		description = "Sends a notification when the left click option on your escape crystal is not set to teleport",
 		section = "notificationSettings",
-		position = 5
+		position = 7
 	)
 	default boolean notifyNonLeftClickTeleport() { return true; }
 
