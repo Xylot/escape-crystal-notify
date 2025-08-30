@@ -356,7 +356,8 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
                             .leftColor(Color.WHITE)
                             .build());
                         height += 15;
-                    } catch (Exception e) { continue; }
+                    } catch (Exception ignored) {
+                    }
                 }
             }
         }
@@ -399,7 +400,8 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
                             .leftColor(Color.WHITE)
                             .build());
                     height += 15;
-                } catch (Exception e) { continue; }
+                } catch (Exception ignored) {
+                }
             }
         }
         height += 20; 

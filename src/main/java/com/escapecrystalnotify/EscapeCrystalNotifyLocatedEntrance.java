@@ -3,8 +3,6 @@ package com.escapecrystalnotify;
 import lombok.Getter;
 import net.runelite.api.coords.WorldPoint;
 
-import java.util.List;
-
 @Getter
 public class EscapeCrystalNotifyLocatedEntrance {
     public EscapeCrystalNotifyRegionEntranceObject target;
