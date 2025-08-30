@@ -533,7 +533,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		section = "notificationSettings",
 		position = 1
 	)
-	default boolean requireCombatForNotifications() { return false; }
+	default boolean requireCombatForNotifications() { return true; }
 
 	@ConfigItem(
 		keyName = "combatGracePeriodSeconds",
