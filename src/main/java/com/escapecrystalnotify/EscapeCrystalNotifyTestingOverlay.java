@@ -342,19 +342,21 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
                 height += 15;
                 
                 for (EscapeCrystalNotifyLocatedEntrance entrance : entrances) {
-                    String entranceInfo = entrance.getTarget().getId() + 
-                                        " at " + formatWorldPoint(entrance.getTarget().getWorldLocation()) +
-                                        " (Valid: " + entrance.isEntranceInValidChunk() +
-                                        ", Moved: " + entrance.hasMoved() +
-                                        ", Past: " + entrance.isPlayerPastEntrance(plugin.getCurrentWorldPoint()) +
-                                        ", Plane Match: " + entrance.matchesPlayerPlane(plugin.getCurrentPlaneId()) + ")";
-                    
-                    panelComponent.getChildren().add(LineComponent.builder()
+                    try {
+                        String entranceInfo = entrance.getTarget().getId() + 
+                                            " at " + formatWorldPoint(entrance.getTarget().getWorldLocation()) +
+                                            " (Valid: " + entrance.isEntranceInValidChunk() +
+                                            ", Moved: " + entrance.hasMoved() +
+                                            ", Past: " + entrance.isPlayerPastEntrance(plugin.getCurrentWorldPoint()) +
+                                            ", Plane Match: " + entrance.matchesPlayerPlane(plugin.getCurrentPlaneId()) + ")";
+                        
+                        panelComponent.getChildren().add(LineComponent.builder()
                             .left("  - " + entranceInfo)
                             .leftFont(OVERLAY_PANEL_FONT)
                             .leftColor(Color.WHITE)
                             .build());
-                    height += 15;
+                        height += 15;
+                    } catch (Exception e) { continue; }
                 }
             }
         }
@@ -384,18 +386,20 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
             height += 15;
         } else {
             for (EscapeCrystalNotifyLocatedEntrance entrance : validEntrances) {
-                String validInfo = entrance.getTarget().getId() + 
-                                 " at " + formatWorldPoint(entrance.getTarget().getWorldLocation()) +
-                                 " (Can Highlight: " + entrance.canHighlight() +
-                                 ", Can Deprioritize: " + entrance.canDeprioritize() +
-                                 ", Prioritized: " + entrance.isPrioritized() + ")";
-                
-                panelComponent.getChildren().add(LineComponent.builder()
-                        .left("- " + validInfo)
-                        .leftFont(OVERLAY_PANEL_FONT)
-                        .leftColor(Color.WHITE)
-                        .build());
-                height += 15;
+                try {
+                    String validInfo = entrance.getTarget().getId() + 
+                                    " at " + formatWorldPoint(entrance.getTarget().getWorldLocation()) +
+                                    " (Can Highlight: " + entrance.canHighlight() +
+                                    ", Can Deprioritize: " + entrance.canDeprioritize() +
+                                    ", Prioritized: " + entrance.isPrioritized() + ")";
+                    
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("- " + validInfo)
+                            .leftFont(OVERLAY_PANEL_FONT)
+                            .leftColor(Color.WHITE)
+                            .build());
+                    height += 15;
+                } catch (Exception e) { continue; }
             }
         }
         height += 20; 
