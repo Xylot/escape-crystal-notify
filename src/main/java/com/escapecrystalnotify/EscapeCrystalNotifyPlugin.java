@@ -43,12 +43,16 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private static final int GROUP_HARDCORE_ACCOUNT_TYPE_VARBIT_VALUE = 5;
 	private static final int ZULRAH_REVIVE_VARBIT = net.runelite.api.gameval.VarbitID.ZULRAH_REVIVE;
 	private static final int ZULRAH_ENTRANCE_REGION_ID = 8751;
+	private static final int YAMA_REGION_ID = 6045;
 	private static final List<Integer> LEVIATHAN_LOBBY_CHUNK_IDS = List.of(525092, 525093, 527139, 527140, 527141, 529188);
 	private static final List<Integer> DOOM_LOBBY_CHUNK_IDS = List.of(335016, 335017, 335018, 337064, 337065, 337066);
 	private static final List<Integer> DOOM_BURROW_HOLE_IDS = List.of(ObjectID.BURROW_HOLE, ObjectID.BURROW_HOLE_57285);
 	private static final List<Integer> DOOM_NPC_IDS = List.of(NpcID.DOOM_OF_MOKHAIOTL, NpcID.DOOM_OF_MOKHAIOTL_SHIELDED, NpcID.DOOM_OF_MOKHAIOTL_BURROWED);
 	private static final List<Integer> HYDRA_ENTRANCE_IDS = List.of(34553, 34554);
 	private static final HashSet<Integer> ENTRANCE_CLEAR_REQUIRED_IDS = new HashSet<>(List.of(net.runelite.api.gameval.ObjectID.INFERNO_ENTRANCE, net.runelite.api.gameval.ObjectID.TZHAAR_FIGHTCAVE_WALL_ENTRANCE));
+	private static final HashSet<Integer> NPC_ENTRANCE_FORCE_CLEAR_IDS = new HashSet<>(List.of(net.runelite.api.gameval.NpcID.NIGHTMARE_ENTRY_READY, net.runelite.api.gameval.NpcID.NIGHTMARE_ENTRY_OPEN, net.runelite.api.gameval.NpcID.NIGHTMARE_ENTRY_CLOSED_01, net.runelite.api.gameval.NpcID.NIGHTMARE_ENTRY_CLOSED_02, net.runelite.api.gameval.NpcID.NIGHTMARE_ENTRY_CLOSED_03, net.runelite.api.gameval.NpcID.VOICE_OF_YAMA_3OP));
+	private static final HashSet<Integer> NPC_ENTRANCE_AUTO_RECHECK_ON_LOAD_REGION_IDS = new HashSet<>(List.of(6045, 15256));
+	private static final HashSet<Integer> NPC_ENTRANCE_AUTO_RECHECK_ON_LOAD_NPC_IDS = new HashSet<>(List.of(net.runelite.api.gameval.NpcID.NIGHTMARE_ENTRY_READY, net.runelite.api.gameval.NpcID.NIGHTMARE_ENTRY_OPEN, net.runelite.api.gameval.NpcID.NIGHTMARE_ENTRY_CLOSED_01, net.runelite.api.gameval.NpcID.NIGHTMARE_ENTRY_CLOSED_02, net.runelite.api.gameval.NpcID.NIGHTMARE_ENTRY_CLOSED_03, net.runelite.api.gameval.NpcID.YAMA_THRONE_OCCUPIED));
 	private static final int SIX_HOUR_LOG_WARNING_THRESHOLD_TICKS = 34000;
 
 	@Inject
@@ -98,6 +102,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private Instant lastCombatTime;
 
 	private boolean ready;
+	private boolean recheckLocalNpcs = false;
 	private boolean notifyMissing = false;
 	private boolean notifyInactive = false;
 	private boolean notifyTimeRemainingThreshold = false;
@@ -280,7 +285,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 					new EscapeCrystalNotifyLocatedEntrance(
 							new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
 							this.chunkEntranceMap.get(locatedChunkId),
-							locatedWorldPoint
+							locatedWorldPoint,
+							spawnedObjectId
 					)
 			);
 		}
@@ -336,7 +342,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 							new EscapeCrystalNotifyLocatedEntrance(
 									new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
 									this.chunkEntranceMap.get(locatedChunkId),
-									locatedWorldPoint
+									locatedWorldPoint,
+									spawnedNpcId
 							)
 					);
 				}
@@ -346,7 +353,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 							new EscapeCrystalNotifyLocatedEntrance(
 									new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
 									EscapeCrystalNotifyRegion.BOSS_THE_WHISPERER.getRegionEntrance(),
-									locatedWorldPoint
+									locatedWorldPoint,
+									spawnedNpcId
 							)
 					);
 				}
@@ -355,7 +363,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 						new EscapeCrystalNotifyLocatedEntrance(
 								new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
 								this.chunkEntranceMap.get(locatedChunkId),
-								locatedWorldPoint
+								locatedWorldPoint,
+								spawnedNpcId
 						)
 				);
 			}
@@ -372,6 +381,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	public void onNpcDespawned(NpcDespawned npc)
 	{
 		NPC despawnedNpc = npc.getNpc();
+
+		if (NPC_ENTRANCE_FORCE_CLEAR_IDS.contains(despawnedNpc.getId())) {
+			clearPossibleEntranceId(despawnedNpc.getId());
+			return;
+		}
 
 		if (this.allEntranceIds.contains(despawnedNpc.getId())) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedNpc.getWorldLocation(), despawnedNpc.getLocalLocation());
@@ -392,10 +406,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Subscribe
 	public void onNpcChanged(NpcChanged npc)
 	{
-		if (npc.getNpc().getId() == NpcID.THE_WHISPERER) {
-			for (int regionId : EscapeCrystalNotifyRegion.BOSS_THE_WHISPERER.getRegionIds()) {
-				possibleEntrances.remove(regionId);
-			}
+		NPC changedNpc = npc.getNpc();
+
+		if (changedNpc.getId() == net.runelite.api.gameval.NpcID.WHISPERER) {
+			this.clearPossibleChangedEntranceId(net.runelite.api.gameval.NpcID.WHISPERER_SPAWN);
 		}
 	}
 
@@ -412,7 +426,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 					new EscapeCrystalNotifyLocatedEntrance(
 							new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
 							this.chunkEntranceMap.get(locatedChunkId),
-							locatedWorldPoint
+							locatedWorldPoint,
+							spawnedObject.getId()
 					)
 			);
 		}
@@ -454,7 +469,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 							new EscapeCrystalNotifyLocatedEntrance(
 									new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
 									EscapeCrystalNotifyRegion.BOSS_HYDRA.getRegionEntrance(),
-									locatedWorldPoint
+									locatedWorldPoint,
+									spawnedObject.getId()
 							)
 					);
 				}
@@ -463,7 +479,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 						new EscapeCrystalNotifyLocatedEntrance(
 								new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
 								this.chunkEntranceMap.get(locatedChunkId),
-								locatedWorldPoint
+								locatedWorldPoint,
+								spawnedObject.getId()
 						)
 				);
 			}
@@ -514,6 +531,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			case LOGIN_SCREEN:
             case LOADING:
                 this.possibleEntrances.clear();
+
+				if (NPC_ENTRANCE_AUTO_RECHECK_ON_LOAD_REGION_IDS.contains(this.currentRegionId)) {
+					this.recheckLocalNpcs = true;
+				}
+
 				break;
         }
 	}
@@ -561,6 +583,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.atDoomLobby = DOOM_LOBBY_CHUNK_IDS.contains(this.currentChunkId);
 		this.inTzhaarEntranceRegion = this.tzhaarEntranceRegionIds.contains(this.currentRegionId);
 
+		this.recheckLocalNpcs();
+
 		this.computeEntranceObjectMetrics();
 	}
 
@@ -572,6 +596,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	private void computeEntranceObjectMetrics() {
+		if (this.currentRegionId == YAMA_REGION_ID) {
+			this.clearPossibleChangedEntranceId(net.runelite.api.gameval.NpcID.YAMA_THRONE_OCCUPIED);
+		}
+
 		if (!this.atNotifyRegionId && !this.inTzhaarEntranceRegion) {
 			this.validEntrances.clear();
 			return;
@@ -1092,6 +1120,32 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 				if (entrances.isEmpty()) {
 					this.possibleEntrances.remove(regionId);
 				}
+			}
+		}
+	}
+
+	public void clearPossibleChangedEntranceId(int entranceId) {
+		for (int regionId : this.possibleEntrances.keySet()) {
+			List<EscapeCrystalNotifyLocatedEntrance> entrances = this.possibleEntrances.get(regionId);
+
+			if (entrances != null) {
+				entrances.removeIf(entrance -> entrance.getInitialTargetId() == entranceId && entrance.hasChangedTargetId());
+
+				if (entrances.isEmpty()) {
+					this.possibleEntrances.remove(regionId);
+				}
+			}
+		}
+	}
+
+	public void recheckLocalNpcs() {
+		if (!this.recheckLocalNpcs) return;
+
+		this.recheckLocalNpcs = false;
+
+		for (NPC npc : client.getTopLevelWorldView().npcs()) {
+			if (npc != null && NPC_ENTRANCE_AUTO_RECHECK_ON_LOAD_NPC_IDS.contains(npc.getId())) {
+				onNpcSpawned(new NpcSpawned(npc));
 			}
 		}
 	}

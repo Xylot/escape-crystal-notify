@@ -10,16 +10,22 @@ public class EscapeCrystalNotifyLocatedEntrance {
     public EscapeCrystalNotifyRegionEntranceObject target;
     public EscapeCrystalNotifyRegionEntrance definition;
     public WorldPoint initialWorldPoint;
+    public int initialTargetId;
 
 
-    EscapeCrystalNotifyLocatedEntrance(EscapeCrystalNotifyRegionEntranceObject target, EscapeCrystalNotifyRegionEntrance definition, WorldPoint initialWorldPoint) {
+    EscapeCrystalNotifyLocatedEntrance(EscapeCrystalNotifyRegionEntranceObject target, EscapeCrystalNotifyRegionEntrance definition, WorldPoint initialWorldPoint, int initialTargetId) {
         this.target = target;
         this.definition = definition;
         this.initialWorldPoint = initialWorldPoint;
+        this.initialTargetId = initialTargetId;
     }
 
     public boolean hasMoved() {
         return computeChunkIdFromWorldPoint(this.target.getWorldLocation()) != computeChunkIdFromWorldPoint(initialWorldPoint);
+    }
+
+    public boolean hasChangedTargetId() {
+        return this.target.getId() != this.initialTargetId;
     }
 
     public boolean isChunkless() {
