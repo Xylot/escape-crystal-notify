@@ -717,10 +717,59 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default boolean hideDoomSettingsInstructionText() { return false; }
 
 	@ConfigSection(
+		name = "Non-HC Inventory Highlight",
+		description = "Settings for minimal inventory highlighting for non-hardcore accounts",
+		closedByDefault = true,
+		position = 10
+	)
+	String nonHardcoreInventorySettings = "nonHardcoreInventorySettings";
+
+	@ConfigItem(
+		keyName = "enableNonHardcoreInventoryHighlight",
+		name = "Enable Non-HC Inventory Highlight",
+		description = "Enable minimal inventory highlighting for non-hardcore accounts (no overlay text, just highlight)",
+		section = "nonHardcoreInventorySettings",
+		position = 1
+	)
+	default boolean enableNonHardcoreInventoryHighlight() { return true; }
+
+	@ConfigItem(
+		keyName = "nonHardcoreInventoryOverlayType",
+		name = "Overlay Type",
+		description = "Method of highlighting the crystal's inventory & equipment model for non-hardcore accounts",
+		section = "nonHardcoreInventorySettings",
+		position = 2
+	)
+	default ModelOverlayType nonHardcoreInventoryOverlayType()
+	{
+		return ModelOverlayType.ITEM_FILL;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "nonHardcoreInventoryActiveFillColor",
+		name = "Active Fill Color",
+		description = "Color of the background fill to draw onto the crystal's inventory model while active for non-hardcore accounts",
+		section = "nonHardcoreInventorySettings",
+		position = 3
+	)
+	default Color nonHardcoreInventoryActiveFillColor() { return new Color(50,205,50,75); }
+
+	@Alpha
+	@ConfigItem(
+		keyName = "nonHardcoreInventoryInactiveFillColor",
+		name = "Inactive Fill Color",
+		description = "Color of the background fill to draw onto the crystal's inventory model while inactive for non-hardcore accounts",
+		section = "nonHardcoreInventorySettings",
+		position = 4
+	)
+	default Color nonHardcoreInventoryInactiveFillColor() { return new Color(205,50,50,75); }
+
+	@ConfigSection(
 		name = "Debug",
 		description = "Settings for testing and debugging the plugin",
 		closedByDefault = true,
-		position = 10
+		position = 11
 	)
 	String debugSettings = "debugSettings";
 

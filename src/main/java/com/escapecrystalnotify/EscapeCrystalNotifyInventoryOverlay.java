@@ -41,15 +41,30 @@ public class EscapeCrystalNotifyInventoryOverlay extends WidgetItemOverlay {
             atNotifyRegion = this.config.alwaysDisplayInventory();
         }
 
-        if (itemId != ItemID.ESCAPE_CRYSTAL || !this.config.enableInventoryDisplay() || !atNotifyRegion || !this.plugin.isAccountTypeEnabled()) {
+        if (itemId != ItemID.ESCAPE_CRYSTAL) {
+            return;
+        }
+
+        boolean shouldRenderMainDisplay = this.config.enableInventoryDisplay() && atNotifyRegion && this.plugin.isAccountTypeEnabled();
+        
+        boolean shouldRenderNonHardcoreHighlight = this.config.enableNonHardcoreInventoryHighlight() && 
+            !this.plugin.isHardcoreAccountType() && 
+            atNotifyRegion;
+
+        if (!shouldRenderMainDisplay && !shouldRenderNonHardcoreHighlight) {
             return;
         }
 
         graphics.setFont(FontManager.getRunescapeSmallFont());
         final Rectangle bounds = widgetItem.getCanvasBounds();
-        renderModelHighlight(graphics, bounds);
-        renderCrystalModelSubtext(graphics, bounds);
-        renderCrystalModelInfoText(graphics, bounds);
+        
+        if (shouldRenderMainDisplay) {
+            renderModelHighlight(graphics, bounds);
+            renderCrystalModelSubtext(graphics, bounds);
+            renderCrystalModelInfoText(graphics, bounds);
+        } else if (shouldRenderNonHardcoreHighlight) {
+            renderNonHardcoreModelHighlight(graphics, bounds);
+        }
     }
 
     private void renderCrystalModelSubtext(Graphics2D graphics, Rectangle modelBounds) {
@@ -78,6 +93,30 @@ public class EscapeCrystalNotifyInventoryOverlay extends WidgetItemOverlay {
         }
 
         switch (this.config.inventoryOverlayType()) {
+            case ITEM_FILL: {
+                Image image = getModelFillImage(ItemID.ESCAPE_CRYSTAL, 1, color);
+                graphics.drawImage(image, modelBounds.x, modelBounds.y, null);
+                break;
+            }
+            case BACKGROUND_FILL: {
+                graphics.setColor(color);
+                graphics.fill(modelBounds);
+                break;
+            }
+            default:
+        }
+    }
+
+    private void renderNonHardcoreModelHighlight(Graphics2D graphics, Rectangle modelBounds) {
+        Color color;
+
+        if (plugin.isEscapeCrystalActive()) {
+            color = config.nonHardcoreInventoryActiveFillColor();
+        } else {
+            color = config.nonHardcoreInventoryInactiveFillColor();
+        }
+
+        switch (this.config.nonHardcoreInventoryOverlayType()) {
             case ITEM_FILL: {
                 Image image = getModelFillImage(ItemID.ESCAPE_CRYSTAL, 1, color);
                 graphics.drawImage(image, modelBounds.x, modelBounds.y, null);
