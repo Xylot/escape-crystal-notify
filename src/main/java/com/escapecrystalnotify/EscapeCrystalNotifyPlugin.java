@@ -171,18 +171,12 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private boolean atNotifyRegionEntrance = false;
 	@Getter
 	private List<EscapeCrystalNotifyLocatedEntrance> validEntrances = new ArrayList<>();
-	private EscapeCrystalNotifyRegionEntranceObject regionEntrance;
-	private EscapeCrystalNotifyRegionEntranceDirection regionEntranceDirection;
-	private EscapeCrystalNotifyRegionEntranceOverlayType regionEntranceOverlayType;
-	private WorldPoint regionEntranceOriginalLocation;
-	private boolean playerPastRegionEntrance;
 	private Set<Integer> targetRegionIds;
 	private final List<Integer> excludedRegionIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedRegionIds();
 	private final List<Integer> excludedChunkIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedChunkIds();
 	private final Map<Integer, Integer> planeRequirements = EscapeCrystalNotifyRegionPlaneRequirements.getRegionPlaneMap();
 	private final Map<Integer, List<Integer>> chunkRequirements = EscapeCrystalNotifyRegion.getRegionChunkRequirementsMap();
 	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> chunkEntranceMap = EscapeCrystalNotifyRegion.getChunkEntranceMap();
-	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> regionEntranceMap = EscapeCrystalNotifyRegion.getRegionEntranceMap();
 	private final Set<Integer> allEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getAllEntranceIds());
 	private final Set<Integer> leviathanRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_LEVIATHAN.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> doomRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_DOOM_OF_MOKHAIOTL.getRegionIds()).boxed().collect(Collectors.toList()));
