@@ -355,6 +355,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 							)
 					);
 				}
+			} else if (spawnedNpcId == NpcID.DT2_PURSUER_HIDEOUT_COMBAT) {
+				this.clearPossibleEntranceId(ObjectID.DT2_HIDEOUT_ALTAR_OP);
 			} else {
 				possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
 						new EscapeCrystalNotifyLocatedEntrance(
