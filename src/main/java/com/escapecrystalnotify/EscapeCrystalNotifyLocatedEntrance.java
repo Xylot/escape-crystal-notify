@@ -40,7 +40,7 @@ public class EscapeCrystalNotifyLocatedEntrance {
     }
 
     public boolean canDeprioritize() {
-        return this.definition.getOverlayType().canDeprioritize();
+        return this.definition.getOverlayType().canDeprioritize() && !this.definition.isEscapeCrystalDisabled();
     }
 
     public boolean isPrioritized() {

@@ -220,6 +220,16 @@ public interface EscapeCrystalNotifyConfig extends Config
 	)
 	default Color deprioritizedMenuTextColor() { return new Color(255,106,213,255); }
 
+	@Alpha
+	@ConfigItem(
+			keyName = "escapeCrystalDisabledTextColor",
+			name = "Escape Crystal Disabled Text Color",
+			description = "Color of the Escape Crystal disabled text overlay (Some regions of the game do not allow Escape Crystals)",
+			section = "entranceOverlaySettings",
+			position = 8
+	)
+	default Color escapeCrystalDisabledTextColor() { return new Color(255,0,0,255); }
+
 	@ConfigSection(
 		name = "On-Screen Widget Display Settings",
 		description = "Settings for the movable and resizable on-screen widget",
