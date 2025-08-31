@@ -405,7 +405,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		NPC changedNpc = npc.getNpc();
 
-		if (changedNpc.getId() == NpcID.WHISPERER) {
+		if (changedNpc.getId() == NpcID.WHISPERER || changedNpc.getId() == NpcID.WHISPERER_QUEST) {
 			this.clearPossibleChangedEntranceId(NpcID.WHISPERER_SPAWN);
 		}
 	}
