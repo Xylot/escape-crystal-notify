@@ -1,6 +1,7 @@
 package com.escapecrystalnotify;
 
 import lombok.Getter;
+import net.runelite.api.Quest;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -166,6 +167,7 @@ public enum EscapeCrystalNotifyRegion {
     MG_PYRAMID_PLUNDER("Pyramid Plunder", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 7749),
     MG_TEMPLE_TREKKING("Temple Trekking", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 8014, 8270, 8256, 8782, 9038, 9294, 9550, 9806),
     MG_VOLCANIC_MINE("Volcanic Mine", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 15263, 15262),
+    TD_DONTKNOWWHAT_FIGHT("Making Friends WIth My Arm Don't Know What Fight", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, Quest.MAKING_FRIENDS_WITH_MY_ARM, 11425),
     TD_EMISSARY_ENFORCER("Emissary Enforcer", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, 6807),
     TD_LUNAR_DREAMS("Lunar Dreams", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, 7247, 7248),
     TD_MOVARIOS_BASE("Movario's Base", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, 16461, 16717);
@@ -182,12 +184,15 @@ public enum EscapeCrystalNotifyRegion {
     private EscapeCrystalNotifyRegionDeathType regionDeathType;
     @Getter
     private EscapeCrystalNotifyRegionEntrance regionEntrance;
+    @Getter
+    private Quest questNotCompleted;
 
     EscapeCrystalNotifyRegion(String regionName, EscapeCrystalNotifyRegionType regionType, EscapeCrystalNotifyRegionDeathType regionDeathType, int... regionIds) {
         this.regionName = regionName;
         this.regionType = regionType;
         this.regionDeathType = regionDeathType;
         this.regionEntrance = null;
+        this.questNotCompleted = null;
         this.regionIds = regionIds;
         this.chunkIds = null;
     }
@@ -197,6 +202,7 @@ public enum EscapeCrystalNotifyRegion {
         this.regionType = regionType;
         this.regionDeathType = regionDeathType;
         this.regionEntrance = null;
+        this.questNotCompleted = null;
         this.regionIds = regionIds;
         this.chunkIds = chunkIds;
     }
@@ -206,6 +212,7 @@ public enum EscapeCrystalNotifyRegion {
         this.regionType = regionType;
         this.regionDeathType = regionDeathType;
         this.regionEntrance = regionEntrance;
+        this.questNotCompleted = null;
         this.regionIds = regionIds;
         this.chunkIds = null;
     }
@@ -215,8 +222,19 @@ public enum EscapeCrystalNotifyRegion {
         this.regionType = regionType;
         this.regionDeathType = regionDeathType;
         this.regionEntrance = regionEntrance;
+        this.questNotCompleted = null;
         this.regionIds = regionIds;
         this.chunkIds = chunkIds;
+    }
+
+    EscapeCrystalNotifyRegion(String regionName, EscapeCrystalNotifyRegionType regionType, EscapeCrystalNotifyRegionDeathType regionDeathType, Quest questNotCompleted, int... regionIds) {
+        this.regionName = regionName;
+        this.regionType = regionType;
+        this.regionDeathType = regionDeathType;
+        this.regionEntrance = null;
+        this.questNotCompleted = questNotCompleted;
+        this.regionIds = regionIds;
+        this.chunkIds = null;
     }
 
     public static List<Integer> getAllRegionIds() {

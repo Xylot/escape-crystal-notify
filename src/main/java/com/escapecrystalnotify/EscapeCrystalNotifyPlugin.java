@@ -13,6 +13,8 @@ import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.ObjectID;
 import net.runelite.api.widgets.InterfaceID;
 import net.runelite.api.widgets.WidgetUtil;
+import net.runelite.api.Quest;
+import net.runelite.api.QuestState;
 import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -215,12 +217,6 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		this.tzhaarEntranceRegionIds.addAll(fightCavesEntranceRegionIds);
 		this.tzhaarEntranceRegionIds.addAll(infernoEntranceRegionIds);
-
-		for (EscapeCrystalNotifyRegion region : EscapeCrystalNotifyRegion.values()) {
-			if (region.getRegionType() == EscapeCrystalNotifyRegionType.TELEPORT_DISABLED) {
-				this.teleportDisabledRegionIds.addAll(Arrays.stream(region.getRegionIds()).boxed().collect(Collectors.toList()));
-			}
-		}
 
 		this.possibleEntrances.clear();
 
@@ -595,7 +591,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.atDoomRegionId = this.doomRegionIds.contains(this.currentRegionId);
 		this.atDoomLobby = DOOM_LOBBY_CHUNK_IDS.contains(this.currentChunkId);
 		this.inTzhaarEntranceRegion = this.tzhaarEntranceRegionIds.contains(this.currentRegionId);
-		this.atTeleportDisabledRegion = this.teleportDisabledRegionIds.contains(this.currentRegionId);
+		this.atTeleportDisabledRegion = this.isRegionTeleportDisabled(this.currentRegionId);
 
 		this.recheckLocalNpcs();
 
@@ -1090,6 +1086,27 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	public boolean hasDiedAtZulrah() {
 		return client.getVarbitValue(ZULRAH_REVIVE_VARBIT) == 1;
+	}
+
+	public boolean isQuestCompleted(Quest quest) {
+		if (client != null && quest != null) {
+			return quest.getState(client) == QuestState.FINISHED;
+		}
+		return false;
+	}
+
+	public boolean isRegionTeleportDisabled(int regionId) {
+		for (EscapeCrystalNotifyRegion region : EscapeCrystalNotifyRegion.values()) {
+			if (region.getRegionType() == EscapeCrystalNotifyRegionType.TELEPORT_DISABLED) {
+				if (Arrays.stream(region.getRegionIds()).anyMatch(id -> id == regionId)) {
+					if (region.getQuestNotCompleted() != null) {
+						return !this.isQuestCompleted(region.getQuestNotCompleted());
+					}
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private void updateZulrahRegionsInSet() {
