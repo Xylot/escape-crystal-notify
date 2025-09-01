@@ -3,6 +3,7 @@ package com.escapecrystalnotify;
 import lombok.Getter;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,16 +22,16 @@ public enum EscapeCrystalNotifyRegionChunkExclusions {
         this.chunkIds = chunkIds;
     }
 
-    public static List<Integer> getAllExcludedRegionIds() {
+    public static HashSet<Integer> getAllExcludedRegionIds() {
         return Arrays.stream(EscapeCrystalNotifyRegionChunkExclusions.values())
                 .map(EscapeCrystalNotifyRegionChunkExclusions::getRegionId)
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(HashSet::new));
     }
 
-    public static List<Integer> getAllExcludedChunkIds() {
+    public static HashSet<Integer> getAllExcludedChunkIds() {
         return Arrays.stream(EscapeCrystalNotifyRegionChunkExclusions.values())
                 .flatMap(region -> Arrays.stream(region.getChunkIds()).boxed())
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(HashSet::new));
     }
 
 }

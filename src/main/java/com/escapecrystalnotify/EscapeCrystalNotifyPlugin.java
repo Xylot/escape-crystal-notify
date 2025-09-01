@@ -49,11 +49,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private static final int ZULRAH_REVIVE_VARBIT = VarbitID.ZULRAH_REVIVE;
 	private static final int ZULRAH_ENTRANCE_REGION_ID = 8751;
 	private static final int YAMA_REGION_ID = 6045;
-	private static final List<Integer> LEVIATHAN_LOBBY_CHUNK_IDS = List.of(525092, 525093, 527139, 527140, 527141, 529188);
-	private static final List<Integer> DOOM_LOBBY_CHUNK_IDS = List.of(335016, 335017, 335018, 337064, 337065, 337066);
-	private static final List<Integer> DOOM_BURROW_HOLE_IDS = List.of(ObjectID.DOM_DESCEND_HOLE, ObjectID.DOM_DESCEND_HOLE_UNIQUE);
-	private static final List<Integer> DOOM_NPC_IDS = List.of(NpcID.DOM_BOSS, NpcID.DOM_BOSS_SHIELDED, NpcID.DOM_BOSS_BURROWED);
-	private static final List<Integer> HYDRA_ENTRANCE_IDS = List.of(34553, 34554);
+	private static final HashSet<Integer> LEVIATHAN_LOBBY_CHUNK_IDS = new HashSet<>(List.of(525092, 525093, 527139, 527140, 527141, 529188));
+	private static final HashSet<Integer> DOOM_LOBBY_CHUNK_IDS = new HashSet<>(List.of(335016, 335017, 335018, 337064, 337065, 337066));
+	private static final HashSet<Integer> DOOM_BURROW_HOLE_IDS = new HashSet<>(List.of(ObjectID.DOM_DESCEND_HOLE, ObjectID.DOM_DESCEND_HOLE_UNIQUE));
+	private static final HashSet<Integer> DOOM_NPC_IDS = new HashSet<>(List.of(NpcID.DOM_BOSS, NpcID.DOM_BOSS_SHIELDED, NpcID.DOM_BOSS_BURROWED));
+	private static final HashSet<Integer> HYDRA_ENTRANCE_IDS = new HashSet<>(List.of(34553, 34554));
 	private static final HashSet<Integer> ENTRANCE_CLEAR_REQUIRED_IDS = new HashSet<>(List.of(ObjectID.INFERNO_ENTRANCE, ObjectID.TZHAAR_FIGHTCAVE_WALL_ENTRANCE));
 	private static final HashSet<Integer> NPC_ENTRANCE_FORCE_CLEAR_IDS = new HashSet<>(List.of(NpcID.NIGHTMARE_ENTRY_READY, NpcID.NIGHTMARE_ENTRY_OPEN, NpcID.NIGHTMARE_ENTRY_CLOSED_01, NpcID.NIGHTMARE_ENTRY_CLOSED_02, NpcID.NIGHTMARE_ENTRY_CLOSED_03, NpcID.VOICE_OF_YAMA_3OP));
 	private static final HashSet<Integer> NPC_ENTRANCE_AUTO_RECHECK_ON_LOAD_REGION_IDS = new HashSet<>(List.of(6045, 15256));
@@ -182,8 +182,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Getter
 	private List<EscapeCrystalNotifyLocatedEntrance> validEntrances = new ArrayList<>();
 	private Set<Integer> targetRegionIds;
-	private final List<Integer> excludedRegionIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedRegionIds();
-	private final List<Integer> excludedChunkIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedChunkIds();
+	private final HashSet<Integer> excludedRegionIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedRegionIds();
+	private final HashSet<Integer> excludedChunkIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedChunkIds();
 	private final Map<Integer, Integer> planeRequirements = EscapeCrystalNotifyRegionPlaneRequirements.getRegionPlaneMap();
 	private final Map<Integer, List<Integer>> chunkRequirements = EscapeCrystalNotifyRegion.getRegionChunkRequirementsMap();
 	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> chunkEntranceMap = EscapeCrystalNotifyRegion.getChunkEntranceMap();
