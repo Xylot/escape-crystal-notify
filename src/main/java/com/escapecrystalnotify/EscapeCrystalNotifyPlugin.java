@@ -81,6 +81,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private EscapeCrystalNotifyTextOverlayPanel escapeCrystalNotifyTextOverlayPanel;
 
 	@Inject
+	private EscapeCrystalNotifyTeleportDisabledPanel escapeCrystalNotifyTeleportDisabledPanel;
+
+	@Inject
 	private EscapeCrystalNotifyRegionEntranceOverlay escapeCrystalNotifyRegionEntranceOverlay;
 
 	@Inject
@@ -150,6 +153,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Getter
 	private boolean inTzhaarEntranceRegion = false;
 	@Getter
+	private boolean atTeleportDisabledRegion = false;
+	@Getter
 	private int timeRemainingThresholdTicks;
 	@Getter
 	private boolean inTimeRemainingThreshold = false;
@@ -189,6 +194,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private final Set<Integer> hydraEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_HYDRA.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> zulrahRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> zulrahEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList()));
+	private final Set<Integer> teleportDisabledRegionIds = new HashSet<>();
 	private Set<Integer> tzhaarEntranceRegionIds = new HashSet<>();
 	private Set<Integer> logoutBugRegionIds = new HashSet<>();
 	private BufferedImage inactiveEscapeCrystalImage;
@@ -210,12 +216,19 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.tzhaarEntranceRegionIds.addAll(fightCavesEntranceRegionIds);
 		this.tzhaarEntranceRegionIds.addAll(infernoEntranceRegionIds);
 
+		for (EscapeCrystalNotifyRegion region : EscapeCrystalNotifyRegion.values()) {
+			if (region.getRegionType() == EscapeCrystalNotifyRegionType.TELEPORT_DISABLED) {
+				this.teleportDisabledRegionIds.addAll(Arrays.stream(region.getRegionIds()).boxed().collect(Collectors.toList()));
+			}
+		}
+
 		this.possibleEntrances.clear();
 
 		overlayManager.add(escapeCrystalNotifyOverlayActive);
 		overlayManager.add(escapeCrystalNotifyOverlayInactive);
 		overlayManager.add(escapeCrystalNotifyInventoryOverlay);
 		overlayManager.add(escapeCrystalNotifyTextOverlayPanel);
+		overlayManager.add(escapeCrystalNotifyTeleportDisabledPanel);
 		overlayManager.add(escapeCrystalNotifyRegionEntranceOverlay);
 		overlayManager.add(escapeCrystalNotifyTestingOverlay);
 	}
@@ -228,6 +241,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		overlayManager.remove(escapeCrystalNotifyOverlayInactive);
 		overlayManager.remove(escapeCrystalNotifyInventoryOverlay);
 		overlayManager.remove(escapeCrystalNotifyTextOverlayPanel);
+		overlayManager.remove(escapeCrystalNotifyTeleportDisabledPanel);
 		overlayManager.remove(escapeCrystalNotifyRegionEntranceOverlay);
 		overlayManager.remove(escapeCrystalNotifyTestingOverlay);
 		removeInfoBoxes();
@@ -581,6 +595,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.atDoomRegionId = this.doomRegionIds.contains(this.currentRegionId);
 		this.atDoomLobby = DOOM_LOBBY_CHUNK_IDS.contains(this.currentChunkId);
 		this.inTzhaarEntranceRegion = this.tzhaarEntranceRegionIds.contains(this.currentRegionId);
+		this.atTeleportDisabledRegion = this.teleportDisabledRegionIds.contains(this.currentRegionId);
 
 		this.recheckLocalNpcs();
 
@@ -747,6 +762,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		if (config.displayRaids()) targetRegions.add(EscapeCrystalNotifyRegionType.RAIDS);
 		if (config.displayDungeons()) targetRegions.add(EscapeCrystalNotifyRegionType.DUNGEONS);
 		if (config.displayMinigames()) targetRegions.add(EscapeCrystalNotifyRegionType.MINIGAMES);
+		if (config.displayTeleportDisabled()) targetRegions.add(EscapeCrystalNotifyRegionType.TELEPORT_DISABLED);
 
 		Set<Integer> regionIds = new HashSet<>(EscapeCrystalNotifyRegion.getRegionIdsFromTypes(targetRegions, getTargetDeathTypes(accountType)));
 		List<Integer> includeRegionIds = parseAdditionalConfigRegionIds(config.includeRegionIds());
@@ -1062,6 +1078,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	public boolean isDoomSafeguardPanelEnabled() {
 		return this.atDoomLobby && !config.disableDoomSafeguardPanelPopup();
+	}
+
+	public boolean isTeleportDisabledPanelEnabled() {
+		return this.atTeleportDisabledRegion && config.displayTeleportDisabled();
 	}
 
 	public boolean isCloseToSixHourLogout() {

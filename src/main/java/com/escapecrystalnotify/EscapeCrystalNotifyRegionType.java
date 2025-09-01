@@ -6,4 +6,5 @@ public enum EscapeCrystalNotifyRegionType {
     DUNGEONS,
     MINIGAMES,
     GLOBAL,
+    TELEPORT_DISABLED,
 }

@@ -165,7 +165,8 @@ public enum EscapeCrystalNotifyRegion {
     MG_PEST_CONTROL("Pest Control", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE_HCGIM, 10536),
     MG_PYRAMID_PLUNDER("Pyramid Plunder", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 7749),
     MG_TEMPLE_TREKKING("Temple Trekking", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 8014, 8270, 8256, 8782, 9038, 9294, 9550, 9806),
-    MG_VOLCANIC_MINE("Volcanic Mine", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 15263, 15262);
+    MG_VOLCANIC_MINE("Volcanic Mine", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 15263, 15262),
+    TD_MOVARIOS_BASE("Movario's Base", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, 16461, 16717);
 
     @Getter
     private String regionName;

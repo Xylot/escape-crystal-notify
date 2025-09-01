@@ -108,11 +108,20 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default boolean displayMinigames() { return true; }
 
 	@ConfigItem(
+			keyName = "displayTeleportDisabled",
+			name = "Enable in Teleport Disabled Areas",
+			description = "Enable the reminder overlay when in areas where your escape crystal cannot teleport you out",
+			section = "displayRegionFilter",
+			position = 5
+	)
+	default boolean displayTeleportDisabled() { return true; }
+
+	@ConfigItem(
 			keyName = "displayEverywhere",
 			name = "Enable Everywhere",
 			description = "Enable the overlays at all times",
 			section = "displayRegionFilter",
-			position = 5
+			position = 6
 	)
 	default boolean displayEverywhere() { return false; }
 
@@ -121,7 +130,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Exclude Zulrah With Elite Diary",
 			description = "Don't display at Zulrah when you have completed the Western Elite Diary. Note: This exclusion is removed if you die and proc the revival.",
 			section = "displayRegionFilter",
-			position = 6
+			position = 7
 	)
 	default boolean excludeZulrahWithEliteDiary() { return true; }
 
@@ -130,7 +139,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Exclude Region IDs",
 			description = "A comma separated list of Region IDs to exclude",
 			section = "displayRegionFilter",
-			position = 7
+			position = 8
 	)
 	default String excludeRegionIds() { return ""; }
 
@@ -139,7 +148,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Include Region IDs",
 			description = "A comma separated list of Region IDs to include",
 			section = "displayRegionFilter",
-			position = 8
+			position = 9
 	)
 	default String includeRegionIds() { return ""; }
 
