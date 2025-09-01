@@ -166,6 +166,8 @@ public enum EscapeCrystalNotifyRegion {
     MG_PYRAMID_PLUNDER("Pyramid Plunder", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 7749),
     MG_TEMPLE_TREKKING("Temple Trekking", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 8014, 8270, 8256, 8782, 9038, 9294, 9550, 9806),
     MG_VOLCANIC_MINE("Volcanic Mine", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 15263, 15262),
+    TD_EMISSARY_ENFORCER("Emissary Enforcer", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, 6807),
+    TD_LUNAR_DREAMS("Lunar Dreams", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, 7247, 7248),
     TD_MOVARIOS_BASE("Movario's Base", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, 16461, 16717);
 
     @Getter
