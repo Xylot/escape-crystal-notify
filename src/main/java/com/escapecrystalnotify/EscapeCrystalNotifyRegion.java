@@ -168,7 +168,7 @@ public enum EscapeCrystalNotifyRegion {
     MG_TEMPLE_TREKKING("Temple Trekking", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 8014, 8270, 8256, 8782, 9038, 9294, 9550, 9806),
     MG_VOLCANIC_MINE("Volcanic Mine", EscapeCrystalNotifyRegionType.MINIGAMES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 15263, 15262),
     TD_DONTKNOWWHAT_FIGHT("Making Friends WIth My Arm Don't Know What Fight", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, Quest.MAKING_FRIENDS_WITH_MY_ARM, 11425),
-    TD_EMISSARY_ENFORCER("Emissary Enforcer", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, 6807),
+    TD_EMISSARY_ENFORCER("Emissary Enforcer", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, Quest.THE_FINAL_DAWN, 6807),
     TD_LUNAR_DREAMS("Lunar Dreams", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, 7247, 7248),
     TD_MOVARIOS_BASE("Movario's Base", EscapeCrystalNotifyRegionType.TELEPORT_DISABLED, EscapeCrystalNotifyRegionDeathType.UNSAFE, 16461, 16717);
 
