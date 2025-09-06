@@ -10,6 +10,9 @@ import net.runelite.client.ui.overlay.OverlayPriority;
 import net.runelite.client.ui.overlay.components.LineComponent;
 
 import javax.inject.Inject;
+
+import lombok.extern.slf4j.Slf4j;
+
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
@@ -17,6 +20,8 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
+
+@Slf4j
 public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
     private static final Font OVERLAY_PANEL_FONT = FontManager.getRunescapeSmallFont();
     private static final Font OVERLAY_PANEL_HEADER_FONT = FontManager.getRunescapeFont();
@@ -357,6 +362,7 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
                             .build());
                         height += 15;
                     } catch (Exception ignored) {
+                        log.debug("Target={}, Definition={}, Initial World Point={}, Initial Target Id={}", entrance.getTarget(), entrance.getDefinition(), entrance.getInitialWorldPoint(), entrance.getInitialTargetId());
                     }
                 }
             }
@@ -401,6 +407,7 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
                             .build());
                     height += 15;
                 } catch (Exception ignored) {
+                    log.debug("Target={}, Definition={}, Initial World Point={}, Initial Target Id={}", entrance.getTarget(), entrance.getDefinition(), entrance.getInitialWorldPoint(), entrance.getInitialTargetId());
                 }
             }
         }
