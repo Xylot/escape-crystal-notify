@@ -1211,7 +1211,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	private int getTimeSinceLastCombat() {
 		if (this.lastCombatTime == null) {
-			return 0;
+			return 100000;
 		}
 
 		long timeSinceCombat = System.currentTimeMillis() - this.lastCombatTime.toEpochMilli();	
