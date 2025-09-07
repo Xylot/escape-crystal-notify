@@ -2,7 +2,7 @@ package com.escapecrystalnotify;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import net.runelite.api.ItemID;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.FontManager;
@@ -41,7 +41,7 @@ public class EscapeCrystalNotifyInventoryOverlay extends WidgetItemOverlay {
             atNotifyRegion = this.config.alwaysDisplayInventory();
         }
 
-        if (itemId != ItemID.ESCAPE_CRYSTAL) {
+        if (itemId != ItemID.TOB_TELEPORT) {
             return;
         }
 
@@ -94,7 +94,7 @@ public class EscapeCrystalNotifyInventoryOverlay extends WidgetItemOverlay {
 
         switch (this.config.inventoryOverlayType()) {
             case ITEM_FILL: {
-                Image image = getModelFillImage(ItemID.ESCAPE_CRYSTAL, 1, color);
+                Image image = getModelFillImage(ItemID.TOB_TELEPORT, 1, color);
                 graphics.drawImage(image, modelBounds.x, modelBounds.y, null);
                 break;
             }
@@ -118,7 +118,7 @@ public class EscapeCrystalNotifyInventoryOverlay extends WidgetItemOverlay {
 
         switch (this.config.nonHardcoreInventoryOverlayType()) {
             case ITEM_FILL: {
-                Image image = getModelFillImage(ItemID.ESCAPE_CRYSTAL, 1, color);
+                Image image = getModelFillImage(ItemID.TOB_TELEPORT, 1, color);
                 graphics.drawImage(image, modelBounds.x, modelBounds.y, null);
                 break;
             }

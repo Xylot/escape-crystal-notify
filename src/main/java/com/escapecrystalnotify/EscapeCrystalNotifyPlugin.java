@@ -11,6 +11,7 @@ import net.runelite.api.events.*;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.ObjectID;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.widgets.InterfaceID;
 import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.api.Quest;
@@ -654,8 +655,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			return false;
 		}
 
-		boolean escapeCrystalEquipped = equipmentContainer != null && equipmentContainer.contains(ItemID.ESCAPE_CRYSTAL);
-		boolean escapeCrystalInInventory = inventoryContainer != null && inventoryContainer.contains(ItemID.ESCAPE_CRYSTAL);
+		boolean escapeCrystalEquipped = equipmentContainer != null && equipmentContainer.contains(ItemID.TOB_TELEPORT);
+		boolean escapeCrystalInInventory = inventoryContainer != null && inventoryContainer.contains(ItemID.TOB_TELEPORT);
 
         return escapeCrystalEquipped || escapeCrystalInInventory;
     }
@@ -686,7 +687,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			this.expectedTicksUntilTeleport = 0;
 		}
 
-		this.escapeCrystalLeftClickTeleportEnabled = configManager.getConfiguration("menuentryswapper", "item_" + ItemID.ESCAPE_CRYSTAL) == null;
+		this.escapeCrystalLeftClickTeleportEnabled = configManager.getConfiguration("menuentryswapper", "item_" + ItemID.TOB_TELEPORT) == null;
 	}
 
 	private void computeNotificationMetrics() {
@@ -815,9 +816,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		if (this.isEscapeCrystalActive() && this.escapeCrystalWithPlayer){
 			if (currentInfoBoxes.contains(this.activeInfoBox)) {
-				if (this.activeInfoBox.imageId != ItemID.ESCAPE_CRYSTAL) {
+				if (this.activeInfoBox.imageId != ItemID.TOB_TELEPORT) {
 					this.activeInfoBox.setImage(this.getActiveEscapeCrystalImage());
-					this.activeInfoBox.imageId = ItemID.ESCAPE_CRYSTAL;
+					this.activeInfoBox.imageId = ItemID.TOB_TELEPORT;
 					this.activeInfoBox.setTooltip(getInfoBoxTooltip());
 					infoBoxManager.updateInfoBoxImage(this.activeInfoBox);
 				}
@@ -825,15 +826,15 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			}
 
 			BufferedImage activeImage = this.getActiveEscapeCrystalImage();
-			this.activeInfoBox = new EscapeCrystalNotifyInfoBox(ItemID.ESCAPE_CRYSTAL, activeImage, this, this.config);
+			this.activeInfoBox = new EscapeCrystalNotifyInfoBox(ItemID.TOB_TELEPORT, activeImage, this, this.config);
 			this.activeInfoBox.setTooltip(getInfoBoxTooltip());
 			infoBoxManager.addInfoBox(this.activeInfoBox);
 
 		} else {
 			if (currentInfoBoxes.contains(this.activeInfoBox)) {
-				if (this.activeInfoBox.imageId != ItemID.CORRUPTED_ESCAPE_CRYSTAL) {
+				if (this.activeInfoBox.imageId != ItemID.GAUNTLET_ESCAPE_CRYSTAL_HM) {
 					this.activeInfoBox.setImage(this.getInactiveEscapeCrystalImage());
-					this.activeInfoBox.imageId = ItemID.CORRUPTED_ESCAPE_CRYSTAL;
+					this.activeInfoBox.imageId = ItemID.GAUNTLET_ESCAPE_CRYSTAL_HM;
 					this.activeInfoBox.setTooltip(getInfoBoxTooltip());
 					infoBoxManager.updateInfoBoxImage(this.activeInfoBox);
 				}
@@ -841,7 +842,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			}
 
 			BufferedImage inactiveImage = this.getInactiveEscapeCrystalImage();
-			this.activeInfoBox = new EscapeCrystalNotifyInfoBox(ItemID.CORRUPTED_ESCAPE_CRYSTAL, inactiveImage, this, this.config);
+			this.activeInfoBox = new EscapeCrystalNotifyInfoBox(ItemID.GAUNTLET_ESCAPE_CRYSTAL_HM, inactiveImage, this, this.config);
 			this.activeInfoBox.setTooltip(getInfoBoxTooltip());
 			infoBoxManager.addInfoBox(this.activeInfoBox);
 		}
@@ -1043,14 +1044,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	public BufferedImage getInactiveEscapeCrystalImage() {
 		if (inactiveEscapeCrystalImage == null) {
-			inactiveEscapeCrystalImage = itemManager.getImage(ItemID.CORRUPTED_ESCAPE_CRYSTAL);
+			inactiveEscapeCrystalImage = itemManager.getImage(ItemID.GAUNTLET_ESCAPE_CRYSTAL_HM);
 		}
 		return inactiveEscapeCrystalImage;
 	}
 
 	public BufferedImage getActiveEscapeCrystalImage() {
 		if (activeEscapeCrystalImage == null) {
-			activeEscapeCrystalImage = itemManager.getImage(ItemID.ESCAPE_CRYSTAL);
+			activeEscapeCrystalImage = itemManager.getImage(ItemID.TOB_TELEPORT);
 		}
 		return activeEscapeCrystalImage;
 	}
