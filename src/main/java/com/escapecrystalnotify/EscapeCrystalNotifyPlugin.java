@@ -1127,8 +1127,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		boolean active = this.isEscapeCrystalInactivityTeleportActive();
 		boolean notHardcore = config.requireHardcoreAccountType() && !this.isHardcoreAccountType();
 		boolean atNotifyRegion = this.isAtNotifyRegionId();
+		boolean isInPvpWorld = WorldType.isPvpWorld(client.getWorldType());
 
-		if (!enabled || active || notHardcore || !atNotifyRegion) return false;
+		if (!enabled || active || notHardcore || !atNotifyRegion || isInPvpWorld) return false;
 
 		if (this.validEntrances.isEmpty()) return false;
 
