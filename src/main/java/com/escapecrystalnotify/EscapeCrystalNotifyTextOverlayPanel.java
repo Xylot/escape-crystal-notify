@@ -23,14 +23,16 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
     private static final String LEVIATHAN_LOGOUT_STATUS_DEPRIORITIZED_TEXT_SHORT = "Right-Click Required";
     private static final String LEVIATHAN_LOGOUT_STATUS_HEADER_TEXT = "Current Logout Setting:";
     private static final String LEVIATHAN_LOGOUT_STATUS_PRIORITIZED_TEXT_SHORT = "Left-Click";
-    private static final String LEVIATHAN_INSTRUCTION_TEXT = "Navigate to the 'Leviathan Safeguards' section in the 'Escape Crystal Notify' settings to enable left-click logout prevention and/or filter these messages";
+    private static final String LEVIATHAN_LOGOUT_STATUS_PRIORITIZED_TEXT_SHORT_ADDITIONAL_INFO = "NOT PROTECTED";
+    private static final String LEVIATHAN_INSTRUCTION_TEXT = "Navigate to the 'Leviathan Safeguards' section in the 'Escape Crystal Notify' settings to enable left-click logout prevention and/or hide this panel";
     private static final String DOOM_BUG_INFO_HEADER_TEXT = "WARNING: DOOM BUG";
     private static final String DOOM_BUG_INFO_TEXT = "Attempting to logout during the encounter can/will DISABLE ALL PLAYER ACTIONS (teleports, prayers, food, etc...) and cause an UNAVOIDABLE DEATH";
     private static final String DOOM_LOGOUT_STATUS_DEPRIORITIZED_TEXT_SHORT = "Right-Click Required";
     private static final String DOOM_LOGOUT_STATUS_DEPRIORITIZED_TEXT_ADDITIONAL_INFO = "Left-Click enabled between floors";
     private static final String DOOM_LOGOUT_STATUS_HEADER_TEXT = "Current Logout Setting:";
     private static final String DOOM_LOGOUT_STATUS_PRIORITIZED_TEXT_SHORT = "Left-Click";
-    private static final String DOOM_INSTRUCTION_TEXT = "Navigate to the 'Doom Safeguards' section in the 'Escape Crystal Notify' settings to enable left-click logout prevention and/or filter these messages";
+    private static final String DOOM_LOGOUT_STATUS_PRIORITIZED_TEXT_SHORT_ADDITIONAL_INFO = "NOT PROTECTED";
+    private static final String DOOM_INSTRUCTION_TEXT = "Navigate to the 'Doom Safeguards' section in the 'Escape Crystal Notify' settings to enable left-click logout prevention and/or hide this panel";
 
     private final EscapeCrystalNotifyPlugin plugin;
     private final EscapeCrystalNotifyConfig config;
@@ -53,6 +55,7 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
         String bugInfoText = null;
         String logoutStatusHeaderText = null;
         String logoutStatusText = null;
+        String logoutStatusAdditionalText = null;
         Color logoutStatusTextColor = null;
         String sixHourWarningText = null;
         String instructionText = null;
@@ -71,6 +74,7 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
                     logoutStatusTextColor = Color.GREEN;
                 } else {
                     logoutStatusText = LEVIATHAN_LOGOUT_STATUS_PRIORITIZED_TEXT_SHORT;
+                    logoutStatusAdditionalText = LEVIATHAN_LOGOUT_STATUS_PRIORITIZED_TEXT_SHORT_ADDITIONAL_INFO;
                     logoutStatusTextColor = JagexColors.CHAT_FC_TEXT_TRANSPARENT_BACKGROUND;
                 }
             };
@@ -88,12 +92,14 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
 
                 if (config.deprioritizeDoomLogout()) {
                     logoutStatusText = DOOM_LOGOUT_STATUS_DEPRIORITIZED_TEXT_SHORT;
+                    logoutStatusAdditionalText = DOOM_LOGOUT_STATUS_DEPRIORITIZED_TEXT_ADDITIONAL_INFO;
                     logoutStatusTextColor = Color.GREEN;
                 } else {
                     logoutStatusText = DOOM_LOGOUT_STATUS_PRIORITIZED_TEXT_SHORT;
+                    logoutStatusAdditionalText = DOOM_LOGOUT_STATUS_PRIORITIZED_TEXT_SHORT_ADDITIONAL_INFO;
                     logoutStatusTextColor = JagexColors.CHAT_FC_TEXT_TRANSPARENT_BACKGROUND;
                 }
-            };
+            }
 
             if (config.warnDoomLogoutTimer()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
             if (!config.hideDoomSettingsInstructionText()) instructionText = DOOM_INSTRUCTION_TEXT;
@@ -139,11 +145,11 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
 
             panelComponent.getChildren().add(logoutStatusComponent.build());
 
-            if (plugin.isDoomSafeguardPanelEnabled() && config.deprioritizeDoomLogout()) {
+            if (logoutStatusAdditionalText != null) {
                 panelComponent.getChildren().add(LineComponent.builder()
-                        .left(DOOM_LOGOUT_STATUS_DEPRIORITIZED_TEXT_ADDITIONAL_INFO)
-                        .leftFont(OVERLAY_PANEL_FONT)
-                        .leftColor(Color.GREEN)
+                        .right(logoutStatusAdditionalText)
+                        .rightFont(OVERLAY_PANEL_FONT)
+                        .rightColor(logoutStatusTextColor)
                         .build());
             }
         }
