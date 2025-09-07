@@ -187,7 +187,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private final Map<Integer, Integer> planeRequirements = EscapeCrystalNotifyRegionPlaneRequirements.getRegionPlaneMap();
 	private final Map<Integer, List<Integer>> chunkRequirements = EscapeCrystalNotifyRegion.getRegionChunkRequirementsMap();
 	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> chunkEntranceMap = EscapeCrystalNotifyRegion.getChunkEntranceMap();
-	private final Set<Integer> allEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getAllEntranceIds());
+	private final Set<Integer> npcEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(List.of(EscapeCrystalNotifyRegionEntranceObjectType.NPC, EscapeCrystalNotifyRegionEntranceObjectType.ANY)));
+	private final Set<Integer> gameObjectEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(List.of(EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, EscapeCrystalNotifyRegionEntranceObjectType.ANY)));
 	private final Set<Integer> leviathanRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_LEVIATHAN.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> doomRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_DOOM_OF_MOKHAIOTL.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> infernoEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_INFERNO_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList()));
@@ -280,7 +281,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		GameObject spawnedObject = event.getGameObject();
 		int spawnedObjectId = spawnedObject.getId();
 
-		if (this.allEntranceIds.contains(spawnedObjectId)) {
+		if (this.gameObjectEntranceIds.contains(spawnedObjectId)) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
@@ -308,7 +309,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		GameObject despawnedObject = event.getGameObject();
 
-		if (this.allEntranceIds.contains(despawnedObject.getId())) {
+		if (this.gameObjectEntranceIds.contains(despawnedObject.getId())) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedObject.getWorldLocation(), despawnedObject.getLocalLocation());
 			int regionId = locatedWorldPoint.getRegionID();
 			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
@@ -339,7 +340,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		NPC spawnedNpc = npc.getNpc();
 		int spawnedNpcId = spawnedNpc.getId();
 
-		if (this.allEntranceIds.contains(spawnedNpcId)) {
+		if (this.npcEntranceIds.contains(spawnedNpcId)) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedNpc.getWorldLocation(), spawnedNpc.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
@@ -396,7 +397,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			return;
 		}
 
-		if (this.allEntranceIds.contains(despawnedNpc.getId())) {
+		if (this.npcEntranceIds.contains(despawnedNpc.getId())) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedNpc.getWorldLocation(), despawnedNpc.getLocalLocation());
 			int regionId = locatedWorldPoint.getRegionID();
 			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
@@ -427,7 +428,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		DecorativeObject spawnedObject = event.getDecorativeObject();
 
-		if (this.allEntranceIds.contains(spawnedObject.getId())) {
+		if (this.gameObjectEntranceIds.contains(spawnedObject.getId())) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
@@ -447,7 +448,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		DecorativeObject despawnedObject = event.getDecorativeObject();
 
-		if (this.allEntranceIds.contains(despawnedObject.getId())) {
+		if (this.gameObjectEntranceIds.contains(despawnedObject.getId())) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedObject.getWorldLocation(), despawnedObject.getLocalLocation());
 			int regionId = locatedWorldPoint.getRegionID();
 			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
@@ -468,7 +469,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		WallObject spawnedObject = event.getWallObject();
 
-		if (this.allEntranceIds.contains(spawnedObject.getId())) {
+		if (this.gameObjectEntranceIds.contains(spawnedObject.getId())) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
@@ -501,7 +502,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		WallObject despawnedObject = event.getWallObject();
 
-		if (this.allEntranceIds.contains(despawnedObject.getId())) {
+		if (this.gameObjectEntranceIds.contains(despawnedObject.getId())) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedObject.getWorldLocation(), despawnedObject.getLocalLocation());
 			int regionId = locatedWorldPoint.getRegionID();
 			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
