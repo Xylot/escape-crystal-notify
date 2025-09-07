@@ -311,4 +311,11 @@ public enum EscapeCrystalNotifyRegion {
         }
         return chunkEntranceMap;
     }
+
+    public static Set<Integer> getTeleportDisabledRegionIds() {
+        return Arrays.stream(EscapeCrystalNotifyRegion.values())
+                .filter(region -> region.getRegionType() == EscapeCrystalNotifyRegionType.TELEPORT_DISABLED)
+                .flatMap(region -> Arrays.stream(region.getRegionIds()).boxed())
+                .collect(Collectors.toSet());
+    }
 }

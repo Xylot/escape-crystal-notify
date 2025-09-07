@@ -197,7 +197,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private final Set<Integer> hydraEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_HYDRA.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> zulrahRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> zulrahEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList()));
-	private final Set<Integer> teleportDisabledRegionIds = new HashSet<>();
+	private final Set<Integer> teleportDisabledRegionIds = EscapeCrystalNotifyRegion.getTeleportDisabledRegionIds();
 	private Set<Integer> tzhaarEntranceRegionIds = new HashSet<>();
 	private Set<Integer> logoutBugRegionIds = new HashSet<>();
 	private BufferedImage inactiveEscapeCrystalImage;
@@ -1097,6 +1097,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	public boolean isRegionTeleportDisabled(int regionId) {
+		if (!this.teleportDisabledRegionIds.contains(regionId)) return false;
+
 		for (EscapeCrystalNotifyRegion region : EscapeCrystalNotifyRegion.values()) {
 			if (region.getRegionType() == EscapeCrystalNotifyRegionType.TELEPORT_DISABLED) {
 				if (Arrays.stream(region.getRegionIds()).anyMatch(id -> id == regionId)) {
@@ -1107,6 +1109,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 				}
 			}
 		}
+
 		return false;
 	}
 
