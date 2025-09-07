@@ -153,7 +153,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default String includeRegionIds() { return ""; }
 
 	@ConfigSection(
-			name = "Entrance Overlay & Menu Swap",
+			name = "Entrance Overlay",
 			description = "Add a reminder overlay to boss/dungeon entrances and optional deprioritization of the enter menu option",
 			closedByDefault = true,
 			position = 3
@@ -240,7 +240,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default Color escapeCrystalDisabledTextColor() { return new Color(255,0,0,255); }
 
 	@ConfigSection(
-		name = "On-Screen Widget Display Settings",
+		name = "On-Screen Widget",
 		description = "Settings for the movable and resizable on-screen widget",
 		closedByDefault = true,
 		position = 4
@@ -341,7 +341,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default String onScreenWidgetTimeExpiredText() { return "Tele"; }
 
 	@ConfigSection(
-		name = "Info Box Display Settings",
+		name = "Info Box",
 		description = "Settings for Info Box",
 		closedByDefault = true,
 		position = 5
@@ -409,7 +409,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default String infoBoxMissingCrystalText() { return "Missing"; }
 
 	@ConfigSection(
-		name = "Inventory Display Settings",
+		name = "Inventory Highlight",
 		description = "Settings for inventory & equipment screen",
 		closedByDefault = true,
 		position = 6
