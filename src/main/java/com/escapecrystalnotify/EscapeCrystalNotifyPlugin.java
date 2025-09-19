@@ -183,13 +183,13 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Getter
 	private List<EscapeCrystalNotifyLocatedEntrance> validEntrances = new ArrayList<>();
 	private Set<Integer> targetRegionIds;
+	private Set<Integer> npcEntranceIds;
+	private Set<Integer> gameObjectEntranceIds;
 	private final HashSet<Integer> excludedRegionIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedRegionIds();
 	private final HashSet<Integer> excludedChunkIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedChunkIds();
 	private final Map<Integer, Integer> planeRequirements = EscapeCrystalNotifyRegionPlaneRequirements.getRegionPlaneMap();
 	private final Map<Integer, List<Integer>> chunkRequirements = EscapeCrystalNotifyRegion.getRegionChunkRequirementsMap();
 	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> chunkEntranceMap = EscapeCrystalNotifyRegion.getChunkEntranceMap();
-	private final Set<Integer> npcEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(List.of(EscapeCrystalNotifyRegionEntranceObjectType.NPC, EscapeCrystalNotifyRegionEntranceObjectType.ANY)));
-	private final Set<Integer> gameObjectEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(List.of(EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, EscapeCrystalNotifyRegionEntranceObjectType.ANY)));
 	private final Set<Integer> leviathanRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_LEVIATHAN.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> doomRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_DOOM_OF_MOKHAIOTL.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> infernoEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_INFERNO_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList()));
@@ -211,6 +211,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
+		this.npcEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(List.of(EscapeCrystalNotifyRegionEntranceObjectType.NPC, EscapeCrystalNotifyRegionEntranceObjectType.ANY), getTargetDeathTypes(this.accountType)));
+		this.gameObjectEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(List.of(EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, EscapeCrystalNotifyRegionEntranceObjectType.ANY), getTargetDeathTypes(this.accountType)));
+
 		this.notifyTimeRemainingThresholdMessage = generateTimeRemainingThresholdMessage();
 		this.timeRemainingThresholdTicks = normalizeTimeRemainingThresholdValue();
 
@@ -576,6 +579,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		if (this.accountType != previousAccountType) {
 			this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
+			this.npcEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(List.of(EscapeCrystalNotifyRegionEntranceObjectType.NPC, EscapeCrystalNotifyRegionEntranceObjectType.ANY), getTargetDeathTypes(this.accountType)));
+			this.gameObjectEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(List.of(EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, EscapeCrystalNotifyRegionEntranceObjectType.ANY), getTargetDeathTypes(this.accountType)));
 		}
 	}
 

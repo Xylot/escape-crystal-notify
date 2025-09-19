@@ -253,8 +253,9 @@ public enum EscapeCrystalNotifyRegion {
                 .collect(Collectors.toList());
     }
 
-    public static List<Integer> getEntranceIdsFromTypes(List<EscapeCrystalNotifyRegionEntranceObjectType> selectedEntranceTypes) {
+    public static List<Integer> getEntranceIdsFromTypes(List<EscapeCrystalNotifyRegionEntranceObjectType> selectedEntranceTypes, List<EscapeCrystalNotifyRegionDeathType> selectedRegionDeathTypes) {
         return Arrays.stream(EscapeCrystalNotifyRegion.values())
+                .filter(region -> selectedRegionDeathTypes.contains(region.getRegionDeathType()))
                 .map(EscapeCrystalNotifyRegion::getRegionEntrance)
                 .filter(Objects::nonNull)
                 .filter(entrance -> selectedEntranceTypes.contains(entrance.getObjectType()))
