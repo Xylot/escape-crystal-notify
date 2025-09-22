@@ -181,6 +181,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Getter
 	private boolean atNotifyRegionEntrance = false;
 	@Getter
+	private boolean atSafeRegionId = false;
+	@Getter
 	private List<EscapeCrystalNotifyLocatedEntrance> validEntrances = new ArrayList<>();
 	private Set<Integer> targetRegionIds;
 	private Set<Integer> npcEntranceIds;
@@ -199,6 +201,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private final Set<Integer> zulrahRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> zulrahEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_ZULRAH_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> teleportDisabledRegionIds = EscapeCrystalNotifyRegion.getTeleportDisabledRegionIds();
+	private final Set<Integer> safeForRegularHardcoreRegionIds = EscapeCrystalNotifyRegion.getSafeForRegularHardcoreRegionIds();
 	private Set<Integer> tzhaarEntranceRegionIds = new HashSet<>();
 	private Set<Integer> logoutBugRegionIds = new HashSet<>();
 	private BufferedImage inactiveEscapeCrystalImage;
@@ -590,6 +593,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		this.computeWorldPointMetrics();
 
+		this.atSafeRegionId = this.isRegionSafe(this.currentRegionId);
 		this.atNotifyRegionId = this.checkAtNotifyLocation();
 		this.enteredNotifyRegionId = !this.previouslyAtNotifyRegionId && this.atNotifyRegionId;
 
@@ -636,6 +640,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	private boolean checkAtNotifyLocation() {
+		if (this.atSafeRegionId) return false;
+
 		if (config.displayEverywhere()) return true;
 
 		if (this.currentRegionId == ZULRAH_ENTRANCE_REGION_ID) this.updateZulrahRegionsInSet();
@@ -1117,6 +1123,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		}
 
 		return false;
+	}
+
+	public boolean isRegionSafe(int regionId) {
+		return this.config.excludeSafeForRegularHardcoreRegions() && this.safeForRegularHardcoreRegionIds.contains(regionId) && this.accountType != EscapeCrystalNotifyAccountType.GROUP_HARDCORE;
 	}
 
 	private void updateZulrahRegionsInSet() {

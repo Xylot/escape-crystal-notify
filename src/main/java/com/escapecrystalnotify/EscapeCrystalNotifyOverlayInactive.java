@@ -48,6 +48,7 @@ public class EscapeCrystalNotifyOverlayInactive extends Overlay {
         boolean enabled = config.enableOnScreenWidget();
         boolean active = plugin.isEscapeCrystalInactivityTeleportActive();
         boolean notHardcore = config.requireHardcoreAccountType() && !plugin.isHardcoreAccountType();
+        boolean atSafeRegion = plugin.isAtSafeRegionId();
 
         boolean atNotifyRegion;
         if (this.plugin.isAtNotifyRegionId()) {
@@ -56,7 +57,7 @@ public class EscapeCrystalNotifyOverlayInactive extends Overlay {
             atNotifyRegion = this.config.alwaysDisplayOnScreenWidget();
         }
 
-        if (!enabled || notHardcore || !atNotifyRegion || active) {
+        if (!enabled || notHardcore || !atNotifyRegion || active || atSafeRegion) {
             return null;
         }
 

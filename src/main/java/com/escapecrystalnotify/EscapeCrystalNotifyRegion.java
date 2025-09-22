@@ -319,4 +319,11 @@ public enum EscapeCrystalNotifyRegion {
                 .flatMap(region -> Arrays.stream(region.getRegionIds()).boxed())
                 .collect(Collectors.toSet());
     }
+
+    public static Set<Integer> getSafeForRegularHardcoreRegionIds() {
+        return Arrays.stream(EscapeCrystalNotifyRegion.values())
+                .filter(region -> region.getRegionDeathType() == EscapeCrystalNotifyRegionDeathType.UNSAFE_HCGIM)
+                .flatMap(region -> Arrays.stream(region.getRegionIds()).boxed())
+                .collect(Collectors.toSet());
+    }
 }

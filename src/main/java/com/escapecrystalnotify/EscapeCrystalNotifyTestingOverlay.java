@@ -477,6 +477,16 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
         height += 15;
 
         panelComponent.getChildren().add(LineComponent.builder()
+                .left("At Safe Region:")
+                .leftFont(OVERLAY_PANEL_FONT)
+                .leftColor(Color.WHITE)
+                .right(String.valueOf(plugin.isAtSafeRegionId()))
+                .rightFont(OVERLAY_PANEL_FONT)
+                .rightColor(plugin.isAtSafeRegionId() ? Color.GREEN : Color.RED)
+                .build());
+        height += 15;
+
+        panelComponent.getChildren().add(LineComponent.builder()
                 .left("Western Elite Diary Done:")
                 .leftFont(OVERLAY_PANEL_FONT)
                 .leftColor(Color.WHITE)

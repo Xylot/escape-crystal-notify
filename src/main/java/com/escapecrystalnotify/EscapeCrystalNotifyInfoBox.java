@@ -30,6 +30,7 @@ public class EscapeCrystalNotifyInfoBox extends InfoBox {
     @Override
     public boolean render() {
         boolean atNotifyRegion;
+        boolean atSafeRegion = plugin.isAtSafeRegionId();
 
         if (this.plugin.isAtNotifyRegionId()) {
             atNotifyRegion = true;
@@ -37,7 +38,7 @@ public class EscapeCrystalNotifyInfoBox extends InfoBox {
             atNotifyRegion = this.config.alwaysDisplayInfoBox();
         }
 
-        return this.config.enableInfoBox() && atNotifyRegion;
+        return this.config.enableInfoBox() && atNotifyRegion && !atSafeRegion;
     }
 
 }

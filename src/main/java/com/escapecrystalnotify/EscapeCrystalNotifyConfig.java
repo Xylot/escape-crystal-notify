@@ -135,11 +135,20 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default boolean excludeZulrahWithEliteDiary() { return true; }
 
 	@ConfigItem(
+			keyName = "excludeSafeForRegularHardcoreRegions",
+			name = "Exclude Safe Regular HC Regions",
+			description = "Don't display at regions that are explicitly safe for regular hardcores (Cox, inferno, etc..)",
+			section = "displayRegionFilter",
+			position = 8
+	)
+	default boolean excludeSafeForRegularHardcoreRegions() { return true; }
+
+	@ConfigItem(
 			keyName = "excludeRegionIds",
 			name = "Exclude Region IDs",
 			description = "A comma separated list of Region IDs to exclude",
 			section = "displayRegionFilter",
-			position = 8
+			position = 9
 	)
 	default String excludeRegionIds() { return ""; }
 
@@ -148,7 +157,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Include Region IDs",
 			description = "A comma separated list of Region IDs to include",
 			section = "displayRegionFilter",
-			position = 9
+			position = 10
 	)
 	default String includeRegionIds() { return ""; }
 
