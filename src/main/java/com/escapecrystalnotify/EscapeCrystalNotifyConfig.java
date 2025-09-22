@@ -137,7 +137,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 			keyName = "excludeSafeForRegularHardcoreRegions",
 			name = "Exclude Safe Regular HC Regions",
-			description = "Don't display at regions that are explicitly safe for regular hardcores (Cox, inferno, etc..)",
+			description = "Don't display at regions that are explicitly safe for regular hardcores (Cox, inferno, etc..). Displays will still be enabled when playing on a GHCIM.",
 			section = "displayRegionFilter",
 			position = 8
 	)
