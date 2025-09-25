@@ -1117,11 +1117,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	public boolean isLeviathanSafeguardPanelEnabled() {
-		return this.atLeviathanLobby && !config.disableLeviathanSafeguardPanelPopup();
+		return this.atLeviathanLobby && (config.displayLeviathanBugInfo() || config.displayLeviathanLogoutSetting());
 	}
 
 	public boolean isDoomSafeguardPanelEnabled() {
-		return this.atDoomLobby && !config.disableDoomSafeguardPanelPopup();
+		return this.atDoomLobby && (config.displayDoomBugInfo() || config.displayDoomLogoutSetting());
 	}
 
 	public boolean isTeleportDisabledPanelEnabled() {

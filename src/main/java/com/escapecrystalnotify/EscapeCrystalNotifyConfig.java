@@ -638,40 +638,22 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default SafeguardAccountType leviathanSafeguardMode() { return SafeguardAccountType.HC_ONLY; }
 
 	@ConfigItem(
-		keyName = "disableLeviathanSafeguardPanelPopup",
-		name = "Disable Panel Popup",
-		description = "Disables the panel that appears when near Leviathan's entry boat",
+		keyName = "displayLeviathanBugInfo",
+		name = "Display Bug Info",
+		description = "Display information about Leviathan's logout bug",
 		section = "leviathanSafeguardSettings",
 		position = 2
 	)
-	default boolean disableLeviathanSafeguardPanelPopup() { return false; }
+	default boolean displayLeviathanBugInfo() { return true; }
 
 	@ConfigItem(
-		keyName = "hideLeviathanBugInfoText",
-		name = "Hide Bug Info Text",
-		description = "Hides the information about Leviathan's logout bug",
+		keyName = "displayLeviathanLogoutSetting",
+		name = "Display Logout Setting",
+		description = "Display information about the current configured logout setting",
 		section = "leviathanSafeguardSettings",
 		position = 3
 	)
-	default boolean hideLeviathanBugInfoText() { return false; }
-
-	@ConfigItem(
-		keyName = "hideLeviathanLogoutSettingText",
-		name = "Hide Current Logout Setting Text",
-		description = "Hides the information about the current configured logout setting",
-		section = "leviathanSafeguardSettings",
-		position = 4
-	)
-	default boolean hideLeviathanLogoutSettingText() { return false; }
-
-	@ConfigItem(
-		keyName = "hideLeviathanSettingsInstructionText",
-		name = "Hide Bottom Instruction Info",
-		description = "Hides the text at the bottom of the panel that explains how to enable/disable the Leviathan safeguard features",
-		section = "leviathanSafeguardSettings",
-		position = 6
-	)
-	default boolean hideLeviathanSettingsInstructionText() { return false; }
+	default boolean displayLeviathanLogoutSetting() { return true; }
 
 	@Alpha
 	@ConfigItem(
@@ -679,16 +661,16 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "6-Hour Entrance Highlight Color",
 		description = "Color used to highlight entrances when close to 6-hour logout and logout bug is possible",
 		section = "leviathanSafeguardSettings",
-		position = 7
+		position = 4
 	)
 	default Color leviathanLogoutBugHighlightColor() { return new Color(173, 216, 230, 75); }
 
 	@ConfigItem(
 		keyName = "leviathanLogoutBugMessage",
 		name = "6-Hour Warning Message",
-		description = "Message displayed when close to 6-hour logout and logout bug is possible",
+		description = "Message displayed when close to 6-hour logout and logout bug is possible. Only shows when 'Display Logout Setting' is enabled.",
 		section = "leviathanSafeguardSettings",
-		position = 8
+		position = 5
 	)
 	default String leviathanLogoutBugMessage() { return "Relog - Close to 6 hour logout"; }
 
@@ -710,40 +692,22 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default SafeguardAccountType doomSafeguardMode() { return SafeguardAccountType.HC_ONLY; }
 
 	@ConfigItem(
-		keyName = "disableDoomSafeguardPanelPopup",
-		name = "Disable Panel Popup",
-		description = "Disables the panel that appears when near Doom's arena",
+		keyName = "displayDoomBugInfo",
+		name = "Display Bug Info",
+		description = "Display information about Doom's logout bug",
 		section = "doomSafeguardSettings",
 		position = 2
 	)
-	default boolean disableDoomSafeguardPanelPopup() { return false; }
+	default boolean displayDoomBugInfo() { return true; }
 
 	@ConfigItem(
-		keyName = "hideDoomBugInfoText",
-		name = "Hide Bug Info Text",
-		description = "Hides the information about Doom's logout bug",
+		keyName = "displayDoomLogoutSetting",
+		name = "Display Logout Setting",
+		description = "Display information about the current configured logout setting",
 		section = "doomSafeguardSettings",
 		position = 3
 	)
-	default boolean hideDoomBugInfoText() { return false; }
-
-	@ConfigItem(
-		keyName = "hideDoomLogoutSettingText",
-		name = "Hide Current Logout Setting Text",
-		description = "Hides the information about the current configured logout setting",
-		section = "doomSafeguardSettings",
-		position = 4
-	)
-	default boolean hideDoomLogoutSettingText() { return false; }
-
-	@ConfigItem(
-		keyName = "hideDoomSettingsInstructionText",
-		name = "Hide Bottom Instruction Info",
-		description = "Hides the text at the bottom of the panel that explains how to enable/disable the Doom safeguard features",
-		section = "doomSafeguardSettings",
-		position = 6
-	)
-	default boolean hideDoomSettingsInstructionText() { return false; }
+	default boolean displayDoomLogoutSetting() { return true; }
 
 	@Alpha
 	@ConfigItem(
@@ -751,16 +715,16 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "6-Hour Entrance Highlight Color",
 		description = "Color used to highlight entrances when close to 6-hour logout and logout bug is possible",
 		section = "doomSafeguardSettings",
-		position = 7
+		position = 4
 	)
 	default Color doomLogoutBugHighlightColor() { return new Color(0, 142, 80, 75); }
 
 	@ConfigItem(
 		keyName = "doomLogoutBugMessage",
 		name = "6-Hour Warning Message",
-		description = "Message displayed when close to 6-hour logout and logout bug is possible",
+		description = "Message displayed when close to 6-hour logout and logout bug is possible. Only shows when 'Display Logout Setting' is enabled.",
 		section = "doomSafeguardSettings",
-		position = 8
+		position = 5
 	)
 	default String doomLogoutBugMessage() { return "Relog - Close to 6 hour logout"; }
 

@@ -61,12 +61,13 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
         String instructionText = null;
 
         if (plugin.isLeviathanSafeguardPanelEnabled()) {
-            if (!config.hideLeviathanBugInfoText()) {
+            if (config.displayLeviathanBugInfo()) {
                 bugInfoHeaderText = LEVIATHAN_BUG_INFO_HEADER_TEXT;
                 bugInfoText = LEVIATHAN_BUG_INFO_TEXT;
+                instructionText = LEVIATHAN_INSTRUCTION_TEXT;
             }
 
-            if (!config.hideLeviathanLogoutSettingText()) {
+            if (config.displayLeviathanLogoutSetting()) {
                 logoutStatusHeaderText = LEVIATHAN_LOGOUT_STATUS_HEADER_TEXT;
 
                 if (plugin.isLeviathanSafeguardEnabled()) {
@@ -79,15 +80,15 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
                 }
             };
 
-            if (plugin.isLeviathanSafeguardEnabled()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
-            if (!config.hideLeviathanSettingsInstructionText()) instructionText = LEVIATHAN_INSTRUCTION_TEXT;
+            if (plugin.isLeviathanSafeguardEnabled() && config.displayLeviathanLogoutSetting()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
         } else if (plugin.isDoomSafeguardPanelEnabled()) {
-            if (!config.hideDoomBugInfoText()) {
+            if (config.displayDoomBugInfo()) {
                 bugInfoHeaderText = DOOM_BUG_INFO_HEADER_TEXT;
                 bugInfoText = DOOM_BUG_INFO_TEXT;
+                instructionText = DOOM_INSTRUCTION_TEXT;
             }
 
-            if (!config.hideDoomLogoutSettingText()) {
+            if (config.displayDoomLogoutSetting()) {
                 logoutStatusHeaderText = DOOM_LOGOUT_STATUS_HEADER_TEXT;
 
                 if (plugin.isDoomSafeguardEnabled()) {
@@ -101,8 +102,7 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
                 }
             }
 
-            if (plugin.isDoomSafeguardEnabled()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
-            if (!config.hideDoomSettingsInstructionText()) instructionText = DOOM_INSTRUCTION_TEXT;
+            if (plugin.isDoomSafeguardEnabled() && config.displayDoomLogoutSetting()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
         } else {
             return null;
         }
