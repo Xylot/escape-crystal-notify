@@ -663,7 +663,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		section = "leviathanSafeguardSettings",
 		position = 4
 	)
-	default Color leviathanLogoutBugHighlightColor() { return new Color(173, 216, 230, 75); }
+	default Color leviathanLogoutBugHighlightColor() { return new Color(0, 142, 80, 75); }
 
 	@ConfigItem(
 		keyName = "leviathanLogoutBugMessage",
