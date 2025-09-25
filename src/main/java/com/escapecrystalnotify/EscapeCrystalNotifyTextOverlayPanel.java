@@ -69,7 +69,7 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
             if (!config.hideLeviathanLogoutSettingText()) {
                 logoutStatusHeaderText = LEVIATHAN_LOGOUT_STATUS_HEADER_TEXT;
 
-                if (config.deprioritizeLeviathanLogout()) {
+                if (plugin.isLeviathanSafeguardEnabled()) {
                     logoutStatusText = LEVIATHAN_LOGOUT_STATUS_DEPRIORITIZED_TEXT_SHORT;
                     logoutStatusTextColor = Color.GREEN;
                 } else {
@@ -79,7 +79,7 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
                 }
             };
 
-            if (config.warnLeviathanLogoutTimer()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
+            if (plugin.isLeviathanSafeguardEnabled()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
             if (!config.hideLeviathanSettingsInstructionText()) instructionText = LEVIATHAN_INSTRUCTION_TEXT;
         } else if (plugin.isDoomSafeguardPanelEnabled()) {
             if (!config.hideDoomBugInfoText()) {
@@ -90,7 +90,7 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
             if (!config.hideDoomLogoutSettingText()) {
                 logoutStatusHeaderText = DOOM_LOGOUT_STATUS_HEADER_TEXT;
 
-                if (config.deprioritizeDoomLogout()) {
+                if (plugin.isDoomSafeguardEnabled()) {
                     logoutStatusText = DOOM_LOGOUT_STATUS_DEPRIORITIZED_TEXT_SHORT;
                     logoutStatusAdditionalText = DOOM_LOGOUT_STATUS_DEPRIORITIZED_TEXT_ADDITIONAL_INFO;
                     logoutStatusTextColor = Color.GREEN;
@@ -101,7 +101,7 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
                 }
             }
 
-            if (config.warnDoomLogoutTimer()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
+            if (plugin.isDoomSafeguardEnabled()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
             if (!config.hideDoomSettingsInstructionText()) instructionText = DOOM_INSTRUCTION_TEXT;
         } else {
             return null;

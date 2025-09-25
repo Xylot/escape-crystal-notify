@@ -43,6 +43,10 @@ public class EscapeCrystalNotifyLocatedEntrance {
         return this.definition.getOverlayType().canDeprioritize() && !this.definition.isEscapeCrystalDisabled();
     }
 
+    public boolean shouldDeprioritizeForLogoutBug() {
+        return this.definition.isLogoutBugPossible() && !this.definition.isEscapeCrystalDisabled();
+    }
+
     public boolean isPrioritized() {
         return this.definition.getOverlayType() == EscapeCrystalNotifyRegionEntranceOverlayType.PRIORITIZED_WITH_HIGHLIGHT;
     }

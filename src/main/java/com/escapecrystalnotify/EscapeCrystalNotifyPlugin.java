@@ -90,6 +90,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private EscapeCrystalNotifyRegionEntranceOverlay escapeCrystalNotifyRegionEntranceOverlay;
 
 	@Inject
+	private EscapeCrystalNotifyRegionEntranceSixHourOverlay escapeCrystalNotifyRegionEntranceSixHourOverlay;
+
+	@Inject
 	private EscapeCrystalNotifyTestingOverlay escapeCrystalNotifyTestingOverlay;
 
 	@Inject
@@ -207,7 +210,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private BufferedImage inactiveEscapeCrystalImage;
 	private BufferedImage activeEscapeCrystalImage;
 	private BufferedImage bankFillerImage;
+	private BufferedImage giantStopwatchImage;
 	private BufferedImage entranceOverlayImage;
+	private BufferedImage entranceSixHourOverlayImage;
 	private EscapeCrystalNotifyInfoBox activeInfoBox;
 
 	@Override
@@ -234,6 +239,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		overlayManager.add(escapeCrystalNotifyTextOverlayPanel);
 		overlayManager.add(escapeCrystalNotifyTeleportDisabledPanel);
 		overlayManager.add(escapeCrystalNotifyRegionEntranceOverlay);
+		overlayManager.add(escapeCrystalNotifyRegionEntranceSixHourOverlay);
 		overlayManager.add(escapeCrystalNotifyTestingOverlay);
 	}
 
@@ -247,6 +253,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		overlayManager.remove(escapeCrystalNotifyTextOverlayPanel);
 		overlayManager.remove(escapeCrystalNotifyTeleportDisabledPanel);
 		overlayManager.remove(escapeCrystalNotifyRegionEntranceOverlay);
+		overlayManager.remove(escapeCrystalNotifyRegionEntranceSixHourOverlay);
 		overlayManager.remove(escapeCrystalNotifyTestingOverlay);
 		removeInfoBoxes();
 	}
@@ -270,14 +277,16 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Subscribe
 	public void onPostMenuSort(PostMenuSort e) {
-		boolean inLeviathanEncounter = config.deprioritizeLeviathanLogout() && this.atLeviathanRegionId && !this.atLeviathanLobby;
-		boolean inDoomEncounter = config.deprioritizeDoomLogout() && this.atDoomRegionId && !this.atDoomLobby && !this.doomFloorCleared;
+		boolean inLeviathanEncounter = this.isLeviathanSafeguardEnabled() && this.atLeviathanRegionId && !this.atLeviathanLobby;
+		boolean inDoomEncounter = this.isDoomSafeguardEnabled() && this.atDoomRegionId && !this.atDoomLobby && !this.doomFloorCleared;
+		boolean leviathanSixHourLogoutWarning = this.isLeviathanSafeguardEnabled() && this.atLeviathanLobby && this.isCloseToSixHourLogout();
+		boolean doomSixHourLogoutWarning = this.isDoomSafeguardEnabled() && this.atDoomLobby && this.isCloseToSixHourLogout();
 
 		if (inLeviathanEncounter || inDoomEncounter) {
 			deprioritizeLogoutButton();
 		}
 
-		if (this.shouldDeprioritizeEntranceEnterOption()) {
+		if (this.shouldDeprioritizeEntranceEnterOption() || leviathanSixHourLogoutWarning || doomSixHourLogoutWarning) {
 			deprioritizeEnterOption();
 		}
 	}
@@ -918,7 +927,16 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		MenuEntry[] newEntries = new MenuEntry[menuEntries.length + 1];
 		System.arraycopy(menuEntries, 0, newEntries, 0, menuEntries.length);
 
-		String optionText = ColorUtil.wrapWithColorTag(config.deprioritizedMenuText(), config.deprioritizedMenuTextColor());
+		String optionText;
+		if (entranceToDeprioritize.shouldDeprioritizeForLogoutBug() && this.isAtLeviathanLobby()) {
+			optionText = ColorUtil.wrapWithColorTag(config.leviathanLogoutBugMessage(), config.leviathanLogoutBugHighlightColor().brighter());
+		}
+		else if (entranceToDeprioritize.shouldDeprioritizeForLogoutBug() && this.isAtDoomLobby()) {
+			optionText = ColorUtil.wrapWithColorTag(config.doomLogoutBugMessage(), config.doomLogoutBugHighlightColor().brighter());
+		}
+		else {
+			optionText = ColorUtil.wrapWithColorTag(config.deprioritizedMenuText(), config.deprioritizedMenuTextColor().brighter());
+		}
 		MenuEntry escapeCrystalReminderEntry = client.createMenuEntry(0).setType(MenuAction.CANCEL).setOption(optionText).setTarget("");
 
 		newEntries[newEntries.length - 1] = escapeCrystalReminderEntry;
@@ -1074,11 +1092,25 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		return bankFillerImage;
 	}
 
+	public BufferedImage getGiantStopwatchImage() {
+		if (giantStopwatchImage == null) {
+			giantStopwatchImage = itemManager.getImage(ItemID.GIANT_STOPWATCH);
+		}
+		return giantStopwatchImage;
+	}
+
 	public BufferedImage getEntranceOverlayImage() {
 		if (entranceOverlayImage == null) {
 			entranceOverlayImage = combineItemImages(this.getActiveEscapeCrystalImage(), this.getBankFillerImage());
 		}
 		return entranceOverlayImage;
+	}
+
+	public BufferedImage getEntranceSixHourOverlayImage() {
+		if (entranceSixHourOverlayImage == null) {
+			entranceSixHourOverlayImage = this.getGiantStopwatchImage();
+		}
+		return entranceSixHourOverlayImage;
 	}
 
 	public boolean isLeviathanSafeguardPanelEnabled() {
@@ -1094,7 +1126,32 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	public boolean isCloseToSixHourLogout() {
-		return ticksSinceLogin >= SIX_HOUR_LOG_WARNING_THRESHOLD_TICKS;
+		int ticksToUse = config.ticksSinceLoginOverride() >= 0 ? config.ticksSinceLoginOverride() : ticksSinceLogin;
+		return ticksToUse >= SIX_HOUR_LOG_WARNING_THRESHOLD_TICKS;
+	}
+
+	public boolean isLeviathanSafeguardEnabled() {
+		switch (config.leviathanSafeguardMode()) {
+			case ALWAYS:
+				return true;
+			case HC_ONLY:
+				return this.isHardcoreAccountType();
+			case DISABLED:
+			default:
+				return false;
+		}
+	}
+
+	public boolean isDoomSafeguardEnabled() {
+		switch (config.doomSafeguardMode()) {
+			case ALWAYS:
+				return true;
+			case HC_ONLY:
+				return this.isHardcoreAccountType();
+			case DISABLED:
+			default:
+				return false;
+		}
 	}
 
 	public boolean hasDiedAtZulrah() {

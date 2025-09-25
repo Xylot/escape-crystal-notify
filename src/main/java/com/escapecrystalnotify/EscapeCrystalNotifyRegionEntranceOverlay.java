@@ -1,11 +1,8 @@
 package com.escapecrystalnotify;
 
-import net.runelite.api.GameObject;
 import net.runelite.api.Point;
 import net.runelite.client.plugins.PluginInstantiationException;
 import net.runelite.client.ui.overlay.*;
-import net.runelite.client.ui.overlay.components.ImageComponent;
-import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
 import java.awt.*;
@@ -63,7 +60,6 @@ public class EscapeCrystalNotifyRegionEntranceOverlay extends Overlay {
             if (!entrance.canHighlight() || entrance.isPlayerPastEntrance(plugin.getCurrentWorldPoint())) {
                 continue;
             }
-
             if (active && !entrance.getDefinition().isEscapeCrystalDisabled()) {
                 continue;
             }
