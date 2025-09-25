@@ -190,6 +190,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private Set<Integer> targetRegionIds;
 	private Set<Integer> npcEntranceIds;
 	private Set<Integer> gameObjectEntranceIds;
+	private HashSet<Integer> manuallyExcludedRegionIds = new HashSet<>();
 	private final HashSet<Integer> excludedRegionIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedRegionIds();
 	private final HashSet<Integer> excludedChunkIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedChunkIds();
 	private final Map<Integer, Integer> planeRequirements = EscapeCrystalNotifyRegionPlaneRequirements.getRegionPlaneMap();
@@ -785,6 +786,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		Set<Integer> regionIds = new HashSet<>(EscapeCrystalNotifyRegion.getRegionIdsFromTypes(targetRegions, getTargetDeathTypes(accountType)));
 		List<Integer> includeRegionIds = parseAdditionalConfigRegionIds(config.includeRegionIds());
 		List<Integer> excludeRegionIds = parseAdditionalConfigRegionIds(config.excludeRegionIds());
+		this.manuallyExcludedRegionIds = new HashSet<>(excludeRegionIds);
 
 		regionIds.addAll(includeRegionIds);
 		regionIds.removeAll(excludeRegionIds);
@@ -1186,7 +1188,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	public boolean isRegionSafe(int regionId) {
-		return this.config.excludeSafeForRegularHardcoreRegions() && this.safeForRegularHardcoreRegionIds.contains(regionId) && this.accountType != EscapeCrystalNotifyAccountType.GROUP_HARDCORE;
+		boolean atExcludedSafeForRegularHardcoreRegion = this.config.excludeSafeForRegularHardcoreRegions() && this.safeForRegularHardcoreRegionIds.contains(regionId) && this.accountType != EscapeCrystalNotifyAccountType.GROUP_HARDCORE;
+		boolean atManuallyExcludedConfigRegion = this.manuallyExcludedRegionIds.contains(regionId);
+		return atExcludedSafeForRegularHardcoreRegion || atManuallyExcludedConfigRegion;
 	}
 
 	private void updateZulrahRegionsInSet() {
