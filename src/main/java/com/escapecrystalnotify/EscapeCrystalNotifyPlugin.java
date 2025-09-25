@@ -276,7 +276,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		sendRequestedNotifications();
 	}
 
-	@Subscribe
+	@Subscribe(priority = -2)
 	public void onPostMenuSort(PostMenuSort e) {
 		boolean inLeviathanEncounter = this.isLeviathanSafeguardEnabled() && this.atLeviathanRegionId && !this.atLeviathanLobby;
 		boolean inDoomEncounter = this.isDoomSafeguardEnabled() && this.atDoomRegionId && !this.atDoomLobby && !this.doomFloorCleared;
