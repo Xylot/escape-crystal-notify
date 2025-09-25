@@ -927,11 +927,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		MenuEntry[] newEntries = new MenuEntry[menuEntries.length + 1];
 		System.arraycopy(menuEntries, 0, newEntries, 0, menuEntries.length);
 
+		boolean enableLeviathan = this.isLeviathanSafeguardEnabled() && this.atLeviathanLobby && this.isCloseToSixHourLogout();
+		boolean enableDoom = this.isDoomSafeguardEnabled() && this.atDoomLobby && this.isCloseToSixHourLogout();
+
 		String optionText;
-		if (entranceToDeprioritize.shouldDeprioritizeForLogoutBug() && this.isAtLeviathanLobby()) {
+		if (entranceToDeprioritize.shouldDeprioritizeForLogoutBug() && enableLeviathan) {
 			optionText = ColorUtil.wrapWithColorTag(config.leviathanLogoutBugMessage(), config.leviathanLogoutBugHighlightColor().brighter());
 		}
-		else if (entranceToDeprioritize.shouldDeprioritizeForLogoutBug() && this.isAtDoomLobby()) {
+		else if (entranceToDeprioritize.shouldDeprioritizeForLogoutBug() && enableDoom) {
 			optionText = ColorUtil.wrapWithColorTag(config.doomLogoutBugMessage(), config.doomLogoutBugHighlightColor().brighter());
 		}
 		else {
