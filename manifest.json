@@ -1,0 +1,110 @@
+{
+  "submission": "5987ff71-3244-44ab-b2bf-aef642d26e88",
+  "revision": "lWjYR78y8KhN_kMsVgYHZfIoMkC9nKciRD-YQQzQ-ug",
+  "base": "a61047d17cdda10202655cb93936d9d50a014ec3",
+  "evidence": {
+    "panels": [
+      {
+        "id": "BOSS_SHELLBANE_GRYPHON-arena-1",
+        "bossId": "BOSS_SHELLBANE_GRYPHON",
+        "name": "Shellbane gryphon",
+        "kind": "arena",
+        "context": {
+          "x": 3179,
+          "y": 8876,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": -1,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Shellbane_Gryphon_Cave",
+          "revision": 15212238
+        },
+        "regions": [
+          12682
+        ],
+        "chunks": [],
+        "restrictChunks": false,
+        "renderScale": 2,
+        "minX": 49,
+        "maxY": 138,
+        "columns": 1,
+        "rows": 1
+      },
+      {
+        "id": "BOSS_SHELLBANE_GRYPHON-entrance-1",
+        "bossId": "BOSS_SHELLBANE_GRYPHON",
+        "name": "Shellbane gryphon",
+        "kind": "entrance",
+        "context": {
+          "x": 3176,
+          "y": 2477,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": 0,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Shellbane_gryphon",
+          "revision": 15318109
+        },
+        "regions": [
+          12582
+        ],
+        "chunks": [],
+        "restrictChunks": false,
+        "renderScale": 2,
+        "minX": 49,
+        "maxY": 38,
+        "columns": 1,
+        "rows": 1
+      }
+    ],
+    "contexts": {
+      "BOSS_SHELLBANE_GRYPHON": {
+        "arena": {
+          "x": 3179,
+          "y": 8876,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": -1,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Shellbane_Gryphon_Cave",
+          "revision": 15212238
+        },
+        "entrance": {
+          "x": 3176,
+          "y": 2477,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": 0,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Shellbane_gryphon",
+          "revision": 15318109
+        }
+      }
+    },
+    "sources": {
+      "BOSS_SHELLBANE_GRYPHON": [
+        "https://oldschool.runescape.wiki/w/Shellbane_Gryphon_Cave",
+        "https://oldschool.runescape.wiki/w/Shellbane_Gryphon_Cave?oldid=15212238",
+        "https://oldschool.runescape.wiki/w/Shellbane_gryphon",
+        "https://oldschool.runescape.wiki/w/Shellbane_gryphon?oldid=15318109"
+      ]
+    }
+  },
+  "presentation": {
+    "BOSS_SHELLBANE_GRYPHON": {
+      "scope": "boss",
+      "images": [
+        "58440",
+        "58441"
+      ]
+    }
+  }
+}
