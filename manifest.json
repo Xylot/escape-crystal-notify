@@ -1,0 +1,113 @@
+{
+  "submission": "7d3675f9-a0dc-4e84-8abe-3e2e63d09c06",
+  "revision": "9dA2gKe6sil6Lz4tqtfDQWaH-mmaR_q2zMA5SZUCDgo",
+  "base": "facacb4319778bffd59c9a5f73ae5274ce83fe4f",
+  "evidence": {
+    "panels": [
+      {
+        "id": "BOSS_MAGGOT_KING-arena-1",
+        "bossId": "BOSS_MAGGOT_KING",
+        "name": "Maggot King",
+        "kind": "arena",
+        "context": {
+          "x": 2911,
+          "y": 8036,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": -1,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Maggot_King's_lair",
+          "revision": 15252788
+        },
+        "regions": [
+          11645
+        ],
+        "chunks": [],
+        "restrictChunks": false,
+        "renderScale": 2,
+        "minX": 45,
+        "maxY": 125,
+        "columns": 1,
+        "rows": 1
+      },
+      {
+        "id": "BOSS_MAGGOT_KING-entrance-1",
+        "bossId": "BOSS_MAGGOT_KING",
+        "name": "Maggot King",
+        "kind": "entrance",
+        "context": {
+          "x": 2678,
+          "y": 7851,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": -1,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Maggot_King's_lair",
+          "revision": 15252788
+        },
+        "regions": [
+          10618
+        ],
+        "chunks": [
+          685012,
+          685013,
+          687060,
+          687061
+        ],
+        "restrictChunks": true,
+        "renderScale": 2,
+        "minX": 41,
+        "maxY": 122,
+        "columns": 1,
+        "rows": 1
+      }
+    ],
+    "contexts": {
+      "BOSS_MAGGOT_KING": {
+        "arena": {
+          "x": 2911,
+          "y": 8036,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": -1,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Maggot_King's_lair",
+          "revision": 15252788
+        },
+        "entrance": {
+          "x": 2678,
+          "y": 7851,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": -1,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Maggot_King's_lair",
+          "revision": 15252788
+        }
+      }
+    },
+    "sources": {
+      "BOSS_MAGGOT_KING": [
+        "https://oldschool.runescape.wiki/w/Maggot_King",
+        "https://oldschool.runescape.wiki/w/Maggot_King's_lair",
+        "https://oldschool.runescape.wiki/w/Maggot_King's_lair?oldid=15252788"
+      ]
+    }
+  },
+  "presentation": {
+    "BOSS_MAGGOT_KING": {
+      "scope": "boss",
+      "images": [
+        "61048"
+      ]
+    }
+  }
+}
