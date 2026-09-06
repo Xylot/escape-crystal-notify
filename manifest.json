@@ -1,0 +1,113 @@
+{
+  "submission": "cb2dd084-7fe8-449f-afe4-b5b22484ffd1",
+  "revision": "ZrxcgOqhvYyH5DXsqcpoxAWSP0B4xgwhMWCQ2Nf9PAI",
+  "base": "dc71b189a7fa4862d12d35c088152999581182a8",
+  "evidence": {
+    "panels": [
+      {
+        "id": "BOSS_MAD_ANGEL-arena-1",
+        "bossId": "BOSS_MAD_ANGEL",
+        "name": "Mad Angel",
+        "kind": "arena",
+        "context": {
+          "x": 2540,
+          "y": 2213,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": 0,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Wyrmscraig_Cavern",
+          "revision": 15288292
+        },
+        "regions": [
+          10018
+        ],
+        "chunks": [],
+        "restrictChunks": false,
+        "renderScale": 2,
+        "minX": 39,
+        "maxY": 34,
+        "columns": 1,
+        "rows": 1
+      },
+      {
+        "id": "BOSS_MAD_ANGEL-entrance-1",
+        "bossId": "BOSS_MAD_ANGEL",
+        "name": "Mad Angel",
+        "kind": "entrance",
+        "context": {
+          "x": 2532,
+          "y": 2216,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": 0,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Ardeaglais",
+          "revision": 15301391
+        },
+        "regions": [
+          10018
+        ],
+        "chunks": [
+          649492,
+          649493
+        ],
+        "restrictChunks": true,
+        "renderScale": 2,
+        "minX": 39,
+        "maxY": 34,
+        "columns": 1,
+        "rows": 1
+      }
+    ],
+    "contexts": {
+      "BOSS_MAD_ANGEL": {
+        "arena": {
+          "x": 2540,
+          "y": 2213,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": 0,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Wyrmscraig_Cavern",
+          "revision": 15288292
+        },
+        "entrance": {
+          "x": 2532,
+          "y": 2216,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": 0,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Ardeaglais",
+          "revision": 15301391
+        }
+      }
+    },
+    "sources": {
+      "BOSS_MAD_ANGEL": [
+        "https://oldschool.runescape.wiki/w/Ardeaglais",
+        "https://oldschool.runescape.wiki/w/Ardeaglais?oldid=15301391",
+        "https://oldschool.runescape.wiki/w/Mad_Angel",
+        "https://oldschool.runescape.wiki/w/Wyrmscraig_Cavern",
+        "https://oldschool.runescape.wiki/w/Wyrmscraig_Cavern?oldid=15288292"
+      ]
+    }
+  },
+  "presentation": {
+    "BOSS_MAD_ANGEL": {
+      "scope": "boss",
+      "images": [
+        "62250"
+      ]
+    }
+  }
+}
