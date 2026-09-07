@@ -34,6 +34,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.function.Predicate;
 
 @Slf4j
 @PluginDescriptor(
@@ -191,6 +192,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private Set<Integer> npcEntranceIds;
 	private Set<Integer> gameObjectEntranceIds;
 	private HashSet<Integer> manuallyExcludedRegionIds = new HashSet<>();
+	private Set<Integer> debugGameObjectEntranceIds = new HashSet<>();
+	private Set<Integer> debugNpcEntranceIds = new HashSet<>();
 	private final HashSet<Integer> excludedRegionIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedRegionIds();
 	private final HashSet<Integer> excludedChunkIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedChunkIds();
 	private final Map<Integer, Integer> planeRequirements = EscapeCrystalNotifyRegionPlaneRequirements.getRegionPlaneMap();
@@ -298,7 +301,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		GameObject spawnedObject = event.getGameObject();
 		int spawnedObjectId = spawnedObject.getId();
 
-		if (this.gameObjectEntranceIds.contains(spawnedObjectId)) {
+		boolean debugEntrance = !this.gameObjectEntranceIds.contains(spawnedObjectId)
+			&& isDebugEntranceObjectId(spawnedObjectId);
+		if (this.gameObjectEntranceIds.contains(spawnedObjectId) || debugEntrance) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
@@ -309,7 +314,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
 					new EscapeCrystalNotifyLocatedEntrance(
 							new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
-							this.chunkEntranceMap.get(locatedChunkId),
+							debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedObjectId, true) : this.chunkEntranceMap.get(locatedChunkId),
 							locatedWorldPoint,
 							spawnedObjectId
 					)
@@ -326,7 +331,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		GameObject despawnedObject = event.getGameObject();
 
-		if (this.gameObjectEntranceIds.contains(despawnedObject.getId())) {
+		if (this.gameObjectEntranceIds.contains(despawnedObject.getId()) || isDebugEntranceObjectId(despawnedObject.getId())) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedObject.getWorldLocation(), despawnedObject.getLocalLocation());
 			int regionId = locatedWorldPoint.getRegionID();
 			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
@@ -357,22 +362,24 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		NPC spawnedNpc = npc.getNpc();
 		int spawnedNpcId = spawnedNpc.getId();
 
-		if (this.npcEntranceIds.contains(spawnedNpcId)) {
+		boolean debugEntrance = !this.npcEntranceIds.contains(spawnedNpcId)
+			&& isDebugEntranceNpcId(spawnedNpcId);
+		if (this.npcEntranceIds.contains(spawnedNpcId) || debugEntrance) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedNpc.getWorldLocation(), spawnedNpc.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
-			if (this.infernoEntranceRegionIds.contains(locatedWorldPoint.getRegionID())) {
+			if (!debugEntrance && this.infernoEntranceRegionIds.contains(locatedWorldPoint.getRegionID())) {
 				for (int regionId : this.infernoEntranceRegionIds) {
 					possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(
 							new EscapeCrystalNotifyLocatedEntrance(
 									new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
-									this.chunkEntranceMap.get(locatedChunkId),
+                                    this.chunkEntranceMap.get(locatedChunkId),
 									locatedWorldPoint,
 									spawnedNpcId
 							)
 					);
 				}
-			} else if (spawnedNpcId == NpcID.WHISPERER_SPAWN) {
+			} else if (!debugEntrance && spawnedNpcId == NpcID.WHISPERER_SPAWN) {
 				for (int regionId : this.whispererEntranceRegionIds) {
 					possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(
 							new EscapeCrystalNotifyLocatedEntrance(
@@ -383,13 +390,13 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 							)
 					);
 				}
-			} else if (spawnedNpcId == NpcID.DT2_PURSUER_HIDEOUT_COMBAT) {
+			} else if (!debugEntrance && spawnedNpcId == NpcID.DT2_PURSUER_HIDEOUT_COMBAT) {
 				this.clearPossibleEntranceId(ObjectID.DT2_HIDEOUT_ALTAR_OP);
 			} else {
 				possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
 						new EscapeCrystalNotifyLocatedEntrance(
 								new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
-								this.chunkEntranceMap.get(locatedChunkId),
+								debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedNpcId, true) : this.chunkEntranceMap.get(locatedChunkId),
 								locatedWorldPoint,
 								spawnedNpcId
 						)
@@ -414,7 +421,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			return;
 		}
 
-		if (this.npcEntranceIds.contains(despawnedNpc.getId())) {
+		if (this.npcEntranceIds.contains(despawnedNpc.getId()) || isDebugEntranceNpcId(despawnedNpc.getId())) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedNpc.getWorldLocation(), despawnedNpc.getLocalLocation());
 			int regionId = locatedWorldPoint.getRegionID();
 			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
@@ -445,14 +452,16 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		DecorativeObject spawnedObject = event.getDecorativeObject();
 
-		if (this.gameObjectEntranceIds.contains(spawnedObject.getId())) {
+		boolean debugEntrance = !this.gameObjectEntranceIds.contains(spawnedObject.getId())
+			&& isDebugEntranceObjectId(spawnedObject.getId());
+		if (this.gameObjectEntranceIds.contains(spawnedObject.getId()) || debugEntrance) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
 			possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
 					new EscapeCrystalNotifyLocatedEntrance(
 							new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
-							this.chunkEntranceMap.get(locatedChunkId),
+							debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedObject.getId(), true) : this.chunkEntranceMap.get(locatedChunkId),
 							locatedWorldPoint,
 							spawnedObject.getId()
 					)
@@ -465,7 +474,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		DecorativeObject despawnedObject = event.getDecorativeObject();
 
-		if (this.gameObjectEntranceIds.contains(despawnedObject.getId())) {
+		if (this.gameObjectEntranceIds.contains(despawnedObject.getId()) || isDebugEntranceObjectId(despawnedObject.getId())) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedObject.getWorldLocation(), despawnedObject.getLocalLocation());
 			int regionId = locatedWorldPoint.getRegionID();
 			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
@@ -486,11 +495,13 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		WallObject spawnedObject = event.getWallObject();
 
-		if (this.gameObjectEntranceIds.contains(spawnedObject.getId())) {
+		boolean debugEntrance = !this.gameObjectEntranceIds.contains(spawnedObject.getId())
+			&& isDebugEntranceObjectId(spawnedObject.getId());
+		if (this.gameObjectEntranceIds.contains(spawnedObject.getId()) || debugEntrance) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
 			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
 
-			if (HYDRA_ENTRANCE_IDS.contains(spawnedObject.getId())) {
+			if (!debugEntrance && HYDRA_ENTRANCE_IDS.contains(spawnedObject.getId())) {
 				for (int regionId : this.hydraEntranceRegionIds) {
 					possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(
 							new EscapeCrystalNotifyLocatedEntrance(
@@ -505,7 +516,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 				possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
 						new EscapeCrystalNotifyLocatedEntrance(
 								new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
-								this.chunkEntranceMap.get(locatedChunkId),
+								debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedObject.getId(), true) : this.chunkEntranceMap.get(locatedChunkId),
 								locatedWorldPoint,
 								spawnedObject.getId()
 						)
@@ -519,7 +530,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	{
 		WallObject despawnedObject = event.getWallObject();
 
-		if (this.gameObjectEntranceIds.contains(despawnedObject.getId())) {
+		if (this.gameObjectEntranceIds.contains(despawnedObject.getId()) || isDebugEntranceObjectId(despawnedObject.getId())) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(despawnedObject.getWorldLocation(), despawnedObject.getLocalLocation());
 			int regionId = locatedWorldPoint.getRegionID();
 			List<EscapeCrystalNotifyLocatedEntrance> entrances = possibleEntrances.get(regionId);
@@ -626,6 +637,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.currentChunkId = this.computeChunkIdFromWorldPoint(this.currentWorldPoint);
 	}
 
+	private boolean isDebugEntranceNpcId(int id) {
+		return this.debugNpcEntranceIds.contains(id);
+	}
+
+	private boolean isDebugEntranceObjectId(int id) {
+		return this.debugGameObjectEntranceIds.contains(id);
+	}
+
 	private void computeEntranceObjectMetrics() {
 		if (this.currentRegionId == YAMA_REGION_ID) {
 			this.clearPossibleChangedEntranceId(NpcID.YAMA_THRONE_OCCUPIED);
@@ -639,7 +658,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.validEntrances.clear();
 		for (List<EscapeCrystalNotifyLocatedEntrance> entrances : this.possibleEntrances.values()) {
 			for (EscapeCrystalNotifyLocatedEntrance entrance : entrances) {
-				if (entrance.isEntranceInValidChunk() && 
+				if ((!entrance.getDefinition().isDebug() || config.enableDebugMode()) &&
+					entrance.isEntranceInValidChunk() &&
 					!entrance.hasMoved() && 
 					!entrance.isPlayerPastEntrance(this.currentWorldPoint) &&
 					entrance.matchesPlayerPlane(this.currentPlaneId)) {
@@ -770,6 +790,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event) {
 		this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
+		Predicate<EscapeCrystalNotifyLocatedEntrance> inactiveDebugEntrance = entrance ->
+			entrance.getDefinition().isDebug() && !(entrance.getTarget().getNpc() == null
+				? isDebugEntranceObjectId(entrance.getInitialTargetId())
+				: isDebugEntranceNpcId(entrance.getInitialTargetId()));
+		for (List<EscapeCrystalNotifyLocatedEntrance> entrances : this.possibleEntrances.values()) {
+			entrances.removeIf(inactiveDebugEntrance);
+		}
+		this.validEntrances.removeIf(inactiveDebugEntrance.or(entrance -> entrance.getDefinition().isDebug() && !config.enableDebugMode()));
 		this.notifyTimeRemainingThresholdMessage = generateTimeRemainingThresholdMessage();
 		this.timeRemainingThresholdTicks = normalizeTimeRemainingThresholdValue();
 	}
@@ -787,6 +815,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		List<Integer> includeRegionIds = parseAdditionalConfigRegionIds(config.includeRegionIds());
 		List<Integer> excludeRegionIds = parseAdditionalConfigRegionIds(config.excludeRegionIds());
 		this.manuallyExcludedRegionIds = new HashSet<>(excludeRegionIds);
+		this.debugGameObjectEntranceIds = EscapeCrystalNotifyIdParser.parseIds(config.debugEntranceObjects());
+		this.debugNpcEntranceIds = EscapeCrystalNotifyIdParser.parseIds(config.debugEntranceNpcs());
 
 		regionIds.addAll(includeRegionIds);
 		regionIds.removeAll(excludeRegionIds);
@@ -799,9 +829,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	private List<Integer> parseAdditionalConfigRegionIds(String regionIds) {
-		if (regionIds.isEmpty()) return List.of();
-
-		return Arrays.stream(regionIds.split(",")).map(Integer::parseInt).collect(Collectors.toList());
+		return new ArrayList<>(EscapeCrystalNotifyIdParser.parseIds(regionIds));
 	}
 
 	private List<EscapeCrystalNotifyRegionDeathType> getTargetDeathTypes(EscapeCrystalNotifyAccountType accountType) {

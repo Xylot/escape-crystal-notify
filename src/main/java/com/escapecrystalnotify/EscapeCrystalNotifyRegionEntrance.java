@@ -14,6 +14,13 @@ public class EscapeCrystalNotifyRegionEntrance {
     public boolean escapeCrystalDisabled;
     public boolean logoutBugPossible;
     public EscapeCrystalNotifyRegionEntranceObjectType objectType;
+    public boolean isDebug;
+
+    EscapeCrystalNotifyRegionEntrance(int entranceId, boolean isDebug) {
+        this(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, null,
+            EscapeCrystalNotifyRegionEntranceObjectType.ANY, entranceId);
+        this.isDebug = isDebug;
+    }
 
     EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType overlayType, List<Integer> chunkIds, EscapeCrystalNotifyRegionEntranceObjectType objectType, int...entranceIds) {
         this.overlayType = overlayType;

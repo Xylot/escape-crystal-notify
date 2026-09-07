@@ -146,7 +146,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 			keyName = "excludeRegionIds",
 			name = "Exclude Region IDs",
-			description = "A comma separated list of Region IDs to exclude",
+			description = "Region IDs to exclude, separated by commas or whitespace.",
 			section = "displayRegionFilter",
 			position = 9
 	)
@@ -155,7 +155,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 			keyName = "includeRegionIds",
 			name = "Include Region IDs",
-			description = "A comma separated list of Region IDs to include",
+			description = "Region IDs to include, separated by commas or whitespace.",
 			section = "displayRegionFilter",
 			position = 10
 	)
@@ -874,6 +874,24 @@ public interface EscapeCrystalNotifyConfig extends Config
 		position = 10
 	)
 	default int ticksSinceLoginOverride() { return -1; }
+
+	@ConfigItem(
+		keyName = "debugEntranceObjects",
+		name = "Objects",
+		description = "Comma or whitespace-separated entrance object IDs to test while Enable Testing Mode is on. Uses the normal entrance overlay and crystal reminder settings. Leave blank to disable.",
+		section = "debugSettings",
+		position = 11
+	)
+	default String debugEntranceObjects() { return ""; }
+
+	@ConfigItem(
+		keyName = "debugEntranceNpcs",
+		name = "NPCs",
+		description = "Comma or whitespace-separated entrance NPC IDs to test while Enable Testing Mode is on. Uses the normal entrance overlay and crystal reminder settings. Leave blank to disable.",
+		section = "debugSettings",
+		position = 12
+	)
+	default String debugEntranceNpcs() { return ""; }
 
 	enum TestingAccountType {
 		DEFAULT ("Default (Actual Account Type)"),
