@@ -20,10 +20,17 @@ import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.ProfileChanged;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.game.chatbox.ChatboxPanelManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.ClientToolbar;
+import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.util.AsyncBufferedImage;
+import net.runelite.client.util.ImageUtil;
+import javax.swing.SwingUtilities;
 import net.runelite.client.ui.overlay.infobox.InfoBox;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.ColorUtil;
@@ -68,6 +75,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private Client client;
 	@Inject
 	private ConfigManager configManager;
+	@Inject
+	private ClientToolbar clientToolbar;
+	@Inject
+	private EscapeCrystalNotifyThresholds thresholds;
+	@Inject
+	private ChatboxPanelManager chatboxPanelManager;
+	private EscapeCrystalNotifyPanel thresholdPanel;
+	private NavigationButton thresholdNavigation;
 
 	@Inject
 	private EscapeCrystalNotifyConfig config;
@@ -188,6 +203,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private boolean atSafeRegionId = false;
 	@Getter
 	private List<EscapeCrystalNotifyLocatedEntrance> validEntrances = new ArrayList<>();
+	@Getter
+	private Set<EscapeCrystalNotifyRegion> nearbyBosses = Collections.emptySet();
 	private Set<Integer> targetRegionIds;
 	private Set<Integer> npcEntranceIds;
 	private Set<Integer> gameObjectEntranceIds;
@@ -198,7 +215,6 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private final HashSet<Integer> excludedChunkIds = EscapeCrystalNotifyRegionChunkExclusions.getAllExcludedChunkIds();
 	private final Map<Integer, Integer> planeRequirements = EscapeCrystalNotifyRegionPlaneRequirements.getRegionPlaneMap();
 	private final Map<Integer, List<Integer>> chunkRequirements = EscapeCrystalNotifyRegion.getRegionChunkRequirementsMap();
-	private final Map<Integer, EscapeCrystalNotifyRegionEntrance> chunkEntranceMap = EscapeCrystalNotifyRegion.getChunkEntranceMap();
 	private final Set<Integer> leviathanRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_THE_LEVIATHAN.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> doomRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_DOOM_OF_MOKHAIOTL.getRegionIds()).boxed().collect(Collectors.toList()));
 	private final Set<Integer> infernoEntranceRegionIds = new HashSet<>(Arrays.stream(EscapeCrystalNotifyRegion.BOSS_INFERNO_ENTRANCE.getRegionIds()).boxed().collect(Collectors.toList()));
@@ -222,6 +238,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
+		setupThresholdPanel();
 		this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
 		this.npcEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(List.of(EscapeCrystalNotifyRegionEntranceObjectType.NPC, EscapeCrystalNotifyRegionEntranceObjectType.ANY), getTargetDeathTypes(this.accountType)));
 		this.gameObjectEntranceIds = new HashSet<>(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(List.of(EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, EscapeCrystalNotifyRegionEntranceObjectType.ANY), getTargetDeathTypes(this.accountType)));
@@ -247,10 +264,28 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		overlayManager.add(escapeCrystalNotifyTestingOverlay);
 	}
 
+	private void setupThresholdPanel() {
+		thresholdPanel = new EscapeCrystalNotifyPanel(thresholds, (id, label) -> itemManager.getImage(id).addTo(label));
+		thresholdPanel.setNearbyBosses(nearbyBosses);
+		EscapeCrystalNotifyPanel panel = thresholdPanel;
+		AsyncBufferedImage crystalIcon = itemManager.getImage(ItemID.TOB_TELEPORT);
+		crystalIcon.onLoaded(() -> SwingUtilities.invokeLater(() -> {
+			if (thresholdPanel != panel) return; // The plugin was stopped or restarted while loading.
+			thresholdNavigation = NavigationButton.builder().tooltip("Escape Crystal Notify")
+				.icon(ImageUtil.resizeCanvas(ImageUtil.resizeImage(crystalIcon, 16, 16, true), 16, 16))
+				.priority(5).panel(panel).build();
+			clientToolbar.addNavigation(thresholdNavigation);
+		}));
+	}
+
 	@Override
 	protected void shutDown() throws Exception
 	{
+		if (thresholdNavigation != null) clientToolbar.removeNavigation(thresholdNavigation);
+		thresholdPanel = null;
+		thresholdNavigation = null;
 		this.possibleEntrances.clear();
+		resetLocatedEntrance();
 		overlayManager.remove(escapeCrystalNotifyOverlayActive);
 		overlayManager.remove(escapeCrystalNotifyOverlayInactive);
 		overlayManager.remove(escapeCrystalNotifyInventoryOverlay);
@@ -279,20 +314,53 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		sendRequestedNotifications();
 	}
 
+	@Subscribe
+	public void onMenuOpened(MenuOpened event) {
+		if (!config.showSetCrystalMaximumOption() || validEntrances.isEmpty()) return;
+		Set<EscapeCrystalNotifyRegion> added = new HashSet<>();
+		for (EscapeCrystalNotifyLocatedEntrance entrance : validEntrances) {
+			EscapeCrystalNotifyRegion encounter = EscapeCrystalNotifyEncounters.forEntrance(entrance.getDefinition());
+			if (encounter == null || added.contains(encounter)) continue;
+			for (MenuEntry entry : event.getMenuEntries()) {
+				NPC npc = entry.getNpc();
+				int entryId = npc != null ? npc.getId() : entry.getIdentifier();
+				if (entryId != entrance.getTarget().getId()) continue;
+				// Only add this after right-click opens the menu; preserve normal left-click and safeguards.
+				client.createMenuEntry(1).setOption("Set crystal maximum")
+					.setTarget(ColorUtil.wrapWithColorTag(encounter.getRegionName(), Color.ORANGE))
+					.setType(MenuAction.RUNELITE).onClick(e -> openThresholdInput(encounter));
+				added.add(encounter);
+				break;
+			}
+		}
+	}
+
+	void openThresholdInput(EscapeCrystalNotifyRegion encounter) {
+		Object editedProfile = thresholds.profile();
+		chatboxPanelManager.openTextInput(encounter.getRegionName() + ": maximum crystal setting (whole seconds, at least " + EscapeCrystalNotifyThresholds.MIN_SECONDS + ")")
+			.value(Integer.toString(thresholds.get(encounter)))
+			.onDone((Predicate<String>) text -> saveThresholdInput(encounter, text, editedProfile)).build();
+	}
+
+	boolean saveThresholdInput(EscapeCrystalNotifyRegion encounter, String text, Object editedProfile) {
+		try {
+			thresholds.set(encounter, EscapeCrystalNotifyThresholds.parseSeconds(text), editedProfile);
+			return true;
+		} catch (NumberFormatException e) {
+			return false; // Keep the input open so invalid values can be corrected.
+		}
+	}
+
 	@Subscribe(priority = -2)
 	public void onPostMenuSort(PostMenuSort e) {
 		boolean inLeviathanEncounter = this.isLeviathanSafeguardEnabled() && this.atLeviathanRegionId && !this.atLeviathanLobby;
 		boolean inDoomEncounter = this.isDoomSafeguardEnabled() && this.atDoomRegionId && !this.atDoomLobby && !this.doomFloorCleared;
-		boolean leviathanSixHourLogoutWarning = this.isLeviathanSafeguardEnabled() && this.atLeviathanLobby && this.isCloseToSixHourLogout();
-		boolean doomSixHourLogoutWarning = this.isDoomSafeguardEnabled() && this.atDoomLobby && this.isCloseToSixHourLogout();
 
 		if (inLeviathanEncounter || inDoomEncounter) {
 			deprioritizeLogoutButton();
 		}
 
-		if (this.shouldDeprioritizeEntranceEnterOption() || leviathanSixHourLogoutWarning || doomSixHourLogoutWarning) {
-			deprioritizeEnterOption();
-		}
+		deprioritizeEnterOption();
 	}
 
 	@Subscribe
@@ -305,16 +373,17 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			&& isDebugEntranceObjectId(spawnedObjectId);
 		if (this.gameObjectEntranceIds.contains(spawnedObjectId) || debugEntrance) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
-			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
+			EscapeCrystalNotifyRegionEntrance definition = EscapeCrystalNotifyRegion.findEntrance(
+				spawnedObjectId, locatedWorldPoint, EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT);
 
 			if (ENTRANCE_CLEAR_REQUIRED_IDS.contains(spawnedObjectId)) {
 				clearPossibleEntranceId(spawnedObjectId);
 			}
 
-			possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
+			addPossibleEntrance(locatedWorldPoint.getRegionID(),
 					new EscapeCrystalNotifyLocatedEntrance(
 							new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
-							debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedObjectId, true) : this.chunkEntranceMap.get(locatedChunkId),
+							debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedObjectId, true) : definition,
 							locatedWorldPoint,
 							spawnedObjectId
 					)
@@ -366,14 +435,15 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			&& isDebugEntranceNpcId(spawnedNpcId);
 		if (this.npcEntranceIds.contains(spawnedNpcId) || debugEntrance) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedNpc.getWorldLocation(), spawnedNpc.getLocalLocation());
-			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
+			EscapeCrystalNotifyRegionEntrance definition = EscapeCrystalNotifyRegion.findEntrance(
+				spawnedNpcId, locatedWorldPoint, EscapeCrystalNotifyRegionEntranceObjectType.NPC);
 
 			if (!debugEntrance && this.infernoEntranceRegionIds.contains(locatedWorldPoint.getRegionID())) {
 				for (int regionId : this.infernoEntranceRegionIds) {
-					possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(
+					addPossibleEntrance(regionId,
 							new EscapeCrystalNotifyLocatedEntrance(
 									new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
-                                    this.chunkEntranceMap.get(locatedChunkId),
+									definition,
 									locatedWorldPoint,
 									spawnedNpcId
 							)
@@ -381,7 +451,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 				}
 			} else if (!debugEntrance && spawnedNpcId == NpcID.WHISPERER_SPAWN) {
 				for (int regionId : this.whispererEntranceRegionIds) {
-					possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(
+					addPossibleEntrance(regionId,
 							new EscapeCrystalNotifyLocatedEntrance(
 									new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
 									EscapeCrystalNotifyRegion.BOSS_THE_WHISPERER.getRegionEntrance(),
@@ -393,10 +463,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			} else if (!debugEntrance && spawnedNpcId == NpcID.DT2_PURSUER_HIDEOUT_COMBAT) {
 				this.clearPossibleEntranceId(ObjectID.DT2_HIDEOUT_ALTAR_OP);
 			} else {
-				possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
+				addPossibleEntrance(locatedWorldPoint.getRegionID(),
 						new EscapeCrystalNotifyLocatedEntrance(
 								new EscapeCrystalNotifyRegionEntranceObject(spawnedNpc),
-								debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedNpcId, true) : this.chunkEntranceMap.get(locatedChunkId),
+								debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedNpcId, true) : definition,
 								locatedWorldPoint,
 								spawnedNpcId
 						)
@@ -456,12 +526,13 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			&& isDebugEntranceObjectId(spawnedObject.getId());
 		if (this.gameObjectEntranceIds.contains(spawnedObject.getId()) || debugEntrance) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
-			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
+			EscapeCrystalNotifyRegionEntrance definition = EscapeCrystalNotifyRegion.findEntrance(
+				spawnedObject.getId(), locatedWorldPoint, EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT);
 
-			possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
+			addPossibleEntrance(locatedWorldPoint.getRegionID(),
 					new EscapeCrystalNotifyLocatedEntrance(
 							new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
-							debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedObject.getId(), true) : this.chunkEntranceMap.get(locatedChunkId),
+							debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedObject.getId(), true) : definition,
 							locatedWorldPoint,
 							spawnedObject.getId()
 					)
@@ -499,11 +570,12 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			&& isDebugEntranceObjectId(spawnedObject.getId());
 		if (this.gameObjectEntranceIds.contains(spawnedObject.getId()) || debugEntrance) {
 			WorldPoint locatedWorldPoint = resolvePossiblyInstancedWorldPoint(spawnedObject.getWorldLocation(), spawnedObject.getLocalLocation());
-			int locatedChunkId = computeChunkIdFromWorldPoint(locatedWorldPoint);
+			EscapeCrystalNotifyRegionEntrance definition = EscapeCrystalNotifyRegion.findEntrance(
+				spawnedObject.getId(), locatedWorldPoint, EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT);
 
 			if (!debugEntrance && HYDRA_ENTRANCE_IDS.contains(spawnedObject.getId())) {
 				for (int regionId : this.hydraEntranceRegionIds) {
-					possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(
+					addPossibleEntrance(regionId,
 							new EscapeCrystalNotifyLocatedEntrance(
 									new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
 									EscapeCrystalNotifyRegion.BOSS_HYDRA.getRegionEntrance(),
@@ -513,10 +585,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 					);
 				}
 			} else {
-				possibleEntrances.computeIfAbsent(locatedWorldPoint.getRegionID(), k -> new ArrayList<>()).add(
+				addPossibleEntrance(locatedWorldPoint.getRegionID(),
 						new EscapeCrystalNotifyLocatedEntrance(
 								new EscapeCrystalNotifyRegionEntranceObject(spawnedObject),
-								debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedObject.getId(), true) : this.chunkEntranceMap.get(locatedChunkId),
+								debugEntrance ? new EscapeCrystalNotifyRegionEntrance(spawnedObject.getId(), true) : definition,
 								locatedWorldPoint,
 								spawnedObject.getId()
 						)
@@ -569,6 +641,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			case LOGIN_SCREEN:
             case LOADING:
                 this.possibleEntrances.clear();
+				resetLocatedEntrance();
 
 				if (NPC_ENTRANCE_AUTO_RECHECK_ON_LOAD_REGION_IDS.contains(this.currentRegionId)) {
 					this.recheckLocalNpcs = true;
@@ -645,17 +718,24 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		return this.debugGameObjectEntranceIds.contains(id);
 	}
 
+	private void addPossibleEntrance(int regionId, EscapeCrystalNotifyLocatedEntrance entrance) {
+		if (entrance.getDefinition() != null) {
+			possibleEntrances.computeIfAbsent(regionId, k -> new ArrayList<>()).add(entrance);
+		}
+	}
+
 	private void computeEntranceObjectMetrics() {
 		if (this.currentRegionId == YAMA_REGION_ID) {
 			this.clearPossibleChangedEntranceId(NpcID.YAMA_THRONE_OCCUPIED);
 		}
 
 		if (!this.atNotifyRegionId && !this.inTzhaarEntranceRegion) {
-			this.validEntrances.clear();
+			resetLocatedEntrance();
 			return;
 		}
 
 		this.validEntrances.clear();
+		Set<EscapeCrystalNotifyRegion> nearby = EnumSet.noneOf(EscapeCrystalNotifyRegion.class);
 		for (List<EscapeCrystalNotifyLocatedEntrance> entrances : this.possibleEntrances.values()) {
 			for (EscapeCrystalNotifyLocatedEntrance entrance : entrances) {
 				if ((!entrance.getDefinition().isDebug() || config.enableDebugMode()) &&
@@ -664,8 +744,23 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 					!entrance.isPlayerPastEntrance(this.currentWorldPoint) &&
 					entrance.matchesPlayerPlane(this.currentPlaneId)) {
 					this.validEntrances.add(entrance);
+					EscapeCrystalNotifyRegion encounter = EscapeCrystalNotifyEncounters.forEntrance(entrance.getDefinition());
+					if (encounter != null) nearby.add(encounter);
 				}
 			}
+		}
+		updateNearbyBosses(nearby);
+	}
+
+	private void updateNearbyBosses(Set<EscapeCrystalNotifyRegion> nearby) {
+		if (nearbyBosses.equals(nearby)) return;
+		nearbyBosses = Collections.unmodifiableSet(nearby);
+		EscapeCrystalNotifyPanel panel = thresholdPanel;
+		Set<EscapeCrystalNotifyRegion> snapshot = nearbyBosses;
+		if (panel != null) {
+			SwingUtilities.invokeLater(() -> {
+				if (thresholdPanel == panel) panel.setNearbyBosses(snapshot);
+			});
 		}
 	}
 
@@ -789,6 +884,13 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event) {
+		if (event != null) {
+			if (!EscapeCrystalNotifyConfig.GROUP.equals(event.getGroup())) return;
+			if (event.getKey().startsWith(EscapeCrystalNotifyThresholds.PREFIX)) {
+				refreshThresholdPanel(event.getKey());
+				return;
+			}
+		}
 		this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
 		Predicate<EscapeCrystalNotifyLocatedEntrance> inactiveDebugEntrance = entrance ->
 			entrance.getDefinition().isDebug() && !(entrance.getTarget().getNpc() == null
@@ -800,6 +902,17 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.validEntrances.removeIf(inactiveDebugEntrance.or(entrance -> entrance.getDefinition().isDebug() && !config.enableDebugMode()));
 		this.notifyTimeRemainingThresholdMessage = generateTimeRemainingThresholdMessage();
 		this.timeRemainingThresholdTicks = normalizeTimeRemainingThresholdValue();
+	}
+
+	@Subscribe
+	public void onProfileChanged(ProfileChanged event) {
+		refreshThresholdPanel(null);
+	}
+
+	private void refreshThresholdPanel(String key) {
+		SwingUtilities.invokeLater(() -> {
+			if (thresholdPanel != null) thresholdPanel.refresh(key);
+		});
 	}
 
 	private Set<Integer> getTargetRegionIdsFromConfig(EscapeCrystalNotifyAccountType accountType) {
@@ -935,41 +1048,22 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		if (this.validEntrances.isEmpty()) return;
 
-		EscapeCrystalNotifyLocatedEntrance entranceToDeprioritize = null;
-		int entryId;
-		if (topEntry.getNpc() != null)  {
-			entryId = topEntry.getNpc().getId();
-		} else {
-			entryId = topEntry.getIdentifier();
-		}
+		String optionText = null;
+		NPC npc = topEntry.getNpc();
+		int entryId = npc != null ? npc.getId() : topEntry.getIdentifier();
 
 		for (EscapeCrystalNotifyLocatedEntrance entrance : this.validEntrances) {
-			if (entrance.canDeprioritize() && 
-				!entrance.isPlayerPastEntrance(this.currentWorldPoint) &&
-				entryId == entrance.getTarget().getId()) {
-				entranceToDeprioritize = entrance;
-				break;
+			if (entryId == entrance.getTarget().getId()) {
+				optionText = getEntranceMenuWarning(entrance);
+				if (optionText != null) break;
 			}
 		}
 
-		if (entranceToDeprioritize == null) return;
+		if (optionText == null) return;
 
 		MenuEntry[] newEntries = new MenuEntry[menuEntries.length + 1];
 		System.arraycopy(menuEntries, 0, newEntries, 0, menuEntries.length);
 
-		boolean enableLeviathan = this.isLeviathanSafeguardEnabled() && this.atLeviathanLobby && this.isCloseToSixHourLogout();
-		boolean enableDoom = this.isDoomSafeguardEnabled() && this.atDoomLobby && this.isCloseToSixHourLogout();
-
-		String optionText;
-		if (entranceToDeprioritize.shouldDeprioritizeForLogoutBug() && enableLeviathan) {
-			optionText = ColorUtil.wrapWithColorTag(config.leviathanLogoutBugMessage(), config.leviathanLogoutBugHighlightColor().brighter());
-		}
-		else if (entranceToDeprioritize.shouldDeprioritizeForLogoutBug() && enableDoom) {
-			optionText = ColorUtil.wrapWithColorTag(config.doomLogoutBugMessage(), config.doomLogoutBugHighlightColor().brighter());
-		}
-		else {
-			optionText = ColorUtil.wrapWithColorTag(config.deprioritizedMenuText(), config.deprioritizedMenuTextColor().brighter());
-		}
 		MenuEntry escapeCrystalReminderEntry = client.createMenuEntry(0).setType(MenuAction.CANCEL).setOption(optionText).setTarget("");
 
 		newEntries[newEntries.length - 1] = escapeCrystalReminderEntry;
@@ -1102,6 +1196,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	public void resetLocatedEntrance() {
 		this.validEntrances.clear();
+		updateNearbyBosses(Collections.emptySet());
 	}
 
 	public BufferedImage getInactiveEscapeCrystalImage() {
@@ -1233,18 +1328,40 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		}
 	}
 
-	public boolean shouldDeprioritizeEntranceEnterOption() {
+	String getEntranceMenuWarning(EscapeCrystalNotifyLocatedEntrance entrance) {
+		if (!entrance.canDeprioritize() || entrance.isPlayerPastEntrance(currentWorldPoint)) return null;
+
+		// Logout safeguards take priority and do not depend on the crystal reminder toggle.
+		if (entrance.shouldDeprioritizeForLogoutBug() && isCloseToSixHourLogout()) {
+			if (isLeviathanSafeguardEnabled() && atLeviathanLobby) {
+				return ColorUtil.wrapWithColorTag(config.leviathanLogoutBugMessage(), config.leviathanLogoutBugHighlightColor().brighter());
+			}
+			if (isDoomSafeguardEnabled() && atDoomLobby) {
+				return ColorUtil.wrapWithColorTag(config.doomLogoutBugMessage(), config.doomLogoutBugHighlightColor().brighter());
+			}
+		}
+
 		boolean enabled = config.deprioritizeEntranceEnterOption();
-		boolean active = this.isEscapeCrystalInactivityTeleportActive();
 		boolean notHardcore = config.requireHardcoreAccountType() && !this.isHardcoreAccountType();
 		boolean atNotifyRegion = this.isAtNotifyRegionId();
 		boolean isInPvpWorld = WorldType.isPvpWorld(client.getWorldType());
 
-		if (!enabled || active || notHardcore || !atNotifyRegion || isInPvpWorld) return false;
+		if (!enabled || notHardcore || !atNotifyRegion || isInPvpWorld) return null;
+		if (!isEscapeCrystalInactivityTeleportActive()) {
+			return ColorUtil.wrapWithColorTag(config.deprioritizedMenuText(), config.deprioritizedMenuTextColor().brighter());
+		}
+		int maximum = getExceededMaximumSeconds(entrance);
+		return maximum > 0 ? ColorUtil.wrapWithColorTag("Crystal setting too high (" + getEscapeCrystalInactivitySeconds()
+			+ "s > " + maximum + "s)", config.highSettingMenuTextColor()) : null;
+	}
 
-		if (this.validEntrances.isEmpty()) return false;
-
-		return this.validEntrances.stream().anyMatch(EscapeCrystalNotifyLocatedEntrance::canDeprioritize);
+	// Return zero when no threshold warning applies; otherwise reuse the maximum in the warning text.
+	int getExceededMaximumSeconds(EscapeCrystalNotifyLocatedEntrance entrance) {
+		if (!isEscapeCrystalInactivityTeleportActive() || entrance.getDefinition().isEscapeCrystalDisabled()) return 0;
+		EscapeCrystalNotifyRegion encounter = EscapeCrystalNotifyEncounters.forEntrance(entrance.getDefinition());
+		if (encounter == null) return 0;
+		int maximum = thresholds.get(encounter);
+		return getEscapeCrystalInactivitySeconds() > maximum ? maximum : 0;
 	}
 
 	public void toggleTestingMode() {

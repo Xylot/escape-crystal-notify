@@ -4,9 +4,11 @@ import net.runelite.client.config.*;
 
 import java.awt.*;
 
-@ConfigGroup("escapecrystalnotify")
+@ConfigGroup(EscapeCrystalNotifyConfig.GROUP)
 public interface EscapeCrystalNotifyConfig extends Config
 {
+	String GROUP = "escapecrystalnotify";
+
 	enum InactivityTimeFormat {
 		SECONDS ("Seconds"),
 		SECONDS_MMSS ("Seconds (MM:SS)"),
@@ -172,7 +174,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 			keyName = "deprioritizeEntranceEnterOption",
 			name = "Deprioritize Entrance Enter Option",
-			description = "Deprioritize the enter menu option when you do not have an active Escape Crystal",
+			description = "Deprioritize the enter menu option when your Escape Crystal is missing, inactive, or above the maximum set in the sidebar panel",
 			section = "entranceOverlaySettings",
 			position = 1
 	)
@@ -181,7 +183,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 			keyName = "displayEntranceOverlay",
 			name = "Display Entrance Overlay",
-			description = "Display the reminder overlay for entrances to dangerous regions when you do not have an active Escape Crystal",
+			description = "Display entrance reminders when your Escape Crystal is missing, inactive, or above the maximum set in the sidebar panel",
 			section = "entranceOverlaySettings",
 			position = 2
 	)
@@ -247,6 +249,44 @@ public interface EscapeCrystalNotifyConfig extends Config
 			position = 8
 	)
 	default Color escapeCrystalDisabledTextColor() { return new Color(255,0,0,255); }
+
+	@Alpha
+	@ConfigItem(
+			keyName = "highSettingOverlayFillColor",
+			name = "High Setting Overlay Fill Color",
+			description = "Entrance fill color when your Escape Crystal setting exceeds the encounter's maximum",
+			section = "entranceOverlaySettings",
+			position = 9
+	)
+	default Color highSettingOverlayFillColor() { return new Color(255,140,0,75); }
+
+	@Alpha
+	@ConfigItem(
+			keyName = "highSettingOverlayTextColor",
+			name = "High Setting Overlay Text Color",
+			description = "Color of the excessive-setting warning and current/maximum values above an entrance",
+			section = "entranceOverlaySettings",
+			position = 10
+	)
+	default Color highSettingOverlayTextColor() { return new Color(255,140,0); }
+
+	@ConfigItem(
+			keyName = "highSettingMenuTextColor",
+			name = "High Setting Menu Text Color",
+			description = "Color of the entrance menu reminder when your Escape Crystal setting exceeds the encounter's maximum",
+			section = "entranceOverlaySettings",
+			position = 11
+	)
+	default Color highSettingMenuTextColor() { return new Color(255,140,0); }
+
+	@ConfigItem(
+			keyName = "showSetCrystalMaximumOption",
+			name = "Show Set Crystal Maximum Option",
+			description = "Add Set crystal maximum to supported entrances' right-click menus to edit their warning threshold",
+			section = "entranceOverlaySettings",
+			position = 12
+	)
+	default boolean showSetCrystalMaximumOption() { return true; }
 
 	@ConfigSection(
 		name = "On-Screen Widget",

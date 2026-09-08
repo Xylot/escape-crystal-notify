@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.ObjectID;
 import net.runelite.api.Quest;
+import net.runelite.api.coords.WorldPoint;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,7 +17,7 @@ public enum EscapeCrystalNotifyRegion {
     https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/discord/DiscordGameEventType.java
      */
 
-    BOSS_SHELLBANE_GRYPHON("Shellbane gryphon", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, null, EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, 58439), 12682),
+    BOSS_SHELLBANE_GRYPHON("Shellbane gryphon", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, null, EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, 58439), 12682, 12582),
     BOSS_MAGGOT_KING("Maggot King", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, List.of(685012, 685013, 687060, 687061), EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, 61048), 11645),
     BOSS_ABYSSAL_SIRE("Abyssal Sire", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.PRIORITIZED_WITH_HIGHLIGHT, List.of(774740, 774742, 780884, 780886), EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, ObjectID.NEXUS_EYE_YELLOW_MIDDLE, ObjectID.NEXUS_EYE_YELLOW_LEFT, ObjectID.NEXUS_EYE_YELLOW_RIGHT, ObjectID.NEXUS_EYE_GREEN_MIDDLE, ObjectID.NEXUS_EYE_GREEN_LEFT, ObjectID.NEXUS_EYE_GREEN_RIGHT), 11851, 11850, 12106, 12363, 12362),
     BOSS_AMOXLIATL("Amoxliatl", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, List.of(410803, 410804), EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, ObjectID.VMQ3_RUINS_DOOR_MULTI), 5446, 6294, 6550),
@@ -191,6 +192,8 @@ public enum EscapeCrystalNotifyRegion {
     @Getter
     private final Quest questNotCompleted;
 
+    private static final Map<Integer, EscapeCrystalNotifyRegion[]> ENTRANCES_BY_ID = buildEntranceIndex();
+
     EscapeCrystalNotifyRegion(String regionName, EscapeCrystalNotifyRegionType regionType, EscapeCrystalNotifyRegionDeathType regionDeathType, int... regionIds) {
         this.regionName = regionName;
         this.regionType = regionType;
@@ -303,16 +306,39 @@ public enum EscapeCrystalNotifyRegion {
         return regionChunkRequirementsMap;
     }
 
-    public static Map<Integer, EscapeCrystalNotifyRegionEntrance> getChunkEntranceMap() {
-        Map<Integer, EscapeCrystalNotifyRegionEntrance> chunkEntranceMap = new HashMap<>();
-        for (EscapeCrystalNotifyRegion e : values()) {
-            if (e.regionEntrance != null && e.regionEntrance.chunkIds != null) {
-                for (int chunkId : e.regionEntrance.getChunkIds()) {
-                    chunkEntranceMap.put(chunkId, e.regionEntrance);
+    static EscapeCrystalNotifyRegionEntrance findEntrance(int id, WorldPoint location, EscapeCrystalNotifyRegionEntranceObjectType type) {
+        EscapeCrystalNotifyRegion[] candidates = ENTRANCES_BY_ID.get(id);
+        if (candidates == null) return null;
+        int chunkId = EscapeCrystalNotifyLocatedEntrance.computeChunkIdFromWorldPoint(location);
+        int regionId = location.getRegionID();
+        for (EscapeCrystalNotifyRegion region : candidates) {
+            EscapeCrystalNotifyRegionEntrance entrance = region.regionEntrance;
+            if (entrance.getObjectType() != type
+                && entrance.getObjectType() != EscapeCrystalNotifyRegionEntranceObjectType.ANY) continue;
+
+            if (entrance.getChunkIds() != null) {
+                if (entrance.getChunkIds().contains(chunkId)) return entrance;
+            } else {
+                for (int allowedRegionId : region.regionIds) {
+                    if (allowedRegionId == regionId) return entrance;
                 }
             }
         }
-        return chunkEntranceMap;
+        return null;
+    }
+
+    private static Map<Integer, EscapeCrystalNotifyRegion[]> buildEntranceIndex() {
+        Map<Integer, List<EscapeCrystalNotifyRegion>> candidates = new HashMap<>();
+        for (EscapeCrystalNotifyRegion region : values()) {
+            if (region.regionEntrance == null) continue;
+            for (int id : region.regionEntrance.getEntranceIds()) {
+                candidates.computeIfAbsent(id, key -> new ArrayList<>()).add(region);
+            }
+        }
+        // Keep every candidate in declaration order, including entrances which share an ID.
+        Map<Integer, EscapeCrystalNotifyRegion[]> index = new HashMap<>();
+        candidates.forEach((id, regions) -> index.put(id, regions.toArray(new EscapeCrystalNotifyRegion[0])));
+        return Collections.unmodifiableMap(index);
     }
 
     public static Set<Integer> getTeleportDisabledRegionIds() {

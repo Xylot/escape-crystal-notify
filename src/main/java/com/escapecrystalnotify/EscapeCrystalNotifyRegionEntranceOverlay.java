@@ -60,7 +60,9 @@ public class EscapeCrystalNotifyRegionEntranceOverlay extends Overlay {
             if (!entrance.canHighlight() || entrance.isPlayerPastEntrance(plugin.getCurrentWorldPoint())) {
                 continue;
             }
-            if (active && !entrance.getDefinition().isEscapeCrystalDisabled()) {
+            int maximum = plugin.getExceededMaximumSeconds(entrance);
+            boolean settingTooHigh = maximum > 0;
+            if (active && !entrance.getDefinition().isEscapeCrystalDisabled() && !settingTooHigh) {
                 continue;
             }
 
@@ -70,7 +72,7 @@ public class EscapeCrystalNotifyRegionEntranceOverlay extends Overlay {
                 continue;
             }
 
-            Color fillColor = entrance.isPrioritized()
+            Color fillColor = settingTooHigh ? config.highSettingOverlayFillColor() : entrance.isPrioritized()
                 ? config.prioritizedEntranceOverlayFillColor() 
                 : config.entranceOverlayFillColor();
 
@@ -92,16 +94,20 @@ public class EscapeCrystalNotifyRegionEntranceOverlay extends Overlay {
             Point imageLocation = new Point(baseImageLocation.getX() - xOffset, baseImageLocation.getY() - yOffset);
             OverlayUtil.renderImageLocation(graphics, imageLocation, generatedEntranceOverlayImage);
 
-            if (entrance.getDefinition().isEscapeCrystalDisabled()) {
+            if (entrance.getDefinition().isEscapeCrystalDisabled() || settingTooHigh) {
+                String[] textLines = settingTooHigh ? new String[]{"ESCAPE CRYSTAL SETTING TOO HIGH",
+                    "Current: " + plugin.getEscapeCrystalInactivitySeconds() + "s · Maximum: " + maximum + "s"}
+                    : disabledTextLines;
+                Color textColor = settingTooHigh ? config.highSettingOverlayTextColor() : config.escapeCrystalDisabledTextColor();
                 FontMetrics fontMetrics = graphics.getFontMetrics();
 
-                for (int i = 0; i < disabledTextLines.length; i++) {
-                    int textWidth = fontMetrics.stringWidth(disabledTextLines[i]);
+                for (int i = 0; i < textLines.length; i++) {
+                    int textWidth = fontMetrics.stringWidth(textLines[i]);
                     int centeredX = baseImageLocation.getX() - (textWidth / 2);
                     int textY = baseImageLocation.getY() + 30 + (i * 15);
                     
                     Point textLocation = new Point(centeredX, textY);
-                    OverlayUtil.renderTextLocation(graphics, textLocation, disabledTextLines[i], config.escapeCrystalDisabledTextColor());
+                    OverlayUtil.renderTextLocation(graphics, textLocation, textLines[i], textColor);
                 }
             }
         }

@@ -11,6 +11,124 @@ import static org.junit.Assert.*;
 
 public class EscapeCrystalNotifyDebugSpawnTest {
     @Test
+    public void ignoresKnownIdsSpawnedOutsideTheirEntranceArea() throws Exception {
+        EscapeCrystalNotifyPlugin plugin = plugin(false);
+        int objectId = EscapeCrystalNotifyRegion.BOSS_ARAXXOR.getRegionEntrance().getEntranceIds()[0];
+        int npcId = EscapeCrystalNotifyRegion.BOSS_NIGHTMARE_ENTRANCE.getRegionEntrance().getEntranceIds()[0];
+        set(plugin, "gameObjectEntranceIds", java.util.Set.of(objectId));
+        set(plugin, "npcEntranceIds", java.util.Set.of(npcId));
+        plugin.onGameObjectSpawned(event(GameObjectSpawned.class, target(GameObject.class, objectId)));
+        plugin.onDecorativeObjectSpawned(event(DecorativeObjectSpawned.class, target(DecorativeObject.class, objectId)));
+        plugin.onWallObjectSpawned(event(WallObjectSpawned.class, target(WallObject.class, objectId)));
+        plugin.onNpcSpawned(new NpcSpawned(target(NPC.class, npcId)));
+        computeEntrances(plugin, new WorldPoint(3200, 3200, 0));
+        plugin.onConfigChanged(null);
+        assertTrue(plugin.getPossibleEntrances().isEmpty());
+        assertTrue(plugin.getValidEntrances().isEmpty());
+    }
+
+    @Test
+    public void resolvesShellbaneEntranceOutsideTheUndergroundArena() throws Exception {
+        EscapeCrystalNotifyPlugin plugin = plugin(false);
+        EscapeCrystalNotifyRegion region = EscapeCrystalNotifyRegion.BOSS_SHELLBANE_GRYPHON;
+        int id = region.getRegionEntrance().getEntranceIds()[0];
+        WorldPoint location = new WorldPoint(3176, 2477, 0);
+        assertEquals(12582, location.getRegionID());
+        assertTrue(EscapeCrystalNotifyRegion.getRegionIdsFromRegions(java.util.List.of(region)).contains(location.getRegionID()));
+        set(plugin, "gameObjectEntranceIds", java.util.Set.of(id));
+        plugin.onGameObjectSpawned(event(GameObjectSpawned.class, target(GameObject.class, id, location)));
+        assertEquals(1, plugin.getPossibleEntrances().get(12582).size());
+        computeEntrances(plugin, location);
+        assertEquals(1, plugin.getValidEntrances().size());
+        assertSame(region.getRegionEntrance(), plugin.getValidEntrances().get(0).getDefinition());
+        assertEquals(java.util.Set.of(region), plugin.getNearbyBosses());
+        java.util.Set<EscapeCrystalNotifyRegion> nearby = plugin.getNearbyBosses();
+        computeEntrances(plugin, location);
+        assertSame(nearby, plugin.getNearbyBosses()); // Unchanged ticks don't publish another panel update.
+        plugin.onConfigChanged(null);
+    }
+
+    @Test
+    public void chunkLookupMatchesTheEntranceIdAndType() throws Exception {
+        EscapeCrystalNotifyPlugin plugin = plugin(false);
+        EscapeCrystalNotifyRegionEntrance definition = EscapeCrystalNotifyRegion.BOSS_ARAXXOR.getRegionEntrance();
+        int chunkId = definition.getChunkIds().get(0);
+        WorldPoint location = new WorldPoint((chunkId >> 11) * 8, (chunkId & 2047) * 8, 0);
+        int id = definition.getEntranceIds()[0];
+        int otherId = EscapeCrystalNotifyRegion.BOSS_AMOXLIATL.getRegionEntrance().getEntranceIds()[0];
+        set(plugin, "gameObjectEntranceIds", java.util.Set.of(id, otherId));
+        plugin.onGameObjectSpawned(event(GameObjectSpawned.class, target(GameObject.class, otherId, location)));
+        assertTrue(plugin.getPossibleEntrances().isEmpty());
+        assertNull(EscapeCrystalNotifyRegion.findEntrance(id, location, EscapeCrystalNotifyRegionEntranceObjectType.NPC));
+        plugin.onGameObjectSpawned(event(GameObjectSpawned.class, target(GameObject.class, id, location)));
+        computeEntrances(plugin, location);
+        assertEquals(1, plugin.getValidEntrances().size());
+        assertSame(definition, plugin.getValidEntrances().get(0).getDefinition());
+    }
+
+    private void computeEntrances(EscapeCrystalNotifyPlugin plugin, WorldPoint location) throws Exception {
+        set(plugin, "atNotifyRegionId", true);
+        set(plugin, "currentWorldPoint", location);
+        java.lang.reflect.Method compute = EscapeCrystalNotifyPlugin.class.getDeclaredMethod("computeEntranceObjectMetrics");
+        compute.setAccessible(true);
+        compute.invoke(plugin);
+    }
+
+    @Test
+    public void nearbyEncountersGroupEntrancesAndClearOnLeavingOrLoading() throws Exception {
+        EscapeCrystalNotifyPlugin plugin = plugin(false);
+        EscapeCrystalNotifyRegion region = EscapeCrystalNotifyRegion.RAIDS_TOMBS_OF_AMASCUT_ENTRANCE;
+        EscapeCrystalNotifyRegionEntrance definition = region.getRegionEntrance();
+        int chunk = definition.getChunkIds().get(0);
+        WorldPoint location = new WorldPoint((chunk >> 11) * 8, (chunk & 2047) * 8, 0);
+        int id = definition.getEntranceIds()[0];
+        set(plugin, "gameObjectEntranceIds", java.util.Set.of(id));
+        plugin.onGameObjectSpawned(event(GameObjectSpawned.class, target(GameObject.class, id, location)));
+        plugin.onGameObjectSpawned(event(GameObjectSpawned.class, target(GameObject.class, id, location)));
+        computeEntrances(plugin, location);
+        assertEquals(2, plugin.getValidEntrances().size());
+        assertEquals(java.util.Set.of(EscapeCrystalNotifyRegion.RAIDS_TOMBS_OF_AMASCUT), plugin.getNearbyBosses());
+        set(plugin, "atNotifyRegionId", false);
+        java.lang.reflect.Method compute = EscapeCrystalNotifyPlugin.class.getDeclaredMethod("computeEntranceObjectMetrics");
+        compute.setAccessible(true);
+        compute.invoke(plugin);
+        assertTrue(plugin.getNearbyBosses().isEmpty());
+        assertTrue(plugin.getValidEntrances().isEmpty());
+        computeEntrances(plugin, location);
+        GameStateChanged loading = new GameStateChanged();
+        loading.setGameState(GameState.LOADING);
+        plugin.onGameStateChanged(loading);
+        assertTrue(plugin.getNearbyBosses().isEmpty());
+        assertTrue(plugin.getValidEntrances().isEmpty());
+    }
+
+    @Test
+    public void indexedLookupResolvesEveryConfiguredEntranceIdAndLocation() {
+        for (EscapeCrystalNotifyRegion region : EscapeCrystalNotifyRegion.values()) {
+            EscapeCrystalNotifyRegionEntrance definition = region.getRegionEntrance();
+            if (definition == null) continue;
+            java.util.List<WorldPoint> locations = new java.util.ArrayList<>();
+            if (definition.getChunkIds() != null) {
+                for (int chunk : definition.getChunkIds()) {
+                    locations.add(new WorldPoint((chunk >> 11) * 8, (chunk & 2047) * 8, 0));
+                }
+            } else {
+                for (int regionId : region.getRegionIds()) {
+                    locations.add(new WorldPoint((regionId >> 8) * 64, (regionId & 255) * 64, 0));
+                }
+            }
+            for (int id : definition.getEntranceIds()) {
+                for (WorldPoint location : locations) {
+                    assertSame(region.name() + " ID " + id + " at " + location, definition,
+                        EscapeCrystalNotifyRegion.findEntrance(id, location, definition.getObjectType()));
+                }
+                assertNull(EscapeCrystalNotifyRegion.findEntrance(id, new WorldPoint(0, 0, 0), definition.getObjectType()));
+            }
+        }
+        assertNull(EscapeCrystalNotifyRegion.findEntrance(-1, new WorldPoint(3200, 3200, 0), EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT));
+    }
+
+    @Test
     public void tracksAndDespawnsEachDebugTargetTypeWithoutAChunkDefinition() throws Exception {
         EscapeCrystalNotifyPlugin plugin = plugin(true);
         GameObject object = target(GameObject.class, 123);
@@ -52,11 +170,13 @@ public class EscapeCrystalNotifyDebugSpawnTest {
         compute.setAccessible(true);
         compute.invoke(plugin);
         assertTrue(plugin.getValidEntrances().isEmpty());
+        assertTrue(plugin.getNearbyBosses().isEmpty());
 
         set(plugin, "config", debugConfig(true));
         plugin.onConfigChanged(null);
         compute.invoke(plugin);
         assertEquals(2, plugin.getValidEntrances().size());
+        assertTrue(plugin.getNearbyBosses().isEmpty()); // Unmapped debug targets have no boss settings row.
 
         set(plugin, "config", debugConfig(false));
         plugin.onConfigChanged(null);
@@ -152,11 +272,15 @@ public class EscapeCrystalNotifyDebugSpawnTest {
     }
 
     private <T> T target(Class<T> type, int id) {
+        return target(type, id, new WorldPoint(3200, 3200, 0));
+    }
+
+    private <T> T target(Class<T> type, int id, WorldPoint location) {
         return type.cast(Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type},
             (proxy, method, args) -> {
                 switch (method.getName()) {
                     case "getId": return id;
-                    case "getWorldLocation": return new WorldPoint(3200, 3200, 0);
+                    case "getWorldLocation": return location;
                     default: return null;
                 }
             }));
