@@ -37,8 +37,10 @@ public class EscapeCrystalNotifyRegionEntranceSixHourOverlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D graphics) {
-        boolean enabledLeviathan = plugin.isAtLeviathanLobby() && plugin.isLeviathanSafeguardEnabled();
-        boolean enabledDoom = plugin.isAtDoomLobby() && plugin.isDoomSafeguardEnabled();
+        boolean enabledLeviathan = plugin.isAtLeviathanLobby() && plugin.isLeviathanSixHourWarningEnabled()
+                && plugin.isCloseToLeviathanSixHourLogout();
+        boolean enabledDoom = plugin.isAtDoomLobby() && plugin.isDoomSixHourWarningEnabled()
+                && plugin.isCloseToDoomSixHourLogout();
 
         if (!enabledLeviathan && !enabledDoom) {
             return null;
@@ -57,7 +59,7 @@ public class EscapeCrystalNotifyRegionEntranceSixHourOverlay extends Overlay {
                 continue;
             }
 
-            boolean isLogoutBugWarning = entrance.getDefinition().isLogoutBugPossible() && plugin.isCloseToSixHourLogout();
+            boolean isLogoutBugWarning = entrance.getDefinition().isLogoutBugPossible();
             if (!isLogoutBugWarning) {
                 continue;
             }

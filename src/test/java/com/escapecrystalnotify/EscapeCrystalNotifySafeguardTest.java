@@ -81,6 +81,92 @@ public class EscapeCrystalNotifySafeguardTest {
         assertFalse(plugin.isDoomSafeguardEnabled());
     }
 
+    @Test public void sixHourThresholdsAreIndependentAndHonorLoginOverrideAndBounds() throws Exception {
+        assertEquals(31500, config.leviathanSixHourWarningTicks());
+        assertEquals(31500, config.doomSixHourWarningTicks());
+        set("ticksSinceLogin", 31499);
+        assertFalse(plugin.isCloseToLeviathanSixHourLogout());
+        assertFalse(plugin.isCloseToDoomSixHourLogout());
+        set("ticksSinceLogin", 31500);
+        assertTrue(plugin.isCloseToLeviathanSixHourLogout());
+        assertTrue(plugin.isCloseToDoomSixHourLogout());
+
+        manager.setConfiguration(GROUP, "leviathanSixHourWarningTicks", 32000);
+        manager.setConfiguration(GROUP, "doomSixHourWarningTicks", 33000);
+        set("ticksSinceLogin", 32000);
+        assertTrue(plugin.isCloseToLeviathanSixHourLogout());
+        assertFalse(plugin.isCloseToDoomSixHourLogout());
+        manager.setConfiguration(GROUP, "ticksSinceLoginOverride", 33000);
+        assertTrue(plugin.isCloseToDoomSixHourLogout());
+        manager.setConfiguration(GROUP, "ticksSinceLoginOverride", 31999);
+        assertFalse(plugin.isCloseToLeviathanSixHourLogout());
+        assertFalse(plugin.isCloseToDoomSixHourLogout());
+        manager.setConfiguration(GROUP, "ticksSinceLoginOverride", -1);
+        assertTrue(plugin.isCloseToLeviathanSixHourLogout());
+
+        // Imported settings can bypass the config UI's range validation.
+        manager.setConfiguration(GROUP, "leviathanSixHourWarningTicks", -10);
+        manager.setConfiguration(GROUP, "doomSixHourWarningTicks", Integer.MAX_VALUE);
+        set("ticksSinceLogin", 0);
+        assertTrue(plugin.isCloseToLeviathanSixHourLogout());
+        assertFalse(plugin.isCloseToDoomSixHourLogout());
+        set("ticksSinceLogin", 35999);
+        assertFalse(plugin.isCloseToDoomSixHourLogout());
+        set("ticksSinceLogin", 36000);
+        assertTrue(plugin.isCloseToDoomSixHourLogout());
+    }
+
+    @Test public void eachLobbyWarningIsIndependentOfLogoutModeAndInfoCheckboxes() throws Exception {
+        manager.setConfiguration(GROUP, "leviathanSixHourWarningTicks", 32000);
+        manager.setConfiguration(GROUP, "doomSixHourWarningTicks", 33000);
+        for (String boss : Arrays.asList("Leviathan", "Doom")) {
+            lobby(boss);
+            assertEquals(DISABLED, boss.equals("Leviathan") ? config.leviathanLogoutSafeguardMode() : config.doomLogoutSafeguardMode());
+            manager.setConfiguration(GROUP, "display" + boss + "BugInfo", false);
+            manager.setConfiguration(GROUP, "display" + boss + "FixInfo", false);
+            manager.setConfiguration(GROUP, "display" + boss + "LogoutSetting", false);
+            int threshold = boss.equals("Leviathan") ? 32000 : 33000;
+            set("ticksSinceLogin", threshold - 1);
+            assertNull(render());
+            set("ticksSinceLogin", threshold);
+            assertNotNull(render());
+            assertTrue(text().contains("approaching the 6-hour"));
+            assertFalse(text().contains("Current Logout Setting"));
+            assertTrue(overlay.getMenuEntries().isEmpty());
+            manager.setConfiguration(GROUP, boss.toLowerCase() + "SixHourMode", DISABLED);
+            manager.setConfiguration(GROUP, boss.toLowerCase() + "LogoutSafeguardMode", ALWAYS);
+            assertNull(render());
+        }
+    }
+
+    @Test public void sixHourModesDefaultToHardcoreAndAreIndependentForEachBoss() throws Exception {
+        assertEquals(HC_ONLY, config.leviathanSixHourMode());
+        assertEquals(HC_ONLY, config.doomSixHourMode());
+        for (boolean hardcore : new boolean[]{false, true}) {
+            set("hardcoreAccountType", hardcore);
+            for (EscapeCrystalNotifyConfig.SafeguardAccountType leviathanMode : values()) {
+                manager.setConfiguration(GROUP, "leviathanSixHourMode", leviathanMode);
+                for (EscapeCrystalNotifyConfig.SafeguardAccountType doomMode : values()) {
+                    manager.setConfiguration(GROUP, "doomSixHourMode", doomMode);
+                    assertEquals(leviathanMode == ALWAYS || leviathanMode == HC_ONLY && hardcore,
+                        plugin.isLeviathanSixHourWarningEnabled());
+                    assertEquals(doomMode == ALWAYS || doomMode == HC_ONLY && hardcore,
+                        plugin.isDoomSixHourWarningEnabled());
+                    assertFalse(plugin.isLeviathanSafeguardEnabled());
+                    assertFalse(plugin.isDoomSafeguardEnabled());
+                }
+            }
+        }
+        manager.setConfiguration(GROUP, "leviathanSixHourMode", DISABLED);
+        manager.setConfiguration(GROUP, "doomSixHourMode", DISABLED);
+        manager.setConfiguration(GROUP, "leviathanLogoutSafeguardMode", ALWAYS);
+        manager.setConfiguration(GROUP, "doomLogoutSafeguardMode", ALWAYS);
+        assertTrue(plugin.isLeviathanSafeguardEnabled());
+        assertTrue(plugin.isDoomSafeguardEnabled());
+        assertFalse(plugin.isLeviathanSixHourWarningEnabled());
+        assertFalse(plugin.isDoomSixHourWarningEnabled());
+    }
+
     @Test public void disabledModesShowOnlyFixAndConfirmationHidesOnlyThatBoss() throws Exception {
         for (String boss : Arrays.asList("Leviathan", "Doom")) {
             lobby(boss);

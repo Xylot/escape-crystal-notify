@@ -98,7 +98,8 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
                 }
             };
 
-            if (plugin.isLeviathanSafeguardEnabled() && config.displayLeviathanLogoutSetting()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
+            if (plugin.isLeviathanSixHourWarningEnabled()
+                    && plugin.isCloseToLeviathanSixHourLogout()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
         } else if (plugin.isDoomSafeguardPanelEnabled()) {
             boolean modeEnabled = config.doomLogoutSafeguardMode() != EscapeCrystalNotifyConfig.SafeguardAccountType.DISABLED;
             if (modeEnabled && config.displayDoomBugInfo()) {
@@ -128,7 +129,8 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
                 }
             }
 
-            if (plugin.isDoomSafeguardEnabled() && config.displayDoomLogoutSetting()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
+            if (plugin.isDoomSixHourWarningEnabled()
+                    && plugin.isCloseToDoomSixHourLogout()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
         } else {
             return null;
         }
@@ -191,7 +193,7 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
             }
         }
 
-        if (sixHourWarningText != null && plugin.isCloseToSixHourLogout()) {
+        if (sixHourWarningText != null) {
             if (!panelComponent.getChildren().isEmpty()) {
                 panelComponent.getChildren().add(newLineComponent);
             }

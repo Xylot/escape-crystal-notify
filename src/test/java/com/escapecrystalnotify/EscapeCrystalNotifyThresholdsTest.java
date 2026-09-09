@@ -429,7 +429,7 @@ public class EscapeCrystalNotifyThresholdsTest {
         set(plugin, "atDoomLobby", true);
         set(plugin, "ticksSinceLogin", 31500);
         set(plugin, "config", new EscapeCrystalNotifyConfig() {
-            @Override public SafeguardAccountType doomLogoutSafeguardMode() { return SafeguardAccountType.HC_ONLY; }
+            @Override public SafeguardAccountType doomSixHourMode() { return SafeguardAccountType.HC_ONLY; }
         });
         menu[0] = new MenuEntry[]{menuEntry(doom.getTarget().getId())};
         plugin.onPostMenuSort(new PostMenuSort());
@@ -437,12 +437,46 @@ public class EscapeCrystalNotifyThresholdsTest {
         assertTrue(reads.isEmpty());
         set(plugin, "config", new EscapeCrystalNotifyConfig() {
             @Override public boolean deprioritizeEntranceEnterOption() { return false; }
-            @Override public SafeguardAccountType doomLogoutSafeguardMode() { return SafeguardAccountType.HC_ONLY; }
+            @Override public SafeguardAccountType doomSixHourMode() { return SafeguardAccountType.HC_ONLY; }
         });
         menu[0] = new MenuEntry[]{menuEntry(doom.getTarget().getId())};
         plugin.onPostMenuSort(new PostMenuSort());
         assertTrue(menu[0][1].getOption().contains("Relog"));
         assertTrue(reads.isEmpty());
+    }
+
+    @Test public void entranceLogoutWarningsUseEachBossThreshold() throws Exception {
+        EscapeCrystalNotifyPlugin plugin = plugin();
+        set(plugin, "config", new EscapeCrystalNotifyConfig() {
+            @Override public boolean deprioritizeEntranceEnterOption() { return false; }
+            @Override public SafeguardAccountType leviathanSixHourMode() { return SafeguardAccountType.ALWAYS; }
+            @Override public SafeguardAccountType doomSixHourMode() { return SafeguardAccountType.ALWAYS; }
+            @Override public int leviathanSixHourWarningTicks() { return 32000; }
+            @Override public int doomSixHourWarningTicks() { return 33000; }
+        });
+        for (EscapeCrystalNotifyRegion region : Arrays.asList(BOSS_THE_LEVIATHAN_ENTRANCE, BOSS_DOOM_OF_MOKHAIOTL)) {
+            boolean leviathan = region == BOSS_THE_LEVIATHAN_ENTRANCE;
+            set(plugin, "atLeviathanLobby", leviathan);
+            set(plugin, "atDoomLobby", !leviathan);
+            EscapeCrystalNotifyLocatedEntrance entrance = entrance(region);
+            int threshold = leviathan ? 32000 : 33000;
+            set(plugin, "ticksSinceLogin", threshold - 1);
+            assertNull(plugin.getEntranceMenuWarning(entrance));
+            set(plugin, "ticksSinceLogin", threshold);
+            assertTrue(plugin.getEntranceMenuWarning(entrance).contains("Relog"));
+        }
+        set(plugin, "config", new EscapeCrystalNotifyConfig() {
+            @Override public boolean deprioritizeEntranceEnterOption() { return false; }
+            @Override public SafeguardAccountType leviathanLogoutSafeguardMode() { return SafeguardAccountType.ALWAYS; }
+            @Override public SafeguardAccountType doomLogoutSafeguardMode() { return SafeguardAccountType.ALWAYS; }
+            @Override public SafeguardAccountType leviathanSixHourMode() { return SafeguardAccountType.DISABLED; }
+            @Override public SafeguardAccountType doomSixHourMode() { return SafeguardAccountType.DISABLED; }
+        });
+        for (EscapeCrystalNotifyRegion region : Arrays.asList(BOSS_THE_LEVIATHAN_ENTRANCE, BOSS_DOOM_OF_MOKHAIOTL)) {
+            set(plugin, "atLeviathanLobby", region == BOSS_THE_LEVIATHAN_ENTRANCE);
+            set(plugin, "atDoomLobby", region == BOSS_DOOM_OF_MOKHAIOTL);
+            assertNull(plugin.getEntranceMenuWarning(entrance(region)));
+        }
     }
 
     @Test public void respectsPvpAccountRegionAndHighlightOnlyEntrances() throws Exception {

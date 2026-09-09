@@ -70,7 +70,6 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private static final HashSet<Integer> NPC_ENTRANCE_FORCE_CLEAR_IDS = new HashSet<>(List.of(NpcID.NIGHTMARE_ENTRY_READY, NpcID.NIGHTMARE_ENTRY_OPEN, NpcID.NIGHTMARE_ENTRY_CLOSED_01, NpcID.NIGHTMARE_ENTRY_CLOSED_02, NpcID.NIGHTMARE_ENTRY_CLOSED_03, NpcID.VOICE_OF_YAMA_3OP));
 	private static final HashSet<Integer> NPC_ENTRANCE_AUTO_RECHECK_ON_LOAD_REGION_IDS = new HashSet<>(List.of(6045, 15256));
 	private static final HashSet<Integer> NPC_ENTRANCE_AUTO_RECHECK_ON_LOAD_NPC_IDS = new HashSet<>(List.of(NpcID.NIGHTMARE_ENTRY_READY, NpcID.NIGHTMARE_ENTRY_OPEN, NpcID.NIGHTMARE_ENTRY_CLOSED_01, NpcID.NIGHTMARE_ENTRY_CLOSED_02, NpcID.NIGHTMARE_ENTRY_CLOSED_03, NpcID.YAMA_THRONE_OCCUPIED));
-	private static final int SIX_HOUR_LOG_WARNING_THRESHOLD_TICKS = 31500;
 
 	@Inject
 	private Notifier notifier;
@@ -1267,12 +1266,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	public boolean isLeviathanSafeguardPanelEnabled() {
 		return this.atLeviathanLobby && (config.displayLeviathanFixInfo()
+			|| (isLeviathanSixHourWarningEnabled() && isCloseToLeviathanSixHourLogout())
 			|| (config.leviathanLogoutSafeguardMode() != EscapeCrystalNotifyConfig.SafeguardAccountType.DISABLED
 				&& (config.displayLeviathanBugInfo() || config.displayLeviathanLogoutSetting())));
 	}
 
 	public boolean isDoomSafeguardPanelEnabled() {
 		return this.atDoomLobby && (config.displayDoomFixInfo()
+			|| (isDoomSixHourWarningEnabled() && isCloseToDoomSixHourLogout())
 			|| (config.doomLogoutSafeguardMode() != EscapeCrystalNotifyConfig.SafeguardAccountType.DISABLED
 				&& (config.displayDoomBugInfo() || config.displayDoomLogoutSetting())));
 	}
@@ -1296,25 +1297,37 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		return this.atTeleportDisabledRegion && config.displayTeleportDisabled();
 	}
 
-	public boolean isCloseToSixHourLogout() {
+	public boolean isCloseToLeviathanSixHourLogout() {
+		return isCloseToSixHourLogout(config.leviathanSixHourWarningTicks());
+	}
+
+	public boolean isCloseToDoomSixHourLogout() {
+		return isCloseToSixHourLogout(config.doomSixHourWarningTicks());
+	}
+
+	private boolean isCloseToSixHourLogout(int warningTicks) {
 		int ticksToUse = config.ticksSinceLoginOverride() >= 0 ? config.ticksSinceLoginOverride() : ticksSinceLogin;
-		return ticksToUse >= SIX_HOUR_LOG_WARNING_THRESHOLD_TICKS;
+		return ticksToUse >= Math.max(0, Math.min(36000, warningTicks));
 	}
 
 	public boolean isLeviathanSafeguardEnabled() {
-		switch (config.leviathanLogoutSafeguardMode()) {
-			case ALWAYS:
-				return true;
-			case HC_ONLY:
-				return this.isHardcoreAccountType();
-			case DISABLED:
-			default:
-				return false;
-		}
+		return isSafeguardModeEnabled(config.leviathanLogoutSafeguardMode());
 	}
 
 	public boolean isDoomSafeguardEnabled() {
-		switch (config.doomLogoutSafeguardMode()) {
+		return isSafeguardModeEnabled(config.doomLogoutSafeguardMode());
+	}
+
+	public boolean isLeviathanSixHourWarningEnabled() {
+		return isSafeguardModeEnabled(config.leviathanSixHourMode());
+	}
+
+	public boolean isDoomSixHourWarningEnabled() {
+		return isSafeguardModeEnabled(config.doomSixHourMode());
+	}
+
+	private boolean isSafeguardModeEnabled(EscapeCrystalNotifyConfig.SafeguardAccountType mode) {
+		switch (mode) {
 			case ALWAYS:
 				return true;
 			case HC_ONLY:
@@ -1375,11 +1388,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		if (!entrance.canDeprioritize() || entrance.isPlayerPastEntrance(currentWorldPoint)) return null;
 
 		// Logout safeguards take priority and do not depend on the crystal reminder toggle.
-		if (entrance.shouldDeprioritizeForLogoutBug() && isCloseToSixHourLogout()) {
-			if (isLeviathanSafeguardEnabled() && atLeviathanLobby) {
+		if (entrance.shouldDeprioritizeForLogoutBug()) {
+			if (isLeviathanSixHourWarningEnabled() && atLeviathanLobby && isCloseToLeviathanSixHourLogout()) {
 				return ColorUtil.wrapWithColorTag(config.leviathanLogoutBugMessage(), config.leviathanLogoutBugHighlightColor().brighter());
 			}
-			if (isDoomSafeguardEnabled() && atDoomLobby) {
+			if (isDoomSixHourWarningEnabled() && atDoomLobby && isCloseToDoomSixHourLogout()) {
 				return ColorUtil.wrapWithColorTag(config.doomLogoutBugMessage(), config.doomLogoutBugHighlightColor().brighter());
 			}
 		}

@@ -671,7 +671,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 			keyName = "leviathanLogoutSafeguardMode",
 			name = "Mode",
-			description = "Controls when Leviathan safeguards are active. The logout bug has been fixed, so safeguards are disabled by default.",
+			description = "Controls Leviathan left-click logout prevention. The logout bug has been fixed, so safeguards are disabled by default.",
 			section = "leviathanSafeguardSettings",
 			position = 1
 	)
@@ -704,24 +704,43 @@ public interface EscapeCrystalNotifyConfig extends Config
 	)
 	default boolean displayLeviathanLogoutSetting() { return true; }
 
+	@ConfigItem(
+		keyName = "leviathanSixHourMode",
+		name = "6-Hour Mode",
+		description = "Controls Leviathan's 6-hour logout warnings and entrance safeguards independently of Mode. Enabled for hardcore accounts by default.",
+		section = "leviathanSafeguardSettings",
+		position = 5
+	)
+	default SafeguardAccountType leviathanSixHourMode() { return SafeguardAccountType.HC_ONLY; }
+
 	@Alpha
 	@ConfigItem(
 		keyName = "leviathanLogoutBugHighlightColor",
 		name = "6-Hour Entrance Highlight Color",
-		description = "Color used to highlight entrances when close to 6-hour logout and logout bug is possible",
+		description = "Color used to highlight entrances when the 6-hour warning threshold is reached. Controlled by 6-Hour Mode.",
 		section = "leviathanSafeguardSettings",
-		position = 5
+		position = 6
 	)
 	default Color leviathanLogoutBugHighlightColor() { return new Color(0, 142, 80, 75); }
 
 	@ConfigItem(
 		keyName = "leviathanLogoutBugMessage",
 		name = "6-Hour Warning Message",
-		description = "Message displayed when close to 6-hour logout and logout bug is possible. Only shows when 'Display Logout Setting' is enabled.",
+		description = "Message displayed at entrances when the 6-hour warning threshold is reached. Controlled by 6-Hour Mode.",
 		section = "leviathanSafeguardSettings",
-		position = 6
+		position = 7
 	)
 	default String leviathanLogoutBugMessage() { return "Relog - Close to 6 hour logout"; }
+
+	@Range(min = 0, max = 36000)
+	@ConfigItem(
+		keyName = "leviathanSixHourWarningTicks",
+		name = "6-Hour Warning Ticks",
+		description = "Ticks elapsed since login before Leviathan's 6-hour warnings and entrance safeguards activate. One tick is about 0.6 seconds; 31500 ticks is 5 hours 15 minutes. Controlled by 6-Hour Mode.",
+		section = "leviathanSafeguardSettings",
+		position = 8
+	)
+	default int leviathanSixHourWarningTicks() { return 31500; }
 
 	@ConfigSection(
 		name = "Doom Safeguards",
@@ -734,7 +753,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 			keyName = "doomLogoutSafeguardMode",
 			name = "Mode",
-			description = "Controls when Doom safeguards are active. The logout bug has been fixed, so safeguards are disabled by default.",
+			description = "Controls Doom left-click logout prevention. The logout bug has been fixed, so safeguards are disabled by default.",
 			section = "doomSafeguardSettings",
 			position = 1
 	)
@@ -767,24 +786,43 @@ public interface EscapeCrystalNotifyConfig extends Config
 	)
 	default boolean displayDoomLogoutSetting() { return true; }
 
+	@ConfigItem(
+		keyName = "doomSixHourMode",
+		name = "6-Hour Mode",
+		description = "Controls Doom's 6-hour logout warnings and entrance safeguards independently of Mode. Enabled for hardcore accounts by default.",
+		section = "doomSafeguardSettings",
+		position = 5
+	)
+	default SafeguardAccountType doomSixHourMode() { return SafeguardAccountType.HC_ONLY; }
+
 	@Alpha
 	@ConfigItem(
 		keyName = "doomLogoutBugHighlightColor",
 		name = "6-Hour Entrance Highlight Color",
-		description = "Color used to highlight entrances when close to 6-hour logout and logout bug is possible",
+		description = "Color used to highlight entrances when the 6-hour warning threshold is reached. Controlled by 6-Hour Mode.",
 		section = "doomSafeguardSettings",
-		position = 5
+		position = 6
 	)
 	default Color doomLogoutBugHighlightColor() { return new Color(0, 142, 80, 75); }
 
 	@ConfigItem(
 		keyName = "doomLogoutBugMessage",
 		name = "6-Hour Warning Message",
-		description = "Message displayed when close to 6-hour logout and logout bug is possible. Only shows when 'Display Logout Setting' is enabled.",
+		description = "Message displayed at entrances when the 6-hour warning threshold is reached. Controlled by 6-Hour Mode.",
 		section = "doomSafeguardSettings",
-		position = 6
+		position = 7
 	)
 	default String doomLogoutBugMessage() { return "Relog - Close to 6 hour logout"; }
+
+	@Range(min = 0, max = 36000)
+	@ConfigItem(
+		keyName = "doomSixHourWarningTicks",
+		name = "6-Hour Warning Ticks",
+		description = "Ticks elapsed since login before Doom's 6-hour warnings and entrance safeguards activate. One tick is about 0.6 seconds; 31500 ticks is 5 hours 15 minutes. Controlled by 6-Hour Mode.",
+		section = "doomSafeguardSettings",
+		position = 8
+	)
+	default int doomSixHourWarningTicks() { return 31500; }
 
 	@ConfigSection(
 		name = "Non-HC Inventory Highlight",
