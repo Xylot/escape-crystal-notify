@@ -42,9 +42,9 @@ public class EscapeCrystalNotifyRegionEntranceOverlay extends Overlay {
         boolean enabled = config.displayEntranceOverlay();
         boolean active = plugin.isEscapeCrystalInactivityTeleportActive();
         boolean notHardcore = config.requireHardcoreAccountType() && !plugin.isHardcoreAccountType();
-        boolean atNotifyRegion = plugin.isAtNotifyRegionId();
+        boolean atEntranceLocation = plugin.isAtEntranceLocation();
 
-        if (!enabled || notHardcore || !atNotifyRegion) {
+        if (!enabled || notHardcore || !atEntranceLocation) {
             return null;
         }
 

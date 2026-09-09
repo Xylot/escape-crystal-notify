@@ -140,6 +140,16 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
         height += 15;
 
         panelComponent.getChildren().add(LineComponent.builder()
+                .left("Location Requirements Met:")
+                .leftFont(OVERLAY_PANEL_FONT)
+                .leftColor(Color.WHITE)
+                .right(String.valueOf(plugin.isRegionLocationRequirementsMet()))
+                .rightFont(OVERLAY_PANEL_FONT)
+                .rightColor(plugin.isRegionLocationRequirementsMet() ? Color.GREEN : Color.RED)
+                .build());
+        height += 15;
+
+        panelComponent.getChildren().add(LineComponent.builder()
                 .left("At Notify Region:")
                 .leftFont(OVERLAY_PANEL_FONT)
                 .leftColor(Color.WHITE)
@@ -150,12 +160,12 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
         height += 15;
 
         panelComponent.getChildren().add(LineComponent.builder()
-                .left("At Notify Entrance:")
+                .left("At Entrance Location:")
                 .leftFont(OVERLAY_PANEL_FONT)
                 .leftColor(Color.WHITE)
-                .right(String.valueOf(plugin.isAtNotifyRegionEntrance()))
+                .right(String.valueOf(plugin.isAtEntranceLocation()))
                 .rightFont(OVERLAY_PANEL_FONT)
-                .rightColor(plugin.isAtNotifyRegionEntrance() ? Color.GREEN : Color.RED)
+                .rightColor(plugin.isAtEntranceLocation() ? Color.GREEN : Color.RED)
                 .build());
         height += 20; 
 

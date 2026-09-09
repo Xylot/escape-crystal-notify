@@ -536,6 +536,38 @@ public class EscapeCrystalNotifyThresholdsTest {
         assertEquals(0, safe.getRGB(15, 15));
     }
 
+    @Test public void safeEntranceHighlightsWithoutRegionNotifications() throws Exception {
+        EscapeCrystalNotifyPlugin plugin = plugin();
+        set(plugin, "accountType", EscapeCrystalNotifyAccountType.STANDARD_HARDCORE);
+        plugin.onConfigChanged(null);
+        set(plugin, "atNotifyRegionId", false);
+        set(plugin, "currentRegionId", 12582);
+        set(plugin, "regionLocationRequirementsMet", true);
+        set(plugin, "currentWorldPoint", new WorldPoint(3176, 2477, 0));
+        set(plugin, "entranceOverlayImage", new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB));
+        plugin.getValidEntrances().add(entrance(BOSS_SHELLBANE_GRYPHON_ENTRANCE));
+        EscapeCrystalNotifyRegionEntranceOverlay overlay = new EscapeCrystalNotifyRegionEntranceOverlay(plugin, new EscapeCrystalNotifyConfig() {});
+        BufferedImage image = new BufferedImage(400, 250, BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D graphics = image.createGraphics();
+        overlay.render(graphics);
+        graphics.dispose();
+        assertFalse(plugin.isAtNotifyRegionId());
+        assertNotEquals(0, image.getRGB(15, 15));
+        assertNotNull(plugin.getEntranceMenuWarning(plugin.getValidEntrances().get(0)));
+        assertEquals(BOSS_SHELLBANE_GRYPHON, EscapeCrystalNotifyEncounters.forEntrance(
+            plugin.getValidEntrances().get(0).getDefinition()));
+
+        set(plugin, "escapeCrystalWithPlayer", true);
+        set(plugin, "escapeCrystalActive", true);
+        thresholds.set(BOSS_SHELLBANE_GRYPHON, 6, profile);
+        BufferedImage ready = new BufferedImage(400, 250, BufferedImage.TYPE_INT_ARGB);
+        graphics = ready.createGraphics();
+        overlay.render(graphics);
+        graphics.dispose();
+        assertEquals(0, ready.getRGB(15, 15));
+        assertNull(plugin.getEntranceMenuWarning(plugin.getValidEntrances().get(0)));
+    }
+
     private EscapeCrystalNotifyPlugin plugin() throws Exception {
         EscapeCrystalNotifyPlugin plugin = new EscapeCrystalNotifyPlugin();
         set(plugin, "config", new EscapeCrystalNotifyConfig() {});

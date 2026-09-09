@@ -30,7 +30,7 @@ public class EscapeCrystalNotifyDebugSpawnTest {
     @Test
     public void resolvesShellbaneEntranceOutsideTheUndergroundArena() throws Exception {
         EscapeCrystalNotifyPlugin plugin = plugin(false);
-        EscapeCrystalNotifyRegion region = EscapeCrystalNotifyRegion.BOSS_SHELLBANE_GRYPHON;
+        EscapeCrystalNotifyRegion region = EscapeCrystalNotifyRegion.BOSS_SHELLBANE_GRYPHON_ENTRANCE;
         int id = region.getRegionEntrance().getEntranceIds()[0];
         WorldPoint location = new WorldPoint(3176, 2477, 0);
         assertEquals(12582, location.getRegionID());
@@ -38,14 +38,27 @@ public class EscapeCrystalNotifyDebugSpawnTest {
         set(plugin, "gameObjectEntranceIds", java.util.Set.of(id));
         plugin.onGameObjectSpawned(event(GameObjectSpawned.class, target(GameObject.class, id, location)));
         assertEquals(1, plugin.getPossibleEntrances().get(12582).size());
-        computeEntrances(plugin, location);
+        computeEntrances(plugin, location, false);
+        assertFalse(plugin.isAtNotifyRegionId());
+        assertTrue(plugin.isAtEntranceLocation());
         assertEquals(1, plugin.getValidEntrances().size());
         assertSame(region.getRegionEntrance(), plugin.getValidEntrances().get(0).getDefinition());
-        assertEquals(java.util.Set.of(region), plugin.getNearbyBosses());
+        assertEquals(java.util.Set.of(EscapeCrystalNotifyRegion.BOSS_SHELLBANE_GRYPHON), plugin.getNearbyBosses());
         java.util.Set<EscapeCrystalNotifyRegion> nearby = plugin.getNearbyBosses();
-        computeEntrances(plugin, location);
+        computeEntrances(plugin, location, false);
         assertSame(nearby, plugin.getNearbyBosses()); // Unchanged ticks don't publish another panel update.
         plugin.onConfigChanged(null);
+        computeEntrances(plugin, new WorldPoint(3200, 3200, 0), false);
+        assertTrue(plugin.getValidEntrances().isEmpty());
+        assertTrue(plugin.getNearbyBosses().isEmpty());
+        computeEntrances(plugin, location, false);
+        assertEquals(1, plugin.getValidEntrances().size());
+        GameStateChanged loading = new GameStateChanged();
+        loading.setGameState(GameState.LOADING);
+        plugin.onGameStateChanged(loading);
+        assertTrue(plugin.getPossibleEntrances().isEmpty());
+        assertTrue(plugin.getValidEntrances().isEmpty());
+        assertTrue(plugin.getNearbyBosses().isEmpty());
     }
 
     @Test
@@ -67,11 +80,68 @@ public class EscapeCrystalNotifyDebugSpawnTest {
     }
 
     private void computeEntrances(EscapeCrystalNotifyPlugin plugin, WorldPoint location) throws Exception {
-        set(plugin, "atNotifyRegionId", true);
+        computeEntrances(plugin, location, true);
+    }
+
+    private void computeEntrances(EscapeCrystalNotifyPlugin plugin, WorldPoint location, boolean notify) throws Exception {
+        set(plugin, "atNotifyRegionId", notify);
+        set(plugin, "currentRegionId", location.getRegionID());
+        set(plugin, "currentPlaneId", location.getPlane());
+        set(plugin, "currentChunkId", EscapeCrystalNotifyLocatedEntrance.computeChunkIdFromWorldPoint(location));
         set(plugin, "currentWorldPoint", location);
+        java.lang.reflect.Method requirements = EscapeCrystalNotifyPlugin.class.getDeclaredMethod("meetsRegionLocationRequirements");
+        requirements.setAccessible(true);
+        set(plugin, "regionLocationRequirementsMet", requirements.invoke(plugin));
         java.lang.reflect.Method compute = EscapeCrystalNotifyPlugin.class.getDeclaredMethod("computeEntranceObjectMetrics");
         compute.setAccessible(true);
         compute.invoke(plugin);
+    }
+
+    @Test
+    public void shellbaneNotifiesOnlyInArenaAndHonorsEntranceExclusions() throws Exception {
+        EscapeCrystalNotifyPlugin plugin = plugin(false);
+        WorldPoint entrance = new WorldPoint(3176, 2477, 0);
+        java.lang.reflect.Method check = EscapeCrystalNotifyPlugin.class.getDeclaredMethod("checkAtNotifyLocation");
+        check.setAccessible(true);
+        computeEntrances(plugin, entrance, false);
+        assertFalse((boolean) check.invoke(plugin));
+        assertTrue(plugin.isAtEntranceLocation());
+
+        computeEntrances(plugin, new WorldPoint((12682 >> 8) * 64, (12682 & 255) * 64, 0), false);
+        assertTrue((boolean) check.invoke(plugin));
+
+        set(plugin, "config", new EscapeCrystalNotifyConfig() {
+            @Override public boolean displayBosses() { return false; }
+        });
+        plugin.onConfigChanged(null);
+        computeEntrances(plugin, entrance, false);
+        assertFalse(plugin.isAtEntranceLocation());
+
+        set(plugin, "config", new EscapeCrystalNotifyConfig() {
+            @Override public String excludeRegionIds() { return "12582"; }
+        });
+        plugin.onConfigChanged(null);
+        assertFalse(plugin.isAtEntranceLocation());
+
+        set(plugin, "config", new EscapeCrystalNotifyConfig() {
+            @Override public String includeRegionIds() { return "12582"; }
+        });
+        plugin.onConfigChanged(null);
+        assertTrue((boolean) check.invoke(plugin)); // Explicit user overrides still work.
+    }
+
+    @Test
+    public void entranceOnlyRegionsKeepDestinationDeathTypeFiltering() {
+        java.util.List<EscapeCrystalNotifyRegionType> bosses = java.util.List.of(EscapeCrystalNotifyRegionType.BOSSES);
+        java.util.List<EscapeCrystalNotifyRegionDeathType> unsafe = java.util.List.of(EscapeCrystalNotifyRegionDeathType.UNSAFE);
+        assertFalse(EscapeCrystalNotifyRegion.getRegionIdsFromTypes(bosses, unsafe).contains(12582));
+        assertTrue(EscapeCrystalNotifyRegion.getRegionIdsFromTypes(bosses, unsafe).contains(12682));
+        assertTrue(EscapeCrystalNotifyRegion.getEntranceOnlyRegionIdsFromTypes(bosses, unsafe).contains(12582));
+        assertTrue(EscapeCrystalNotifyRegion.getEntranceOnlyRegionIdsFromTypes(bosses, java.util.List.of()).isEmpty());
+        assertTrue(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(
+            java.util.List.of(EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT), unsafe).contains(58439));
+        assertFalse(EscapeCrystalNotifyRegion.getEntranceIdsFromTypes(
+            java.util.List.of(EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT), java.util.List.of()).contains(58439));
     }
 
     @Test

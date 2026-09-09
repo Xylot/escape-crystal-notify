@@ -17,7 +17,8 @@ public enum EscapeCrystalNotifyRegion {
     https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/discord/DiscordGameEventType.java
      */
 
-    BOSS_SHELLBANE_GRYPHON("Shellbane gryphon", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, null, EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, 58439), 12682, 12582),
+    BOSS_SHELLBANE_GRYPHON("Shellbane Gryphon", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, 12682),
+    BOSS_SHELLBANE_GRYPHON_ENTRANCE("Shellbane Gryphon Entrance", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, null, EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, 58439), false, 12582),
     BOSS_MAGGOT_KING("Maggot King", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, List.of(685012, 685013, 687060, 687061), EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, 61048), 11645),
     BOSS_ABYSSAL_SIRE("Abyssal Sire", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.PRIORITIZED_WITH_HIGHLIGHT, List.of(774740, 774742, 780884, 780886), EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, ObjectID.NEXUS_EYE_YELLOW_MIDDLE, ObjectID.NEXUS_EYE_YELLOW_LEFT, ObjectID.NEXUS_EYE_YELLOW_RIGHT, ObjectID.NEXUS_EYE_GREEN_MIDDLE, ObjectID.NEXUS_EYE_GREEN_LEFT, ObjectID.NEXUS_EYE_GREEN_RIGHT), 11851, 11850, 12106, 12363, 12362),
     BOSS_AMOXLIATL("Amoxliatl", EscapeCrystalNotifyRegionType.BOSSES, EscapeCrystalNotifyRegionDeathType.UNSAFE, new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, List.of(410803, 410804), EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, ObjectID.VMQ3_RUINS_DOOR_MULTI), 5446, 6294, 6550),
@@ -191,6 +192,8 @@ public enum EscapeCrystalNotifyRegion {
     private final EscapeCrystalNotifyRegionEntrance regionEntrance;
     @Getter
     private final Quest questNotCompleted;
+    @Getter
+    private final boolean notifyRegion;
 
     private static final Map<Integer, EscapeCrystalNotifyRegion[]> ENTRANCES_BY_ID = buildEntranceIndex();
 
@@ -202,6 +205,7 @@ public enum EscapeCrystalNotifyRegion {
         this.questNotCompleted = null;
         this.regionIds = regionIds;
         this.chunkIds = null;
+        this.notifyRegion = true;
     }
 
     EscapeCrystalNotifyRegion(String regionName, EscapeCrystalNotifyRegionType regionType, EscapeCrystalNotifyRegionDeathType regionDeathType, List<Integer> chunkIds, int... regionIds) {
@@ -212,19 +216,22 @@ public enum EscapeCrystalNotifyRegion {
         this.questNotCompleted = null;
         this.regionIds = regionIds;
         this.chunkIds = chunkIds;
+        this.notifyRegion = true;
     }
 
     EscapeCrystalNotifyRegion(String regionName, EscapeCrystalNotifyRegionType regionType, EscapeCrystalNotifyRegionDeathType regionDeathType, EscapeCrystalNotifyRegionEntrance regionEntrance, int... regionIds) {
-        this.regionName = regionName;
-        this.regionType = regionType;
-        this.regionDeathType = regionDeathType;
-        this.regionEntrance = regionEntrance;
-        this.questNotCompleted = null;
-        this.regionIds = regionIds;
-        this.chunkIds = null;
+        this(regionName, regionType, regionDeathType, regionEntrance, true, regionIds);
+    }
+
+    EscapeCrystalNotifyRegion(String regionName, EscapeCrystalNotifyRegionType regionType, EscapeCrystalNotifyRegionDeathType regionDeathType, EscapeCrystalNotifyRegionEntrance regionEntrance, boolean notifyRegion, int... regionIds) {
+        this(regionName, regionType, regionDeathType, regionEntrance, notifyRegion, null, regionIds);
     }
 
     EscapeCrystalNotifyRegion(String regionName, EscapeCrystalNotifyRegionType regionType, EscapeCrystalNotifyRegionDeathType regionDeathType, EscapeCrystalNotifyRegionEntrance regionEntrance, List<Integer> chunkIds, int... regionIds) {
+        this(regionName, regionType, regionDeathType, regionEntrance, true, chunkIds, regionIds);
+    }
+
+    EscapeCrystalNotifyRegion(String regionName, EscapeCrystalNotifyRegionType regionType, EscapeCrystalNotifyRegionDeathType regionDeathType, EscapeCrystalNotifyRegionEntrance regionEntrance, boolean notifyRegion, List<Integer> chunkIds, int... regionIds) {
         this.regionName = regionName;
         this.regionType = regionType;
         this.regionDeathType = regionDeathType;
@@ -232,6 +239,7 @@ public enum EscapeCrystalNotifyRegion {
         this.questNotCompleted = null;
         this.regionIds = regionIds;
         this.chunkIds = chunkIds;
+        this.notifyRegion = notifyRegion;
     }
 
     EscapeCrystalNotifyRegion(String regionName, EscapeCrystalNotifyRegionType regionType, EscapeCrystalNotifyRegionDeathType regionDeathType, Quest questNotCompleted, int... regionIds) {
@@ -242,6 +250,7 @@ public enum EscapeCrystalNotifyRegion {
         this.questNotCompleted = questNotCompleted;
         this.regionIds = regionIds;
         this.chunkIds = null;
+        this.notifyRegion = true;
     }
 
     public static List<Integer> getAllRegionIds() {
@@ -270,10 +279,20 @@ public enum EscapeCrystalNotifyRegion {
 
     public static List<Integer> getRegionIdsFromTypes(List<EscapeCrystalNotifyRegionType> selectedRegionTypes, List<EscapeCrystalNotifyRegionDeathType> selectedRegionDeathTypes) {
         return Arrays.stream(EscapeCrystalNotifyRegion.values())
+                .filter(EscapeCrystalNotifyRegion::isNotifyRegion)
                 .filter(region -> selectedRegionTypes.contains(region.getRegionType()))
                 .filter(region -> selectedRegionDeathTypes.contains(region.getRegionDeathType()))
                 .flatMap(region -> Arrays.stream(region.getRegionIds()).boxed())
                 .collect(Collectors.toList());
+    }
+
+    public static Set<Integer> getEntranceOnlyRegionIdsFromTypes(List<EscapeCrystalNotifyRegionType> selectedRegionTypes, List<EscapeCrystalNotifyRegionDeathType> selectedRegionDeathTypes) {
+        return Arrays.stream(values())
+                .filter(region -> !region.notifyRegion && region.regionEntrance != null)
+                .filter(region -> selectedRegionTypes.contains(region.regionType))
+                .filter(region -> selectedRegionDeathTypes.contains(region.regionDeathType))
+                .flatMap(region -> Arrays.stream(region.regionIds).boxed())
+                .collect(Collectors.toSet());
     }
 
     public static List<Integer> getRegionIdsFromRegions(List<EscapeCrystalNotifyRegion> selectedRegions) {

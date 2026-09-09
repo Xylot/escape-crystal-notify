@@ -200,14 +200,15 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private boolean atNotifyRegionId = false;
 	private boolean previouslyAtNotifyRegionId = false;
 	@Getter
-	private boolean atNotifyRegionEntrance = false;
-	@Getter
 	private boolean atSafeRegionId = false;
+	@Getter
+	private boolean regionLocationRequirementsMet = false;
 	@Getter
 	private List<EscapeCrystalNotifyLocatedEntrance> validEntrances = new ArrayList<>();
 	@Getter
 	private Set<EscapeCrystalNotifyRegion> nearbyBosses = Collections.emptySet();
 	private Set<Integer> targetRegionIds;
+	private Set<Integer> entranceOnlyRegionIds = new HashSet<>();
 	private Set<Integer> npcEntranceIds;
 	private Set<Integer> gameObjectEntranceIds;
 	private HashSet<Integer> manuallyExcludedRegionIds = new HashSet<>();
@@ -710,6 +711,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		this.computeWorldPointMetrics();
 
+		this.regionLocationRequirementsMet = this.meetsRegionLocationRequirements();
 		this.atSafeRegionId = this.isRegionSafe(this.currentRegionId);
 		this.atNotifyRegionId = this.checkAtNotifyLocation();
 		this.enteredNotifyRegionId = !this.previouslyAtNotifyRegionId && this.atNotifyRegionId;
@@ -747,12 +749,18 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		}
 	}
 
+	public boolean isAtEntranceLocation() {
+		return this.atNotifyRegionId || (!this.atSafeRegionId
+			&& this.entranceOnlyRegionIds.contains(this.currentRegionId)
+			&& this.regionLocationRequirementsMet);
+	}
+
 	private void computeEntranceObjectMetrics() {
 		if (this.currentRegionId == YAMA_REGION_ID) {
 			this.clearPossibleChangedEntranceId(NpcID.YAMA_THRONE_OCCUPIED);
 		}
 
-		if (!this.atNotifyRegionId && !this.inTzhaarEntranceRegion) {
+		if (!isAtEntranceLocation() && !this.inTzhaarEntranceRegion) {
 			resetLocatedEntrance();
 			return;
 		}
@@ -796,6 +804,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		if (!targetRegionIds.contains(this.currentRegionId)) return false;
 
+		return this.regionLocationRequirementsMet;
+	}
+
+	private boolean meetsRegionLocationRequirements() {
 		if (excludedChunkIds.contains(this.currentChunkId)) return false;
 
 		if (this.chunkRequirements.containsKey(this.currentRegionId)) {
@@ -951,6 +963,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		List<Integer> includeRegionIds = parseAdditionalConfigRegionIds(config.includeRegionIds());
 		List<Integer> excludeRegionIds = parseAdditionalConfigRegionIds(config.excludeRegionIds());
 		this.manuallyExcludedRegionIds = new HashSet<>(excludeRegionIds);
+		this.entranceOnlyRegionIds = EscapeCrystalNotifyRegion.getEntranceOnlyRegionIdsFromTypes(targetRegions, getTargetDeathTypes(accountType));
+		this.entranceOnlyRegionIds.removeAll(excludeRegionIds);
 		this.debugGameObjectEntranceIds = EscapeCrystalNotifyIdParser.parseIds(config.debugEntranceObjects());
 		this.debugNpcEntranceIds = EscapeCrystalNotifyIdParser.parseIds(config.debugEntranceNpcs());
 
@@ -1399,10 +1413,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		boolean enabled = config.deprioritizeEntranceEnterOption();
 		boolean notHardcore = config.requireHardcoreAccountType() && !this.isHardcoreAccountType();
-		boolean atNotifyRegion = this.isAtNotifyRegionId();
+		boolean atEntranceLocation = this.isAtEntranceLocation();
 		boolean isInPvpWorld = WorldType.isPvpWorld(client.getWorldType());
 
-		if (!enabled || notHardcore || !atNotifyRegion || isInPvpWorld) return null;
+		if (!enabled || notHardcore || !atEntranceLocation || isInPvpWorld) return null;
 		if (!isEscapeCrystalInactivityTeleportActive()) {
 			return ColorUtil.wrapWithColorTag(config.deprioritizedMenuText(), config.deprioritizedMenuTextColor().brighter());
 		}
