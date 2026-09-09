@@ -428,12 +428,16 @@ public class EscapeCrystalNotifyThresholdsTest {
         plugin.getValidEntrances().add(doom);
         set(plugin, "atDoomLobby", true);
         set(plugin, "ticksSinceLogin", 31500);
+        set(plugin, "config", new EscapeCrystalNotifyConfig() {
+            @Override public SafeguardAccountType doomLogoutSafeguardMode() { return SafeguardAccountType.HC_ONLY; }
+        });
         menu[0] = new MenuEntry[]{menuEntry(doom.getTarget().getId())};
         plugin.onPostMenuSort(new PostMenuSort());
         assertTrue(menu[0][1].getOption().contains("Relog"));
         assertTrue(reads.isEmpty());
         set(plugin, "config", new EscapeCrystalNotifyConfig() {
             @Override public boolean deprioritizeEntranceEnterOption() { return false; }
+            @Override public SafeguardAccountType doomLogoutSafeguardMode() { return SafeguardAccountType.HC_ONLY; }
         });
         menu[0] = new MenuEntry[]{menuEntry(doom.getTarget().getId())};
         plugin.onPostMenuSort(new PostMenuSort());

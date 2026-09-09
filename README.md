@@ -17,10 +17,10 @@ Useful for HCIM/HCGIM
   - Close to triggering the inactivity teleport
   - Do not have your escape crystal set to left-click teleport
 - Minimal inventory highlighting for non-HC accounts
-- Safeguards to prevent deaths due to Leviathan's logout bug
+- Optional safeguards for Leviathan's fixed logout bug (disabled by default)
   - Option to disable left-click logouts while inside of Leviathan's arena
   - Warning message when approaching a 6-hour logout while at Leviathan's entry boat
-- Safeguards to prevent deaths due to Doom's logout bug
+- Optional safeguards for Doom's fixed logout bug (disabled by default)
   - Option to disable left-click logouts while inside of Doom's arena
   - Warning message when approaching a 6-hour logout while at Doom's entry boat
   - Logout is re-enabled between levels

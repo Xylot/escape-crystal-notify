@@ -1,5 +1,6 @@
 package com.escapecrystalnotify;
 
+import net.runelite.api.MenuAction;
 import net.runelite.client.plugins.PluginInstantiationException;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.JagexColors;
@@ -14,6 +15,12 @@ import java.awt.*;
 
 
 public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
+    static final String CONFIRM_FIX_OPTION = "Confirm fix";
+    static final String LEVIATHAN_FIX_TARGET = "Leviathan logout bug";
+    static final String DOOM_FIX_TARGET = "Doom logout bug";
+    private static final String FIX_INSTRUCTION_TEXT = "Right-click this panel and select 'Confirm fix' to hide this notice. Enable 'Display Fix Info' in the safeguard settings to show it again.";
+    private static final String LEVIATHAN_FIX_INFO_TEXT = "The Leviathan logout bug has been fixed. Safeguards are now disabled by default and remain available as an optional setting.";
+    private static final String DOOM_FIX_INFO_TEXT = "The Doom of Mokhaiotl logout bug has been fixed. Safeguards are now disabled by default and remain available as an optional setting.";
     private static final Font OVERLAY_PANEL_FONT = FontManager.getRunescapeSmallFont();
     private static final int OVERLAY_PANEL_WIDTH = 235;
     private static final int OVERLAY_PANEL_HEIGHT = 100;
@@ -49,6 +56,8 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
     }
     @Override
     public Dimension render(Graphics2D graphics) {
+        getMenuEntries().clear();
+        panelComponent.getChildren().clear();
         if (!plugin.isLeviathanSafeguardPanelEnabled() && !plugin.isDoomSafeguardPanelEnabled()) return null;
 
         String bugInfoHeaderText = null;
@@ -59,15 +68,24 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
         Color logoutStatusTextColor = null;
         String sixHourWarningText = null;
         String instructionText = null;
+        String fixInfoText = null;
 
         if (plugin.isLeviathanSafeguardPanelEnabled()) {
-            if (config.displayLeviathanBugInfo()) {
+            boolean modeEnabled = config.leviathanLogoutSafeguardMode() != EscapeCrystalNotifyConfig.SafeguardAccountType.DISABLED;
+            if (modeEnabled && config.displayLeviathanBugInfo()) {
                 bugInfoHeaderText = LEVIATHAN_BUG_INFO_HEADER_TEXT;
                 bugInfoText = LEVIATHAN_BUG_INFO_TEXT;
                 instructionText = LEVIATHAN_INSTRUCTION_TEXT;
             }
 
-            if (config.displayLeviathanLogoutSetting()) {
+            if (config.displayLeviathanFixInfo()) {
+                fixInfoText = LEVIATHAN_FIX_INFO_TEXT;
+                if (bugInfoHeaderText == null) bugInfoHeaderText = "LEVIATHAN BUG FIXED";
+                instructionText = FIX_INSTRUCTION_TEXT;
+                addMenuEntry(MenuAction.RUNELITE_OVERLAY, CONFIRM_FIX_OPTION, LEVIATHAN_FIX_TARGET);
+            }
+
+            if (modeEnabled && config.displayLeviathanLogoutSetting()) {
                 logoutStatusHeaderText = LEVIATHAN_LOGOUT_STATUS_HEADER_TEXT;
 
                 if (plugin.isLeviathanSafeguardEnabled()) {
@@ -82,13 +100,21 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
 
             if (plugin.isLeviathanSafeguardEnabled() && config.displayLeviathanLogoutSetting()) sixHourWarningText = SIX_HOUR_WARNING_TEXT;
         } else if (plugin.isDoomSafeguardPanelEnabled()) {
-            if (config.displayDoomBugInfo()) {
+            boolean modeEnabled = config.doomLogoutSafeguardMode() != EscapeCrystalNotifyConfig.SafeguardAccountType.DISABLED;
+            if (modeEnabled && config.displayDoomBugInfo()) {
                 bugInfoHeaderText = DOOM_BUG_INFO_HEADER_TEXT;
                 bugInfoText = DOOM_BUG_INFO_TEXT;
                 instructionText = DOOM_INSTRUCTION_TEXT;
             }
 
-            if (config.displayDoomLogoutSetting()) {
+            if (config.displayDoomFixInfo()) {
+                fixInfoText = DOOM_FIX_INFO_TEXT;
+                if (bugInfoHeaderText == null) bugInfoHeaderText = "DOOM BUG FIXED";
+                instructionText = FIX_INSTRUCTION_TEXT;
+                addMenuEntry(MenuAction.RUNELITE_OVERLAY, CONFIRM_FIX_OPTION, DOOM_FIX_TARGET);
+            }
+
+            if (modeEnabled && config.displayDoomLogoutSetting()) {
                 logoutStatusHeaderText = DOOM_LOGOUT_STATUS_HEADER_TEXT;
 
                 if (plugin.isDoomSafeguardEnabled()) {
@@ -114,15 +140,26 @@ public class EscapeCrystalNotifyTextOverlayPanel extends OverlayPanel {
         panelComponent.setPreferredSize(new Dimension(OVERLAY_PANEL_WIDTH, OVERLAY_PANEL_HEIGHT));
         panelComponent.getChildren().clear();
 
-        if (bugInfoText != null) {
+        if (bugInfoHeaderText != null) {
             panelComponent.getChildren().add(LineComponent.builder()
                     .left(getCenteredText(bugInfoHeaderText, metrics))
                     .leftFont(OVERLAY_PANEL_FONT)
                     .leftColor(JagexColors.YELLOW_INTERFACE_TEXT)
                     .build());
+        }
 
+        if (bugInfoText != null) {
             panelComponent.getChildren().add(LineComponent.builder()
                     .left(bugInfoText)
+                    .leftFont(OVERLAY_PANEL_FONT)
+                    .leftColor(JagexColors.YELLOW_INTERFACE_TEXT)
+                    .build());
+        }
+
+        if (fixInfoText != null) {
+            if (bugInfoText != null) panelComponent.getChildren().add(newLineComponent);
+            panelComponent.getChildren().add(LineComponent.builder()
+                    .left(fixInfoText)
                     .leftFont(OVERLAY_PANEL_FONT)
                     .leftColor(JagexColors.YELLOW_INTERFACE_TEXT)
                     .build());

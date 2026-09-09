@@ -20,12 +20,14 @@ import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.OverlayMenuClicked;
 import net.runelite.client.events.ProfileChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.chatbox.ChatboxPanelManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.OverlayMenuEntry;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.AsyncBufferedImage;
@@ -34,6 +36,7 @@ import javax.swing.SwingUtilities;
 import net.runelite.client.ui.overlay.infobox.InfoBox;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.ColorUtil;
+import net.runelite.client.util.Text;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -316,6 +319,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Subscribe
 	public void onMenuOpened(MenuOpened event) {
+		addFixConfirmationMenuEntry(event);
 		if (!config.showSetCrystalMaximumOption() || validEntrances.isEmpty()) return;
 		Set<EscapeCrystalNotifyRegion> added = new HashSet<>();
 		for (EscapeCrystalNotifyLocatedEntrance entrance : validEntrances) {
@@ -331,6 +335,26 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 					.setType(MenuAction.RUNELITE).onClick(e -> openThresholdInput(encounter));
 				added.add(encounter);
 				break;
+			}
+		}
+	}
+
+	private void addFixConfirmationMenuEntry(MenuOpened event) {
+		if (escapeCrystalNotifyTextOverlayPanel == null
+			|| (!isLeviathanSafeguardPanelEnabled() && !isDoomSafeguardPanelEnabled())) return;
+		net.runelite.api.Point mouse = client.getMouseCanvasPosition();
+		if (!escapeCrystalNotifyTextOverlayPanel.getBounds().contains(mouse.getX(), mouse.getY())) return;
+
+		for (OverlayMenuEntry fixEntry : escapeCrystalNotifyTextOverlayPanel.getMenuEntries()) {
+			// RuneLite already adds overlay actions when Shift is held.
+			boolean alreadyAdded = Arrays.stream(event.getMenuEntries()).anyMatch(entry ->
+				fixEntry.getOption().equals(entry.getOption())
+					&& fixEntry.getTarget().equals(Text.removeTags(entry.getTarget())));
+			if (!alreadyAdded) {
+				client.createMenuEntry(1).setOption(fixEntry.getOption())
+					.setTarget(ColorUtil.wrapWithColorTag(fixEntry.getTarget(), Color.ORANGE))
+					.setType(fixEntry.getMenuAction())
+					.onClick(entry -> onOverlayMenuClicked(new OverlayMenuClicked(fixEntry, escapeCrystalNotifyTextOverlayPanel)));
 			}
 		}
 	}
@@ -1242,11 +1266,30 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	public boolean isLeviathanSafeguardPanelEnabled() {
-		return this.atLeviathanLobby && (config.displayLeviathanBugInfo() || config.displayLeviathanLogoutSetting());
+		return this.atLeviathanLobby && (config.displayLeviathanFixInfo()
+			|| (config.leviathanLogoutSafeguardMode() != EscapeCrystalNotifyConfig.SafeguardAccountType.DISABLED
+				&& (config.displayLeviathanBugInfo() || config.displayLeviathanLogoutSetting())));
 	}
 
 	public boolean isDoomSafeguardPanelEnabled() {
-		return this.atDoomLobby && (config.displayDoomBugInfo() || config.displayDoomLogoutSetting());
+		return this.atDoomLobby && (config.displayDoomFixInfo()
+			|| (config.doomLogoutSafeguardMode() != EscapeCrystalNotifyConfig.SafeguardAccountType.DISABLED
+				&& (config.displayDoomBugInfo() || config.displayDoomLogoutSetting())));
+	}
+
+	@Subscribe
+	public void onOverlayMenuClicked(OverlayMenuClicked event) {
+		if (event.getOverlay() != escapeCrystalNotifyTextOverlayPanel
+			|| event.getEntry().getMenuAction() != MenuAction.RUNELITE_OVERLAY
+			|| !EscapeCrystalNotifyTextOverlayPanel.CONFIRM_FIX_OPTION.equals(event.getEntry().getOption())) return;
+
+		if (EscapeCrystalNotifyTextOverlayPanel.LEVIATHAN_FIX_TARGET.equals(event.getEntry().getTarget())
+			&& atLeviathanLobby && config.displayLeviathanFixInfo()) {
+			configManager.setConfiguration(EscapeCrystalNotifyConfig.GROUP, "displayLeviathanFixInfo", false);
+		} else if (EscapeCrystalNotifyTextOverlayPanel.DOOM_FIX_TARGET.equals(event.getEntry().getTarget())
+			&& atDoomLobby && config.displayDoomFixInfo()) {
+			configManager.setConfiguration(EscapeCrystalNotifyConfig.GROUP, "displayDoomFixInfo", false);
+		}
 	}
 
 	public boolean isTeleportDisabledPanelEnabled() {
@@ -1259,7 +1302,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	public boolean isLeviathanSafeguardEnabled() {
-		switch (config.leviathanSafeguardMode()) {
+		switch (config.leviathanLogoutSafeguardMode()) {
 			case ALWAYS:
 				return true;
 			case HC_ONLY:
@@ -1271,7 +1314,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	public boolean isDoomSafeguardEnabled() {
-		switch (config.doomSafeguardMode()) {
+		switch (config.doomLogoutSafeguardMode()) {
 			case ALWAYS:
 				return true;
 			case HC_ONLY:
