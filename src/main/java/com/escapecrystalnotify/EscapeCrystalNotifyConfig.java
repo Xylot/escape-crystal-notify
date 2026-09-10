@@ -1,6 +1,7 @@
 package com.escapecrystalnotify;
 
 import net.runelite.client.config.*;
+import static com.escapecrystalnotify.EscapeCrystalNotifyCrystalDefaults.*;
 
 import java.awt.*;
 
@@ -587,10 +588,153 @@ public interface EscapeCrystalNotifyConfig extends Config
 	default String inventoryTimeExpiredText() { return "Tele"; }
 
 	@ConfigSection(
+		name = "3D Crystal",
+		description = "Floating crystal with status colors and resource fill, visible only in your client",
+		closedByDefault = DEFAULT_SECTION_CLOSED,
+		position = 7
+	)
+	String crystal3dSettings = "crystal3dSettings";
+
+	@ConfigItem(
+		keyName = "enableCrystal3d", name = "Enable 3D Crystal",
+		description = "Show a floating 3D crystal near your character",
+		section = crystal3dSettings, position = 1
+	)
+	default boolean enableCrystal3d() { return DEFAULT_ENABLED; }
+
+	@ConfigItem(
+		keyName = "crystal3dDisplayEverywhere", name = "Display Everywhere",
+		description = "Show regardless of location. When off, use the inventory display's notification-region rules. Independent of the inventory toggle.",
+		section = crystal3dSettings, position = 2
+	)
+	default boolean crystal3dDisplayEverywhere() { return DEFAULT_DISPLAY_EVERYWHERE; }
+
+	@ConfigItem(
+		keyName = "crystal3dDisplayStyle", name = "Display Style",
+		description = "Place the crystal above your head, or anchor a smaller crystal beside your character using the Small position settings",
+		section = crystal3dSettings, position = 3
+	)
+	default Crystal3dDisplayStyle crystal3dDisplayStyle() { return DEFAULT_DISPLAY_STYLE; }
+
+	@ConfigItem(
+		keyName = "crystal3dActiveColor", name = "Active Color",
+		description = "Crystal color when carried with inactivity teleport enabled. Game lighting affects its rendered appearance.",
+		section = crystal3dSettings, position = 4
+	)
+	default Color crystal3dActiveColor() { return DEFAULT_ACTIVE_COLOR; }
+
+	@ConfigItem(
+		keyName = "crystal3dInactiveColor", name = "Inactive Color",
+		description = "Crystal color when inactivity teleport is disabled or the escape crystal is missing",
+		section = crystal3dSettings, position = 5
+	)
+	default Color crystal3dInactiveColor() { return DEFAULT_INACTIVE_COLOR; }
+
+	@ConfigItem(
+		keyName = "crystal3dFillMode", name = "Fill Mode",
+		description = "Fill from inactivity time, hitpoints or prayer points remaining. Resource fill is capped at your normal maximum. Disabled shows the solid active/inactive color.",
+		section = crystal3dSettings, position = 6
+	)
+	default Crystal3dFillMode crystal3dFillMode() { return DEFAULT_FILL_MODE; }
+
+	@Range(min = MIN_SIZE, max = MAX_SIZE)
+	@Units(Units.PERCENT)
+	@ConfigItem(
+		keyName = "crystal3dSize", name = "Size",
+		description = "Size of the floating crystal; Small next to head uses a smaller proportion of this size",
+		section = crystal3dSettings, position = 7
+	)
+	default int crystal3dSize() { return DEFAULT_SIZE; }
+
+	@Range(min = MIN_HEIGHT, max = MAX_HEIGHT)
+	@ConfigItem(
+		keyName = "crystal3dHeight", name = "Manual Height Above Head",
+		description = "Above head height when automatic clearance is off (128 scene units = one tile). Small next to head uses Small: Height instead.",
+		section = crystal3dSettings, position = 8
+	)
+	default int crystal3dHeight() { return DEFAULT_HEIGHT; }
+
+	@Range(min = MIN_SPIN_SECONDS, max = MAX_SPIN_SECONDS)
+	@Units(Units.SECONDS)
+	@ConfigItem(
+		keyName = "crystal3dSpinSeconds", name = "Rotation Period",
+		description = "Seconds per full rotation; 0 disables rotation",
+		section = crystal3dSettings, position = 9
+	)
+	default int crystal3dSpinSeconds() { return DEFAULT_SPIN_SECONDS; }
+
+	@Range(min = MIN_BOB_HEIGHT, max = MAX_BOB_HEIGHT)
+	@ConfigItem(
+		keyName = "crystal3dBobHeight", name = "Bobbing Height",
+		description = "Gentle vertical movement in scene units; 0 disables bobbing",
+		section = crystal3dSettings, position = 10
+	)
+	default int crystal3dBobHeight() { return DEFAULT_BOB_HEIGHT; }
+
+	@ConfigItem(
+		keyName = "crystal3dAutomaticClearance", name = "Automatic Overhead Clearance",
+		description = "Above head style: clear active prayers, skulls, bars, chat and hint arrows. Stay close when overheads are absent; hide if there is no room.",
+		section = crystal3dSettings, position = 11
+	)
+	default boolean crystal3dAutomaticClearance() { return DEFAULT_AUTOMATIC_CLEARANCE; }
+
+	@Range(min = MIN_PADDING, max = MAX_PADDING)
+	@ConfigItem(
+		keyName = "crystal3dClearancePadding", name = "Overhead Padding (Pixels)",
+		description = "Additional screen-space gap for automatic Above head placement; Small next to head uses its own position settings",
+		section = crystal3dSettings, position = 12
+	)
+	default int crystal3dClearancePadding() { return DEFAULT_CLEARANCE_PADDING; }
+
+	@Range(min = MIN_SIDE_OFFSET, max = MAX_SIDE_OFFSET)
+	@ConfigItem(
+		keyName = "crystal3dSideOffset", name = "Small: Side Offset",
+		description = "Small style only: positive is the character's right, negative is left, based on their facing direction. 128 scene units = one tile.",
+		section = crystal3dSettings, position = 13
+	)
+	default int crystal3dSideOffset() { return DEFAULT_SIDE_OFFSET; }
+
+	@Range(min = MIN_SIDE_OFFSET, max = MAX_SIDE_OFFSET)
+	@ConfigItem(
+		keyName = "crystal3dForwardOffset", name = "Small: Forward Offset",
+		description = "Small style only: positive moves in front of the character, negative moves behind. 128 scene units = one tile.",
+		section = crystal3dSettings, position = 14
+	)
+	default int crystal3dForwardOffset() { return DEFAULT_FORWARD_OFFSET; }
+
+	@Range(min = MIN_SIDE_HEIGHT, max = MAX_SIDE_HEIGHT)
+	@ConfigItem(
+		keyName = "crystal3dSideHeight", name = "Small: Height",
+		description = "Small style only: crystal center relative to the top of the head. Positive raises it; negative lowers it. Scene units.",
+		section = crystal3dSettings, position = 15
+	)
+	default int crystal3dSideHeight() { return DEFAULT_SIDE_HEIGHT; }
+
+	enum Crystal3dDisplayStyle {
+		ABOVE_HEAD("Above head"),
+		SMALL_NEXT_TO_HEAD("Small next to head");
+
+		private final String displayName;
+		Crystal3dDisplayStyle(String displayName) { this.displayName = displayName; }
+		@Override public String toString() { return displayName; }
+	}
+
+	enum Crystal3dFillMode {
+		INACTIVITY_TIME("Inactivity time"),
+		HITPOINTS("Hitpoints"),
+		PRAYER_POINTS("Prayer points remaining"),
+		DISABLED("Disabled");
+
+		private final String displayName;
+		Crystal3dFillMode(String displayName) { this.displayName = displayName; }
+		@Override public String toString() { return displayName; }
+	}
+
+	@ConfigSection(
 		name = "Notification Settings",
 		description = "Configure preferences for Runelite notifications",
 		closedByDefault = true,
-		position = 7
+		position = 8
 	)
 	String notificationSettings = "notificationSettings";
 
@@ -664,7 +808,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Leviathan Safeguards",
 		description = "Configure optional safeguards for the fixed Leviathan logout bug",
 		closedByDefault = true,
-		position = 8
+		position = 9
 	)
 	String leviathanSafeguardSettings = "leviathanSafeguardSettings";
 
@@ -746,7 +890,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Doom Safeguards",
 		description = "Configure optional safeguards for the fixed Doom logout bug",
 		closedByDefault = true,
-		position = 9
+		position = 10
 	)
 	String doomSafeguardSettings = "doomSafeguardSettings";
 
@@ -828,7 +972,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Non-HC Inventory Highlight",
 		description = "Settings for minimal inventory highlighting for non-hardcore accounts",
 		closedByDefault = true,
-		position = 10
+		position = 11
 	)
 	String nonHardcoreInventorySettings = "nonHardcoreInventorySettings";
 
@@ -877,7 +1021,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Debug",
 		description = "Settings for testing and debugging the plugin",
 		closedByDefault = true,
-		position = 11
+		position = 12
 	)
 	String debugSettings = "debugSettings";
 

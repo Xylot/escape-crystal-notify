@@ -107,6 +107,97 @@ public class EscapeCrystalNotifyRegionPolicyTest {
         assertTrue(plugin.isAtEntranceLocation());
     }
 
+    @Test
+    public void crystalUsesNotifyRegionsIncludingGlobalOverrideButNotEntranceOnlyAreas() throws Exception {
+        EscapeCrystalNotifyPlugin plugin = plugin(EscapeCrystalNotifyAccountType.STANDARD_HARDCORE);
+        at(plugin, SHELLBANE_ENTRANCE);
+        assertFalse(crystalNotifyLocation(plugin));
+        at(plugin, SHELLBANE_ARENA);
+        assertTrue(crystalNotifyLocation(plugin));
+        at(plugin, chunk(785665));
+        assertTrue(crystalNotifyLocation(plugin));
+        at(plugin, region(12192, 0));
+        assertFalse(crystalNotifyLocation(plugin));
+        at(plugin, region(5525, 1));
+        assertFalse(crystalNotifyLocation(plugin));
+
+        set(plugin, "config", new EscapeCrystalNotifyConfig() {
+            @Override public boolean displayEverywhere() { return true; }
+            @Override public boolean displayBosses() { return false; }
+        });
+        plugin.onConfigChanged(null);
+        at(plugin, SHELLBANE_ENTRANCE);
+        assertTrue(plugin.isAtNotifyRegionId());
+        assertTrue(crystalNotifyLocation(plugin));
+        set(plugin, "config", new EscapeCrystalNotifyConfig() {
+            @Override public boolean displayEverywhere() { return true; }
+            @Override public String excludeRegionIds() { return "12582"; }
+        });
+        plugin.onConfigChanged(null);
+        at(plugin, SHELLBANE_ENTRANCE);
+        assertFalse(crystalNotifyLocation(plugin));
+    }
+
+    @Test
+    public void crystalSettingsInvalidateOnCrystalConfigAndProfileChanges() throws Exception {
+        EscapeCrystalNotifyPlugin plugin = plugin(EscapeCrystalNotifyAccountType.STANDARD_HARDCORE);
+        int[] invalidations = {0};
+        set(plugin, "crystal3d", new EscapeCrystalNotifyCrystal3d(null, null) {
+            @Override void invalidateSettings() { invalidations[0]++; }
+        });
+        net.runelite.client.events.ConfigChanged event = new net.runelite.client.events.ConfigChanged();
+        event.setGroup("anotherPlugin");
+        event.setKey("crystal3dSize");
+        plugin.onConfigChanged(event);
+        assertEquals(0, invalidations[0]);
+        event.setGroup(EscapeCrystalNotifyConfig.GROUP);
+        event.setKey("alwaysDisplayInventory");
+        plugin.onConfigChanged(event);
+        assertEquals(0, invalidations[0]);
+        event.setKey("crystal3dSize");
+        plugin.onConfigChanged(event);
+        assertEquals(1, invalidations[0]);
+        plugin.onProfileChanged(null);
+        assertEquals(2, invalidations[0]);
+    }
+
+    @Test
+    public void crystalReceivesExistingTickMetricsAndFramesOnlyRender() throws Exception {
+        EscapeCrystalNotifyPlugin plugin = plugin(EscapeCrystalNotifyAccountType.STANDARD_HARDCORE);
+        int[] calls = {0, 0};
+        set(plugin, "crystal3d", new EscapeCrystalNotifyCrystal3d(null, null) {
+            @Override void updateState(boolean carried, boolean active, boolean notify, int remaining, int total) {
+                calls[0]++;
+                assertTrue(carried);
+                assertTrue(active);
+                assertTrue(notify);
+                assertEquals(25, remaining);
+                assertEquals(100, total);
+            }
+            @Override void update() { calls[1]++; }
+        });
+        set(plugin, "escapeCrystalWithPlayer", true);
+        set(plugin, "escapeCrystalActive", true);
+        set(plugin, "atNotifyRegionId", true);
+        set(plugin, "expectedTicksUntilTeleport", 25);
+        set(plugin, "escapeCrystalInactivityTicks", 100);
+        plugin.updateCrystal3dState();
+        for (int i = 0; i < 100; i++) plugin.onBeforeRender(null);
+        assertEquals(1, calls[0]);
+        assertEquals(100, calls[1]);
+    }
+
+    private static boolean crystalNotifyLocation(EscapeCrystalNotifyPlugin plugin) throws Exception {
+        boolean[] notifyLocation = {false};
+        set(plugin, "crystal3d", new EscapeCrystalNotifyCrystal3d(null, null) {
+            @Override void updateState(boolean carried, boolean active, boolean notify, int remaining, int total) {
+                notifyLocation[0] = notify;
+            }
+        });
+        plugin.updateCrystal3dState();
+        return notifyLocation[0];
+    }
+
     private static EscapeCrystalNotifyPlugin plugin(EscapeCrystalNotifyAccountType account) throws Exception {
         EscapeCrystalNotifyPlugin plugin = new EscapeCrystalNotifyPlugin();
         set(plugin, "config", new EscapeCrystalNotifyConfig() {});

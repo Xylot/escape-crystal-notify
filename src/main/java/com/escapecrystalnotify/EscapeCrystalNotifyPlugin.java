@@ -17,6 +17,7 @@ import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.api.Quest;
 import net.runelite.api.QuestState;
 import net.runelite.client.Notifier;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -88,6 +89,12 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Inject
 	private EscapeCrystalNotifyConfig config;
+
+	@Inject
+	private EscapeCrystalNotifyCrystal3d crystal3d;
+
+	@Inject
+	private ClientThread clientThread;
 
 	@Inject
 	private EscapeCrystalNotifyOverlayActive escapeCrystalNotifyOverlayActive;
@@ -284,6 +291,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
+		clientThread.invoke(crystal3d::reset);
 		if (thresholdNavigation != null) clientToolbar.removeNavigation(thresholdNavigation);
 		thresholdPanel = null;
 		thresholdNavigation = null;
@@ -301,11 +309,22 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onBeforeRender(BeforeRender event) {
+		crystal3d.update();
+	}
+
+	void updateCrystal3dState() {
+		crystal3d.updateState(escapeCrystalWithPlayer, escapeCrystalActive, isAtNotifyRegionId(),
+			expectedTicksUntilTeleport, escapeCrystalInactivityTicks);
+	}
+
+	@Subscribe
 	public void onGameTick(GameTick event) {
 		ticksSinceLogin++;
 		computeAccountTypeMetrics();
 		computeLocationMetrics();
 		computeEscapeCrystalMetrics();
+		updateCrystal3dState();
 		computeNotificationMetrics();
 
 		if (this.config.enableInfoBox() && isAccountTypeEnabled()) {
@@ -645,6 +664,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged event) {
 		GameState state = event.getGameState();
+		if (state != GameState.LOGGED_IN) {
+			crystal3d.reset();
+		}
 
 		switch (state)
 		{
@@ -926,6 +948,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 				return;
 			}
 		}
+		if (crystal3d != null && (event == null || event.getKey().startsWith("crystal3d"))) {
+			crystal3d.invalidateSettings();
+		}
 		this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
 		Predicate<EscapeCrystalNotifyLocatedEntrance> inactiveDebugEntrance = entrance ->
 			entrance.getDefinition().isDebug() && !(entrance.getTarget().getNpc() == null
@@ -941,6 +966,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Subscribe
 	public void onProfileChanged(ProfileChanged event) {
+		if (crystal3d != null) crystal3d.invalidateSettings();
 		refreshThresholdPanel(null);
 	}
 
