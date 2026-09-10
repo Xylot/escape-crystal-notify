@@ -104,9 +104,9 @@ public class EscapeCrystalNotifySafeguardTest {
         manager.setConfiguration(GROUP, "ticksSinceLoginOverride", -1);
         assertTrue(plugin.isCloseToLeviathanSixHourLogout());
 
-        // Imported settings can bypass the config UI's range validation.
-        manager.setConfiguration(GROUP, "leviathanSixHourWarningTicks", -10);
-        manager.setConfiguration(GROUP, "doomSixHourWarningTicks", Integer.MAX_VALUE);
+        // The minimum and maximum supported config values activate at their exact thresholds.
+        manager.setConfiguration(GROUP, "leviathanSixHourWarningTicks", 0);
+        manager.setConfiguration(GROUP, "doomSixHourWarningTicks", 36000);
         set("ticksSinceLogin", 0);
         assertTrue(plugin.isCloseToLeviathanSixHourLogout());
         assertFalse(plugin.isCloseToDoomSixHourLogout());

@@ -139,29 +139,6 @@ public class EscapeCrystalNotifyRegionPolicyTest {
     }
 
     @Test
-    public void crystalSettingsInvalidateOnCrystalConfigAndProfileChanges() throws Exception {
-        EscapeCrystalNotifyPlugin plugin = plugin(EscapeCrystalNotifyAccountType.STANDARD_HARDCORE);
-        int[] invalidations = {0};
-        set(plugin, "crystal3d", new EscapeCrystalNotifyCrystal3d(null, null) {
-            @Override void invalidateSettings() { invalidations[0]++; }
-        });
-        net.runelite.client.events.ConfigChanged event = new net.runelite.client.events.ConfigChanged();
-        event.setGroup("anotherPlugin");
-        event.setKey("crystal3dSize");
-        plugin.onConfigChanged(event);
-        assertEquals(0, invalidations[0]);
-        event.setGroup(EscapeCrystalNotifyConfig.GROUP);
-        event.setKey("alwaysDisplayInventory");
-        plugin.onConfigChanged(event);
-        assertEquals(0, invalidations[0]);
-        event.setKey("crystal3dSize");
-        plugin.onConfigChanged(event);
-        assertEquals(1, invalidations[0]);
-        plugin.onProfileChanged(null);
-        assertEquals(2, invalidations[0]);
-    }
-
-    @Test
     public void crystalReceivesExistingTickMetricsAndFramesOnlyRender() throws Exception {
         EscapeCrystalNotifyPlugin plugin = plugin(EscapeCrystalNotifyAccountType.STANDARD_HARDCORE);
         int[] calls = {0, 0};

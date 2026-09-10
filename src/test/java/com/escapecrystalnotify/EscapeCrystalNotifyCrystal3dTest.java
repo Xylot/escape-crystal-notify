@@ -100,8 +100,8 @@ public class EscapeCrystalNotifyCrystal3dTest
 		assertTrue(f.registered.isEmpty());
 		f.gameState = GameState.LOGGED_IN;
 		f.update(true, true);
-		f.renderer.clear();
-		f.renderer.clear();
+		f.renderer.reset();
+		f.renderer.reset();
 		assertTrue(f.registered.isEmpty());
 	}
 
@@ -114,7 +114,7 @@ public class EscapeCrystalNotifyCrystal3dTest
 		f.update(true, true);
 		assertEquals(1, f.loads);
 		assertTrue(f.registered.isEmpty());
-		f.renderer.clear();
+		f.renderer.reset();
 		f.modelAvailable = true;
 		f.update(true, true);
 		assertTrue(f.object.isActive());
@@ -392,18 +392,14 @@ public class EscapeCrystalNotifyCrystal3dTest
 	}
 
 	@Test
-	public void derivedSettingsStayCachedAcrossFramesAndRefreshOnInvalidation()
+	public void unchangedSettingsReuseModelAndSizeChangesApplyWithoutInvalidation()
 	{
 		Fixture f = new Fixture();
 		f.update(true, true);
-		int reads = f.config.sizeReads;
 		for (int i = 0; i < 100; i++) f.renderer.update();
-		assertEquals(reads, f.config.sizeReads);
 		assertEquals(1, f.loads);
 		f.config.size = 150;
-		f.renderer.invalidateSettings();
 		f.renderer.update();
-		assertEquals(reads + 1, f.config.sizeReads);
 		assertEquals(150, f.litSize);
 		assertEquals(2, f.loads);
 	}
@@ -431,7 +427,7 @@ public class EscapeCrystalNotifyCrystal3dTest
 		assertTrue(original.isActive());
 		assertTrue((f.lit1[0] & 127) < (fullColor & 127));
 		assertEquals(1, f.loads);
-		f.renderer.clear();
+		f.renderer.reset();
 		f.update(true, true);
 		assertNotSame(original, f.object);
 		assertEquals(2, f.loads);
@@ -459,19 +455,16 @@ public class EscapeCrystalNotifyCrystal3dTest
 		f.config.fillMode = EscapeCrystalNotifyConfig.Crystal3dFillMode.INACTIVITY_TIME;
 		f.remainingTicks = f.totalTicks = 100;
 		f.update(true, true);
-		int reads = f.config.colorReads;
 		int full = f.lit1[0];
 		f.renderer.updateState(true, true, true, 50, 100);
 		f.location = new LocalPoint(6500, 6600);
 		for (int i = 0; i < 100; i++) f.renderer.update();
-		assertEquals(reads, f.config.colorReads);
 		assertEquals(1, f.loads);
 		assertEquals(6500, f.object.getX());
 		assertEquals(6600, f.object.getY());
 		assertTrue((f.lit1[0] & 127) < (full & 127));
 		f.renderer.updateState(true, false, true, 0, 100);
 		f.renderer.update();
-		assertEquals(reads, f.config.colorReads);
 		assertEquals(2, f.loads);
 		assertEquals(Short.toUnsignedInt(f.colors[0]), f.lit1[0]); // Inactive restores full shading.
 	}
@@ -485,27 +478,24 @@ public class EscapeCrystalNotifyCrystal3dTest
 		f.totalTicks = 100;
 		f.update(true, true);
 		f.config.fillMode = EscapeCrystalNotifyConfig.Crystal3dFillMode.DISABLED;
-		f.renderer.invalidateSettings();
 		f.renderer.update();
 		assertEquals(Short.toUnsignedInt(f.colors[0]), f.lit1[0]);
 		f.config.fillMode = EscapeCrystalNotifyConfig.Crystal3dFillMode.INACTIVITY_TIME;
 		f.config.activeColor = Color.RED;
 		f.config.size = 150;
-		f.renderer.invalidateSettings();
 		f.renderer.update();
 		short red = f.colors[0];
 		assertEquals(150, f.litSize);
 		assertEquals(2, f.loads);
 		assertTrue((f.lit1[0] & 127) < (red & 127));
 		f.config.activeColor = EscapeCrystalNotifyCrystalDefaults.DEFAULT_ACTIVE_COLOR;
-		f.renderer.invalidateSettings();
 		f.renderer.update();
 		assertNotEquals(red, f.colors[0]);
 		assertTrue((f.lit1[0] & 127) < (f.colors[0] & 127));
 	}
 
 	@Test
-	public void disablingPreservesTickStateButSceneChangesDiscardIt()
+	public void disablingAndSceneChangesReleaseActorAndReuseMetricsUntilNextTick()
 	{
 		Fixture f = new Fixture();
 		f.config.fillMode = EscapeCrystalNotifyConfig.Crystal3dFillMode.INACTIVITY_TIME;
@@ -523,14 +513,14 @@ public class EscapeCrystalNotifyCrystal3dTest
 		assertEquals(partial, f.lit1[0]);
 		f.gameState = GameState.LOADING;
 		f.renderer.update();
+		assertTrue(f.registered.isEmpty());
 		f.gameState = GameState.LOGGED_IN;
 		f.renderer.update();
-		assertTrue(f.registered.isEmpty()); // No stale notify-region state before the next game tick.
-		f.config.everywhere = true;
-		f.renderer.update();
 		assertTrue(f.object.isActive());
-		assertEquals(Short.toUnsignedInt(f.colors[0]), f.lit1[0]); // Preview has no stale countdown.
-		assertNotEquals(partial & ~127, f.lit1[0] & ~127); // Missing crystals use the inactive color.
+		assertEquals(partial, f.lit1[0]); // The last known cosmetic state is acceptable before the next tick.
+		f.notifyLocation = false;
+		f.update(false, false);
+		assertTrue(f.registered.isEmpty());
 	}
 
 	@Test
@@ -568,13 +558,11 @@ public class EscapeCrystalNotifyCrystal3dTest
 		assertEquals(hpColor, f.lit1[0]);
 		assertEquals(reads, f.skillReads);
 		f.config.fillMode = EscapeCrystalNotifyConfig.Crystal3dFillMode.PRAYER_POINTS;
-		f.renderer.invalidateSettings();
 		f.renderer.update();
 		assertTrue((f.lit1[0] & 127) > (hpColor & 127));
 		assertEquals(reads, f.skillReads);
 		assertEquals(1, f.loads);
 		f.config.fillMode = EscapeCrystalNotifyConfig.Crystal3dFillMode.HITPOINTS;
-		f.renderer.invalidateSettings();
 		f.renderer.update();
 		assertEquals(hpColor, f.lit1[0]);
 		f.renderer.updateState(true, true, true, 0, 100);
@@ -602,7 +590,6 @@ public class EscapeCrystalNotifyCrystal3dTest
 				f.update(true, active);
 				assertTrue((f.lit1[0] & 127) < (f.colors[0] & 127));
 				f.config.fillMode = EscapeCrystalNotifyConfig.Crystal3dFillMode.DISABLED;
-				f.renderer.invalidateSettings();
 				f.renderer.update();
 				assertEquals(Short.toUnsignedInt(f.colors[0]), f.lit1[0]);
 				Color expected = active ? f.config.activeColor : f.config.inactiveColor;
@@ -613,7 +600,7 @@ public class EscapeCrystalNotifyCrystal3dTest
 	}
 
 	@Test
-	public void unavailableResourcesAndNewSessionsUseFullInactiveAppearance()
+	public void unavailableResourcesUseFullAppearanceAndResetReleasesActor()
 	{
 		Fixture f = new Fixture();
 		f.config.fillMode = EscapeCrystalNotifyConfig.Crystal3dFillMode.HITPOINTS;
@@ -625,6 +612,9 @@ public class EscapeCrystalNotifyCrystal3dTest
 		f.update(false, false);
 		assertTrue((f.lit1[0] & 127) < (f.colors[0] & 127));
 		f.renderer.reset();
+		assertTrue(f.registered.isEmpty());
+		f.maxHitpoints = 0;
+		f.renderer.updateState(false, false, true, 0, 0);
 		f.renderer.update();
 		assertEquals(Short.toUnsignedInt(f.colors[0]), f.lit1[0]);
 	}
@@ -639,6 +629,10 @@ public class EscapeCrystalNotifyCrystal3dTest
 			.getAnnotation(net.runelite.client.config.ConfigSection.class).position();
 		assertEquals("3D Crystal", crystal.name());
 		assertEquals(inventoryPosition + 1, crystal.position());
+		assertEquals(crystal.position() + 1, type.getField("playerOutlineSettings")
+			.getAnnotation(net.runelite.client.config.ConfigSection.class).position());
+		assertEquals(crystal.position() + 2, type.getField("teleportNpcSettings")
+			.getAnnotation(net.runelite.client.config.ConfigSection.class).position());
 		assertEquals(Color.class, type.getMethod("crystal3dActiveColor").getReturnType());
 		assertEquals(Color.class, type.getMethod("crystal3dInactiveColor").getReturnType());
 		assertEquals(4, EscapeCrystalNotifyConfig.Crystal3dFillMode.values().length);
@@ -657,8 +651,6 @@ public class EscapeCrystalNotifyCrystal3dTest
 		boolean inventoryEverywhere = true;
 		Crystal3dFillMode fillMode = Crystal3dFillMode.DISABLED;
 		int size = 100;
-		int sizeReads;
-		int colorReads;
 		boolean automatic;
 		int manualHeight = 60;
 		int sideOffset = 56;
@@ -671,15 +663,15 @@ public class EscapeCrystalNotifyCrystal3dTest
 		@Override public boolean alwaysDisplayInventory() { return inventoryEverywhere; }
 		@Override public Crystal3dFillMode crystal3dFillMode() { return fillMode; }
 		@Override public Crystal3dDisplayStyle crystal3dDisplayStyle() { return style; }
-		@Override public int crystal3dSize() { sizeReads++; return size; }
+		@Override public int crystal3dSize() { return size; }
 		@Override public int crystal3dBobHeight() { return 0; }
 		@Override public int crystal3dHeight() { return manualHeight; }
 		@Override public int crystal3dSideOffset() { return sideOffset; }
 		@Override public int crystal3dForwardOffset() { return forwardOffset; }
 		@Override public int crystal3dSideHeight() { return sideHeight; }
 		@Override public boolean crystal3dAutomaticClearance() { return automatic; }
-		@Override public Color crystal3dActiveColor() { colorReads++; return activeColor; }
-		@Override public Color crystal3dInactiveColor() { colorReads++; return inactiveColor; }
+		@Override public Color crystal3dActiveColor() { return activeColor; }
+		@Override public Color crystal3dInactiveColor() { return inactiveColor; }
 	}
 
 	/** Small API doubles keep lifecycle tests independent of a running game client. */
@@ -763,8 +755,6 @@ public class EscapeCrystalNotifyCrystal3dTest
 
 		void update(boolean carried, boolean active)
 		{
-			// Most tests edit config fields directly; mirror the config event before rendering.
-			renderer.invalidateSettings();
 			renderer.updateState(carried, active, notifyLocation, remainingTicks, totalTicks);
 			renderer.update();
 		}

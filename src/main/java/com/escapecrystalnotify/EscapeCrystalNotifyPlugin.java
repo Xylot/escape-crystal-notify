@@ -8,6 +8,7 @@ import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
+import net.runelite.api.gameval.AnimationID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.ObjectID;
@@ -106,6 +107,16 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private EscapeCrystalNotifyInventoryOverlay escapeCrystalNotifyInventoryOverlay;
 
 	@Inject
+	private EscapeCrystalNotifyPlayerOutlineOverlay playerOutlineOverlay;
+
+	@Inject
+	private EscapeCrystalNotifyTeleportNpc teleportNpc;
+
+	@Inject
+	private EscapeCrystalNotifyTeleportNpcOverlay teleportNpcOverlay;
+
+
+	@Inject
 	private EscapeCrystalNotifyTextOverlayPanel escapeCrystalNotifyTextOverlayPanel;
 
 	@Inject
@@ -139,6 +150,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private Instant lastCombatTime;
 
 	private boolean ready;
+	private boolean revealTeleportNpc;
+	private int crystalCount = -1;
+	private int teleportDuration;
 	private boolean recheckLocalNpcs = false;
 	private boolean notifyMissing = false;
 	private boolean notifyInactive = false;
@@ -267,6 +281,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		overlayManager.add(escapeCrystalNotifyOverlayActive);
 		overlayManager.add(escapeCrystalNotifyOverlayInactive);
 		overlayManager.add(escapeCrystalNotifyInventoryOverlay);
+		overlayManager.add(playerOutlineOverlay);
+		overlayManager.add(teleportNpcOverlay);
 		overlayManager.add(escapeCrystalNotifyTextOverlayPanel);
 		overlayManager.add(escapeCrystalNotifyTeleportDisabledPanel);
 		overlayManager.add(escapeCrystalNotifyRegionEntranceOverlay);
@@ -291,7 +307,12 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		clientThread.invoke(crystal3d::reset);
+		clientThread.invoke(() ->
+		{
+			crystal3d.reset();
+			teleportNpc.shutDown();
+			resetCrystalConsumption();
+		});
 		if (thresholdNavigation != null) clientToolbar.removeNavigation(thresholdNavigation);
 		thresholdPanel = null;
 		thresholdNavigation = null;
@@ -300,6 +321,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		overlayManager.remove(escapeCrystalNotifyOverlayActive);
 		overlayManager.remove(escapeCrystalNotifyOverlayInactive);
 		overlayManager.remove(escapeCrystalNotifyInventoryOverlay);
+		overlayManager.remove(playerOutlineOverlay);
+		overlayManager.remove(teleportNpcOverlay);
 		overlayManager.remove(escapeCrystalNotifyTextOverlayPanel);
 		overlayManager.remove(escapeCrystalNotifyTeleportDisabledPanel);
 		overlayManager.remove(escapeCrystalNotifyRegionEntranceOverlay);
@@ -335,6 +358,57 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 		sendRequestedNotifications();
 	}
+
+	@Subscribe
+	public void onClientTick(ClientTick event)
+	{
+		if (revealTeleportNpc)
+		{
+			teleportNpc.show();
+			revealTeleportNpc = false;
+		}
+		teleportNpc.tick();
+	}
+
+	@Subscribe
+	public void onAnimationChanged(AnimationChanged event)
+	{
+		if (!config.enableTeleportNpc() || event.getActor() != client.getLocalPlayer()) return;
+		Player player = client.getLocalPlayer();
+		if (player == null) return;
+		if (player.getAnimation() != AnimationID.HUMAN_CASTTELEPORT)
+		{
+			teleportNpc.reset();
+			return;
+		}
+		if (teleportDuration == 0)
+		{
+			Animation animation = client.loadAnimation(AnimationID.HUMAN_CASTTELEPORT);
+			if (animation == null) return;
+			teleportDuration = animation.isMayaAnim() ? animation.getNumFrames()
+				: Arrays.stream(animation.getFrameLengths()).sum();
+		}
+		teleportNpc.spawnHidden(player, client.getGameCycle() + teleportDuration);
+		if (config.enableDebugMode() && config.debugTeleportNpcOnAnyTeleport()) teleportNpc.show();
+	}
+
+	@Subscribe
+	public void onItemContainerChanged(ItemContainerChanged event)
+	{
+		int id = event.getContainerId();
+		if (id != InventoryID.INVENTORY.getId() && id != InventoryID.EQUIPMENT.getId()) return;
+		ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
+		ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
+		int count = inventory == null || equipment == null ? -1
+			: inventory.count(ItemID.TOB_TELEPORT) + equipment.count(ItemID.TOB_TELEPORT);
+		if (count != crystalCount)
+		{
+			// An increase cancels a pending reveal when a crystal moves between containers.
+			revealTeleportNpc = crystalCount >= 0 && count >= 0 && count < crystalCount;
+		}
+		crystalCount = count;
+	}
+
 
 	@Subscribe
 	public void onMenuOpened(MenuOpened event) {
@@ -665,6 +739,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	public void onGameStateChanged(GameStateChanged event) {
 		GameState state = event.getGameState();
 		if (state != GameState.LOGGED_IN) {
+			if (teleportNpc != null) teleportNpc.reset();
+			resetCrystalConsumption();
 			crystal3d.reset();
 		}
 
@@ -840,20 +916,19 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		return this.currentPlaneId == planeRequirement;
 	}
 
-	private boolean checkEscapeCrystalWithPlayer() {
-		ItemContainer equipmentContainer = client.getItemContainer(InventoryID.EQUIPMENT);
-		ItemContainer inventoryContainer = client.getItemContainer(InventoryID.INVENTORY);
+	private boolean checkEscapeCrystalWithPlayer()
+	{
+		ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
+		ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
+		return (inventory != null && inventory.contains(ItemID.TOB_TELEPORT))
+			|| (equipment != null && equipment.contains(ItemID.TOB_TELEPORT));
+	}
 
-		if (equipmentContainer == null && inventoryContainer == null) {
-			return false;
-		}
-
-		boolean escapeCrystalEquipped = equipmentContainer != null && equipmentContainer.contains(ItemID.TOB_TELEPORT);
-		boolean escapeCrystalInInventory = inventoryContainer != null && inventoryContainer.contains(ItemID.TOB_TELEPORT);
-
-        return escapeCrystalEquipped || escapeCrystalInInventory;
-    }
-
+	void resetCrystalConsumption()
+	{
+		crystalCount = -1;
+		revealTeleportNpc = false;
+	}
 	private void computeEscapeCrystalMetrics() {
 		if (client.getVarbitValue(ITEMS_STORED_VARBIT) == 0) {
 			this.escapeCrystalWithPlayer = checkEscapeCrystalWithPlayer();
@@ -941,16 +1016,42 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event) {
-		if (event != null) {
-			if (!EscapeCrystalNotifyConfig.GROUP.equals(event.getGroup())) return;
-			if (event.getKey().startsWith(EscapeCrystalNotifyThresholds.PREFIX)) {
-				refreshThresholdPanel(event.getKey());
-				return;
-			}
+		if (event != null && !EscapeCrystalNotifyConfig.GROUP.equals(event.getGroup())) return;
+		String key = event == null ? null : event.getKey();
+		if (key == null) {
+			refreshRegionSettings();
+			refreshNotificationSettings();
+			return;
 		}
-		if (crystal3d != null && (event == null || event.getKey().startsWith("crystal3d"))) {
-			crystal3d.invalidateSettings();
+		if (key.startsWith(EscapeCrystalNotifyThresholds.PREFIX)) {
+			refreshThresholdPanel(key);
+			return;
 		}
+		switch (key) {
+			case "enableDebugMode":
+			case "displayBosses":
+			case "displayRaids":
+			case "displayDungeons":
+			case "displayMinigames":
+			case "displayTeleportDisabled":
+			case "excludeZulrahWithEliteDiary":
+			case "includeRegionIds":
+			case "excludeRegionIds":
+			case "debugEntranceObjects":
+			case "debugEntranceNpcs":
+				refreshRegionSettings();
+				break;
+			case "notifyTimeUntilTeleportThreshold":
+			case "notificationInactivityTimeFormat":
+			case "onScreenWidgetInactivityTimeFormat":
+				refreshNotificationSettings();
+				break;
+			default:
+				// Other settings are read when used, or account state is refreshed on the next tick.
+		}
+	}
+
+	private void refreshRegionSettings() {
 		this.targetRegionIds = getTargetRegionIdsFromConfig(this.accountType);
 		Predicate<EscapeCrystalNotifyLocatedEntrance> inactiveDebugEntrance = entrance ->
 			entrance.getDefinition().isDebug() && !(entrance.getTarget().getNpc() == null
@@ -960,13 +1061,16 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			entrances.removeIf(inactiveDebugEntrance);
 		}
 		this.validEntrances.removeIf(inactiveDebugEntrance.or(entrance -> entrance.getDefinition().isDebug() && !config.enableDebugMode()));
+	}
+
+	private void refreshNotificationSettings() {
 		this.notifyTimeRemainingThresholdMessage = generateTimeRemainingThresholdMessage();
 		this.timeRemainingThresholdTicks = normalizeTimeRemainingThresholdValue();
 	}
 
 	@Subscribe
 	public void onProfileChanged(ProfileChanged event) {
-		if (crystal3d != null) crystal3d.invalidateSettings();
+		clientThread.invoke(this::resetCrystalConsumption);
 		refreshThresholdPanel(null);
 	}
 
@@ -1347,7 +1451,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	private boolean isCloseToSixHourLogout(int warningTicks) {
 		int ticksToUse = config.ticksSinceLoginOverride() >= 0 ? config.ticksSinceLoginOverride() : ticksSinceLogin;
-		return ticksToUse >= Math.max(0, Math.min(36000, warningTicks));
+		return ticksToUse >= warningTicks;
 	}
 
 	public boolean isLeviathanSafeguardEnabled() {

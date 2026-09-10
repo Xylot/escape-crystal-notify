@@ -731,10 +731,91 @@ public interface EscapeCrystalNotifyConfig extends Config
 	}
 
 	@ConfigSection(
+		name = "Player Outline",
+		description = "Outline your character to show whether your escape crystal is active",
+		closedByDefault = true,
+		position = 8
+	)
+	String playerOutlineSettings = "playerOutlineSettings";
+
+	@ConfigItem(
+		keyName = "enablePlayerOutline", name = "Enable Player Outline",
+		description = "Outline your character using the active or inactive color. Follows the HCIM/HCGIM account filter.",
+		section = playerOutlineSettings, position = 1
+	)
+	default boolean enablePlayerOutline() { return false; }
+
+	@ConfigItem(
+		keyName = "alwaysDisplayPlayerOutline", name = "Display Everywhere",
+		description = "Always enable the player outline regardless of location",
+		section = playerOutlineSettings, position = 2
+	)
+	default boolean alwaysDisplayPlayerOutline() { return true; }
+
+	@Alpha
+	@ConfigItem(
+		keyName = "playerOutlineActiveColor", name = "Active Color",
+		description = "Outline color while carrying or wearing an active escape crystal",
+		section = playerOutlineSettings, position = 3
+	)
+	default Color playerOutlineActiveColor() { return new Color(50, 205, 50, 0); }
+
+	@Alpha
+	@ConfigItem(
+		keyName = "playerOutlineInactiveColor", name = "Inactive Color",
+		description = "Outline color while your escape crystal is inactive or missing",
+		section = playerOutlineSettings, position = 4
+	)
+	default Color playerOutlineInactiveColor() { return new Color(205, 50, 50, 75); }
+
+	@Range(min = 1, max = 10)
+	@ConfigItem(
+		keyName = "playerOutlineWidth", name = "Border Width",
+		description = "Width of the player outline",
+		section = playerOutlineSettings, position = 5
+	)
+	default int playerOutlineWidth() { return 4; }
+
+	@Range(min = 0, max = 4)
+	@ConfigItem(
+		keyName = "playerOutlineFeather", name = "Outline Feather",
+		description = "How much the outline edge fades (0-4)",
+		section = playerOutlineSettings, position = 6
+	)
+	default int playerOutlineFeather() { return 4; }
+
+	@ConfigSection(
+		name = "Teleport NPC", description = "A temporary NPC reacting to an escape crystal teleport",
+		closedByDefault = true, position = 9
+	)
+	String teleportNpcSettings = "teleportNpcSettings";
+
+	@ConfigItem(
+		keyName = "enableTeleportNpc", name = "Enable Teleport NPC",
+		description = "Show a client-only NPC with your chosen overhead text during your escape crystal teleport animation. Works for all account types.",
+		section = teleportNpcSettings, position = 1
+	)
+	default boolean enableTeleportNpc() { return false; }
+
+	@ConfigItem(
+		keyName = "teleportNpcType", name = "NPC",
+		description = "Choose the NPC that appears during your next escape crystal teleport",
+		section = teleportNpcSettings, position = 2
+	)
+	default EscapeCrystalNotifyTeleportNpcType teleportNpcType() { return EscapeCrystalNotifyTeleportNpcType.DEATH; }
+
+	@ConfigItem(
+		keyName = "teleportNpcText", name = "NPC Text",
+		description = "Text displayed above the teleport NPC. Leave blank to hide the text.",
+		section = teleportNpcSettings, position = 3
+	)
+	default String teleportNpcText() { return "-75k"; }
+
+	@ConfigSection(
 		name = "Notification Settings",
 		description = "Configure preferences for Runelite notifications",
 		closedByDefault = true,
-		position = 8
+		position = 10
 	)
 	String notificationSettings = "notificationSettings";
 
@@ -808,7 +889,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Leviathan Safeguards",
 		description = "Configure optional safeguards for the fixed Leviathan logout bug",
 		closedByDefault = true,
-		position = 9
+		position = 11
 	)
 	String leviathanSafeguardSettings = "leviathanSafeguardSettings";
 
@@ -890,7 +971,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Doom Safeguards",
 		description = "Configure optional safeguards for the fixed Doom logout bug",
 		closedByDefault = true,
-		position = 10
+		position = 12
 	)
 	String doomSafeguardSettings = "doomSafeguardSettings";
 
@@ -972,7 +1053,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Non-HC Inventory Highlight",
 		description = "Settings for minimal inventory highlighting for non-hardcore accounts",
 		closedByDefault = true,
-		position = 11
+		position = 13
 	)
 	String nonHardcoreInventorySettings = "nonHardcoreInventorySettings";
 
@@ -1021,7 +1102,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Debug",
 		description = "Settings for testing and debugging the plugin",
 		closedByDefault = true,
-		position = 12
+		position = 14
 	)
 	String debugSettings = "debugSettings";
 
@@ -1132,6 +1213,15 @@ public interface EscapeCrystalNotifyConfig extends Config
 		position = 12
 	)
 	default String debugEntranceNpcs() { return ""; }
+
+	@ConfigItem(
+		keyName = "debugTeleportNpcOnAnyTeleport",
+		name = "Teleport NPC on Any Teleport",
+		description = "While Enable Testing Mode and Enable Teleport NPC are on, show the NPC during any standard teleport animation (714), without consuming an escape crystal.",
+		section = "debugSettings",
+		position = 13
+	)
+	default boolean debugTeleportNpcOnAnyTeleport() { return false; }
 
 	enum TestingAccountType {
 		DEFAULT ("Default (Actual Account Type)"),

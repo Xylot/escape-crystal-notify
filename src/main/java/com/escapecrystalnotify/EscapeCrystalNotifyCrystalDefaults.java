@@ -27,7 +27,7 @@ final class EscapeCrystalNotifyCrystalDefaults
 	static final int DEFAULT_FORWARD_OFFSET = 0;
 	static final int DEFAULT_SIDE_HEIGHT = 20;
 
-	// Shared config and renderer limits.
+	// Config limits.
 	static final int MIN_SIZE = 25, MAX_SIZE = 200;
 	static final int MIN_HEIGHT = 0, MAX_HEIGHT = 300;
 	static final int MIN_SPIN_SECONDS = 0, MAX_SPIN_SECONDS = 30;
@@ -38,7 +38,6 @@ final class EscapeCrystalNotifyCrystalDefaults
 
 	// Model and motion tuning. Full-turn angle units and tile size come from RuneLite.
 	static final double SMALL_STYLE_SCALE = 0.4;
-	static final int MIN_SMALL_SIZE = 10;
 	static final float MODEL_WIDTH_RATIO = 0.4f;
 	static final double COLOR_BRIGHTNESS = 1.0;
 	static final long MODEL_RETRY_NANOS = 1_000_000_000L;
