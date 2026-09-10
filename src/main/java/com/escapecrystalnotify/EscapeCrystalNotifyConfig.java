@@ -732,7 +732,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 
 	@ConfigSection(
 		name = "Player Outline",
-		description = "Outline your character to show whether your escape crystal is active",
+		description = "Outline your character or draw a circle beneath it to show whether your escape crystal is active",
 		closedByDefault = true,
 		position = 8
 	)
@@ -740,15 +740,30 @@ public interface EscapeCrystalNotifyConfig extends Config
 
 	@ConfigItem(
 		keyName = "enablePlayerOutline", name = "Enable Player Outline",
-		description = "Outline your character using the active or inactive color. Follows the HCIM/HCGIM account filter.",
+		description = "Show the selected player indicator using the active or inactive color. Follows the HCIM/HCGIM account filter.",
 		section = playerOutlineSettings, position = 1
 	)
 	default boolean enablePlayerOutline() { return false; }
 
 	@ConfigItem(
+		keyName = "playerOutlineStyle", name = "Display Style",
+		description = "Outline the player's body or draw a circle on the ground beneath the player",
+		section = playerOutlineSettings, position = 2
+	)
+	default PlayerOutlineStyle playerOutlineStyle() { return PlayerOutlineStyle.BODY_OUTLINE; }
+
+	enum PlayerOutlineStyle {
+		BODY_OUTLINE("Body Outline"),
+		GROUND_CIRCLE("Ground Circle");
+		private final String displayName;
+		PlayerOutlineStyle(String displayName) { this.displayName = displayName; }
+		@Override public String toString() { return displayName; }
+	}
+
+	@ConfigItem(
 		keyName = "alwaysDisplayPlayerOutline", name = "Display Everywhere",
 		description = "Always enable the player outline regardless of location",
-		section = playerOutlineSettings, position = 2
+		section = playerOutlineSettings, position = 3
 	)
 	default boolean alwaysDisplayPlayerOutline() { return true; }
 
@@ -756,7 +771,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 		keyName = "playerOutlineActiveColor", name = "Active Color",
 		description = "Outline color while carrying or wearing an active escape crystal",
-		section = playerOutlineSettings, position = 3
+		section = playerOutlineSettings, position = 4
 	)
 	default Color playerOutlineActiveColor() { return new Color(50, 205, 50, 0); }
 
@@ -764,25 +779,40 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 		keyName = "playerOutlineInactiveColor", name = "Inactive Color",
 		description = "Outline color while your escape crystal is inactive or missing",
-		section = playerOutlineSettings, position = 4
+		section = playerOutlineSettings, position = 5
 	)
 	default Color playerOutlineInactiveColor() { return new Color(205, 50, 50, 75); }
 
 	@Range(min = 1, max = 10)
 	@ConfigItem(
 		keyName = "playerOutlineWidth", name = "Border Width",
-		description = "Width of the player outline",
-		section = playerOutlineSettings, position = 5
+		description = "Width of the body outline or ground circle",
+		section = playerOutlineSettings, position = 6
 	)
 	default int playerOutlineWidth() { return 4; }
 
 	@Range(min = 0, max = 4)
 	@ConfigItem(
 		keyName = "playerOutlineFeather", name = "Outline Feather",
-		description = "How much the outline edge fades (0-4)",
-		section = playerOutlineSettings, position = 6
+		description = "How much the body outline edge fades (0-4). Does not affect the ground circle.",
+		section = playerOutlineSettings, position = 7
 	)
 	default int playerOutlineFeather() { return 4; }
+
+	@ConfigItem(
+		keyName = "groundCircleImage", name = "Ground Circle Crystal Image",
+		description = "Display the active or inactive escape crystal image inside the ground circle",
+		section = playerOutlineSettings, position = 8
+	)
+	default boolean groundCircleImage() { return true; }
+
+	@Range(min = 0, max = 10)
+	@ConfigItem(
+		keyName = "groundCircleGlow", name = "Ground Circle Glow",
+		description = "Soft glow around the ground circle (0 disables the glow)",
+		section = playerOutlineSettings, position = 9
+	)
+	default int groundCircleGlow() { return 8; }
 
 	@ConfigSection(
 		name = "Teleport NPC", description = "A temporary NPC reacting to an escape crystal teleport",
