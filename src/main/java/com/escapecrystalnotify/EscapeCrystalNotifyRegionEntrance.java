@@ -15,6 +15,12 @@ public class EscapeCrystalNotifyRegionEntrance {
     public boolean logoutBugPossible;
     public EscapeCrystalNotifyRegionEntranceObjectType objectType;
     public boolean isDebug;
+    private boolean bossInstanced;
+
+    public EscapeCrystalNotifyRegionEntrance withInstancedBoss() {
+        this.bossInstanced = true;
+        return this;
+    }
 
     EscapeCrystalNotifyRegionEntrance(int entranceId, boolean isDebug) {
         this(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, null,

@@ -14,6 +14,67 @@ public class EscapeCrystalNotifyRegionPolicyTest {
     private static final WorldPoint SHELLBANE_ARENA = region(12682, 0);
 
     @Test
+    public void instancedBossOnlyNotifiesAfterEnteringInstanceInSameRegion() throws Exception {
+        EscapeCrystalNotifyRegionEntrance entrance = EscapeCrystalNotifyRegion.BOSS_MAGGOT_KING.getRegionEntrance();
+        Field requirement = EscapeCrystalNotifyRegionEntrance.class.getDeclaredField("bossInstanced");
+        requirement.setAccessible(true);
+        boolean original = entrance.isBossInstanced();
+        try {
+            assertSame(entrance, entrance.withInstancedBoss());
+            for (EscapeCrystalNotifyAccountType account : EscapeCrystalNotifyAccountType.values()) {
+                EscapeCrystalNotifyPlugin plugin = plugin(account);
+                set(plugin, "escapeCrystalWithPlayer", false);
+                boolean[] instanced = {false};
+                Player player = (Player) Proxy.newProxyInstance(Player.class.getClassLoader(), new Class<?>[]{Player.class},
+                    (p, m, a) -> m.getName().equals("getHealthScale") ? -1 : null);
+                set(plugin, "client", Proxy.newProxyInstance(Client.class.getClassLoader(), new Class<?>[]{Client.class},
+                    (p, m, a) -> m.getName().equals("isInInstancedRegion") ? instanced[0]
+                        : m.getName().equals("getLocalPlayer") ? player : null));
+                WorldPoint point = region(11645, 0);
+                at(plugin, point);
+                invoke(plugin, "computeNotificationMetrics");
+                assertFalse(plugin.isAtNotifyRegionId());
+                assertFalse(flag(plugin, "notifyMissing"));
+                assertTrue(plugin.isAtEntranceLocation());
+
+                instanced[0] = true;
+                at(plugin, point);
+                invoke(plugin, "computeNotificationMetrics");
+                assertTrue(plugin.isAtNotifyRegionId());
+                assertTrue(flag(plugin, "enteredNotifyRegionId"));
+                assertEquals(account != EscapeCrystalNotifyAccountType.NON_HARDCORE, flag(plugin, "notifyMissing"));
+                at(plugin, point);
+                assertFalse(flag(plugin, "enteredNotifyRegionId"));
+
+                instanced[0] = false;
+                at(plugin, point);
+                invoke(plugin, "computeNotificationMetrics");
+                assertFalse(plugin.isAtNotifyRegionId());
+                assertFalse(flag(plugin, "notifyMissing"));
+                assertTrue(plugin.isAtEntranceLocation());
+
+                set(plugin, "config", new EscapeCrystalNotifyConfig() {
+                    @Override public String includeRegionIds() { return "11645"; }
+                });
+                plugin.onConfigChanged(null);
+                at(plugin, point);
+                assertTrue(plugin.isAtNotifyRegionId());
+
+                set(plugin, "config", new EscapeCrystalNotifyConfig() {
+                    @Override public boolean displayEverywhere() { return true; }
+                    @Override public String excludeRegionIds() { return "11645"; }
+                });
+                plugin.onConfigChanged(null);
+                at(plugin, point);
+                assertFalse(plugin.isAtNotifyRegionId());
+                assertFalse(plugin.isAtEntranceLocation());
+            }
+        } finally {
+            requirement.setBoolean(entrance, original);
+        }
+    }
+
+    @Test
     public void safeApproachDoesNotConsumeArenaEntryNotificationAndClearsWarningsOnReturn() throws Exception {
         EscapeCrystalNotifyPlugin plugin = plugin(EscapeCrystalNotifyAccountType.STANDARD_HARDCORE);
         set(plugin, "escapeCrystalWithPlayer", false);

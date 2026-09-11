@@ -289,7 +289,8 @@ public enum EscapeCrystalNotifyRegion {
 
     public static Set<Integer> getEntranceOnlyRegionIdsFromTypes(List<EscapeCrystalNotifyRegionType> selectedRegionTypes, List<EscapeCrystalNotifyRegionDeathType> selectedRegionDeathTypes) {
         return Arrays.stream(values())
-                .filter(region -> !region.notifyRegion && region.regionEntrance != null)
+                .filter(region -> region.regionEntrance != null
+                    && (!region.notifyRegion || region.regionEntrance.isBossInstanced()))
                 .filter(region -> selectedRegionTypes.contains(region.regionType))
                 .filter(region -> selectedRegionDeathTypes.contains(region.regionDeathType))
                 .flatMap(region -> Arrays.stream(region.regionIds).boxed())
@@ -300,6 +301,20 @@ public enum EscapeCrystalNotifyRegion {
         return selectedRegions.stream()
                 .flatMap(subRegionType -> Arrays.stream(subRegionType.getRegionIds()).boxed())
                 .collect(Collectors.toList());
+    }
+
+    public static Set<Integer> getInstancedOnlyRegionIdsFromTypes(List<EscapeCrystalNotifyRegionType> types, List<EscapeCrystalNotifyRegionDeathType> deaths) {
+        Set<Integer> instanced = new HashSet<>();
+        Set<Integer> unrestricted = new HashSet<>();
+        for (EscapeCrystalNotifyRegion region : values()) {
+            if (!region.notifyRegion || !types.contains(region.regionType) || !deaths.contains(region.regionDeathType)) continue;
+            Set<Integer> destination = region.regionEntrance != null && region.regionEntrance.isBossInstanced()
+                ? instanced : unrestricted;
+            Arrays.stream(region.regionIds).forEach(destination::add);
+        }
+        // Another enabled encounter may still make the ordinary region dangerous.
+        instanced.removeAll(unrestricted);
+        return instanced;
     }
 
     public static Map<Integer, EscapeCrystalNotifyRegionEntrance> getRegionEntranceMap() {

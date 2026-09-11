@@ -230,6 +230,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private Set<EscapeCrystalNotifyRegion> nearbyBosses = Collections.emptySet();
 	private Set<Integer> targetRegionIds;
 	private Set<Integer> entranceOnlyRegionIds = new HashSet<>();
+	private Set<Integer> instancedOnlyRegionIds = new HashSet<>();
 	private Set<Integer> npcEntranceIds;
 	private Set<Integer> gameObjectEntranceIds;
 	private HashSet<Integer> manuallyExcludedRegionIds = new HashSet<>();
@@ -901,6 +902,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		if (this.currentRegionId == ZULRAH_ENTRANCE_REGION_ID) this.updateZulrahRegionsInSet();
 
 		if (!targetRegionIds.contains(this.currentRegionId)) return false;
+		if (instancedOnlyRegionIds.contains(this.currentRegionId) && !client.isInInstancedRegion()) return false;
 
 		return this.regionLocationRequirementsMet;
 	}
@@ -1095,6 +1097,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.manuallyExcludedRegionIds = new HashSet<>(excludeRegionIds);
 		this.entranceOnlyRegionIds = EscapeCrystalNotifyRegion.getEntranceOnlyRegionIdsFromTypes(targetRegions, getTargetDeathTypes(accountType));
 		this.entranceOnlyRegionIds.removeAll(excludeRegionIds);
+		this.instancedOnlyRegionIds = EscapeCrystalNotifyRegion.getInstancedOnlyRegionIdsFromTypes(targetRegions, getTargetDeathTypes(accountType));
+		this.instancedOnlyRegionIds.removeAll(includeRegionIds);
 		this.debugGameObjectEntranceIds = EscapeCrystalNotifyIdParser.parseIds(config.debugEntranceObjects());
 		this.debugNpcEntranceIds = EscapeCrystalNotifyIdParser.parseIds(config.debugEntranceNpcs());
 
