@@ -9,7 +9,6 @@ import net.runelite.client.config.ConfigManager;
 /** Reads through to RuneLite so overlay and menu checks always use the active profile. */
 final class EscapeCrystalNotifyThresholds {
     static final String PREFIX = "maximumSeconds_";
-    static final int DEFAULT_SECONDS = 4;
     static final int MIN_SECONDS = 2;
     private final Function<String, String> read;
     private final BiConsumer<String, Integer> write;
@@ -31,11 +30,11 @@ final class EscapeCrystalNotifyThresholds {
 
     int get(EscapeCrystalNotifyRegion encounter) {
         String saved = read.apply(key(encounter));
-        if (saved == null || saved.trim().isEmpty()) return DEFAULT_SECONDS;
+        if (saved == null || saved.trim().isEmpty()) return EscapeCrystalNotifyThresholdDefaults.seconds(encounter);
         try {
             return parseSeconds(saved);
         } catch (NumberFormatException e) {
-            return DEFAULT_SECONDS;
+            return EscapeCrystalNotifyThresholdDefaults.seconds(encounter);
         }
     }
 

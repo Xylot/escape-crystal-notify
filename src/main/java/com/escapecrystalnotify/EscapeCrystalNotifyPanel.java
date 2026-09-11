@@ -225,7 +225,7 @@ final class EscapeCrystalNotifyPanel extends PluginPanel {
         }
 
         private JSpinner createSpinner() {
-            JSpinner spinner = new JSpinner(new SpinnerNumberModel(EscapeCrystalNotifyThresholds.DEFAULT_SECONDS,
+            JSpinner spinner = new JSpinner(new SpinnerNumberModel(EscapeCrystalNotifyThresholdDefaults.seconds(encounter),
                 EscapeCrystalNotifyThresholds.MIN_SECONDS, Integer.MAX_VALUE, 1));
             spinner.setEditor(new JSpinner.NumberEditor(spinner, "0"));
             spinner.setPreferredSize(new Dimension(68, 24));
@@ -245,7 +245,7 @@ final class EscapeCrystalNotifyPanel extends PluginPanel {
             ((DefaultFormatter) input.getFormatter()).setOverwriteMode(false);
             input.setFocusLostBehavior(JFormattedTextField.PERSIST);
             input.setToolTipText("Maximum inactivity setting in seconds (minimum: " + EscapeCrystalNotifyThresholds.MIN_SECONDS
-                + ", default: " + EscapeCrystalNotifyThresholds.DEFAULT_SECONDS + ")");
+                + ", default: " + EscapeCrystalNotifyThresholdDefaults.seconds(encounter) + ")");
             input.addActionListener(e -> commit());
             input.addFocusListener(new FocusAdapter() {
                 @Override public void focusLost(FocusEvent e) { commit(); }
@@ -262,7 +262,7 @@ final class EscapeCrystalNotifyPanel extends PluginPanel {
             reset.setBorderPainted(false);
             reset.setContentAreaFilled(false);
             reset.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-            reset.setToolTipText("Reset to " + EscapeCrystalNotifyThresholds.DEFAULT_SECONDS + " seconds");
+            reset.setToolTipText("Reset to " + EscapeCrystalNotifyThresholdDefaults.seconds(encounter) + " seconds");
             reset.addActionListener(e -> resetToDefault());
             editor.add(reset, BorderLayout.EAST);
             return editor;
@@ -276,7 +276,7 @@ final class EscapeCrystalNotifyPanel extends PluginPanel {
 
         private void resetToDefault() {
             if (!ensureCurrentProfile()) return;
-            spinner.setValue(EscapeCrystalNotifyThresholds.DEFAULT_SECONDS);
+            spinner.setValue(EscapeCrystalNotifyThresholdDefaults.seconds(encounter));
             input.setValue(spinner.getValue());
         }
 

@@ -249,7 +249,7 @@ public class EscapeCrystalNotifyCrystal3dTest
 		f.update(true, true);
 		assertEquals(100, f.litSize);
 		RuneLiteObject original = f.object;
-		f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.SMALL_NEXT_TO_HEAD;
+		f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.RIGHT_OF_HEAD;
 		f.update(true, true);
 		assertTrue(f.object.isActive());
 		assertSame(original, f.object);
@@ -265,10 +265,66 @@ public class EscapeCrystalNotifyCrystal3dTest
 	}
 
 	@Test
+	public void switchingPlacementsRestoresEachSizeAndPosition()
+	{
+		Fixture f = new Fixture();
+		f.config.size = 150;
+		f.config.manualHeight = 90;
+		f.config.leftSize = 75;
+		f.config.leftOffset = 35;
+		f.config.leftForwardOffset = -18;
+		f.config.leftHeight = -10;
+		f.config.rightSize = 125;
+		f.config.sideOffset = 80;
+		f.config.forwardOffset = 24;
+		f.config.sideHeight = 55;
+		for (int round = 0; round < 3; round++)
+		{
+			f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.LEFT_OF_HEAD;
+			f.update(true, true);
+			assertEquals(30, f.litSize);
+			assertEquals(6365, f.object.getX());
+			assertEquals(6382, f.object.getY());
+			assertEquals(-190, f.object.getZ());
+			f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.RIGHT_OF_HEAD;
+			f.update(true, true);
+			assertEquals(50, f.litSize);
+			assertEquals(6480, f.object.getX());
+			assertEquals(6424, f.object.getY());
+			assertEquals(-255, f.object.getZ());
+			f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.ABOVE_HEAD;
+			f.update(true, true);
+			assertEquals(150, f.litSize);
+			assertEquals(6400, f.object.getX());
+			assertEquals(6400, f.object.getY());
+			assertEquals(-365, f.object.getZ());
+			// A renderer restart must not lose any placement's saved settings either.
+			f.renderer.reset();
+		}
+	}
+
+	@Test
+	public void leftPlacementMirrorsRightForEveryFacingDirection()
+	{
+		Fixture f = new Fixture();
+		for (int direction : new int[]{0, 512, 1024, 1536})
+		{
+			f.orientation = direction;
+			f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.RIGHT_OF_HEAD;
+			f.update(true, true);
+			int rightX = f.object.getX(), rightY = f.object.getY();
+			f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.LEFT_OF_HEAD;
+			f.update(true, true);
+			assertEquals(2 * f.location.getX() - rightX, f.object.getX());
+			assertEquals(2 * f.location.getY() - rightY, f.object.getY());
+		}
+	}
+
+	@Test
 	public void sideStyleAnchorStaysFixedAsCameraTurns()
 	{
 		Fixture f = new Fixture();
-		f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.SMALL_NEXT_TO_HEAD;
+		f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.RIGHT_OF_HEAD;
 		for (int yaw : new int[]{0, 2048, 4096, 8192, 12288})
 		{
 			f.cameraYaw = yaw;
@@ -285,14 +341,14 @@ public class EscapeCrystalNotifyCrystal3dTest
 	public void sideOffsetsAndHeightUpdateLiveWithoutRebuildingTheModel()
 	{
 		Fixture f = new Fixture();
-		f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.SMALL_NEXT_TO_HEAD;
+		f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.RIGHT_OF_HEAD;
 		f.update(true, true);
-		f.config.sideOffset = -40;
+		f.config.sideOffset = 40;
 		f.config.forwardOffset = 24;
 		f.config.sideHeight = 80;
 		f.update(true, true);
 		assertTrue(f.object.isActive());
-		assertEquals(6360, f.object.getX());
+		assertEquals(6440, f.object.getX());
 		assertEquals(6424, f.object.getY());
 		assertEquals(-280, f.object.getZ());
 		assertEquals(1, f.loads);
@@ -302,7 +358,7 @@ public class EscapeCrystalNotifyCrystal3dTest
 	public void sideAnchorTurnsWithTheCharactersRenderedFacingDirection()
 	{
 		Fixture f = new Fixture();
-		f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.SMALL_NEXT_TO_HEAD;
+		f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.RIGHT_OF_HEAD;
 		int[][] cases = {{0, 6344, 6400}, {512, 6400, 6456}, {1024, 6456, 6400}, {1536, 6400, 6344}};
 		for (int[] direction : cases)
 		{
@@ -332,7 +388,7 @@ public class EscapeCrystalNotifyCrystal3dTest
 	public void sideAnchorOutsideSceneHidesAndReturnsWhenPlayerMovesBack()
 	{
 		Fixture f = new Fixture();
-		f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.SMALL_NEXT_TO_HEAD;
+		f.config.style = EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.RIGHT_OF_HEAD;
 		f.location = new LocalPoint(10, 10);
 		f.orientation = 0;
 		f.update(true, true);
@@ -629,11 +685,11 @@ public class EscapeCrystalNotifyCrystal3dTest
 			.getAnnotation(net.runelite.client.config.ConfigSection.class).position();
 		assertEquals("3D Crystal", crystal.name());
 		assertEquals(inventoryPosition + 1, crystal.position());
-		assertEquals(crystal.position() + 1, type.getField("playerOutlineSettings")
+		assertEquals(crystal.position() + 5, type.getField("playerOutlineSettings")
 			.getAnnotation(net.runelite.client.config.ConfigSection.class).position());
-		assertEquals(crystal.position() + 2, type.getField("playerCircleSettings")
+		assertEquals(crystal.position() + 6, type.getField("playerCircleSettings")
 			.getAnnotation(net.runelite.client.config.ConfigSection.class).position());
-		assertEquals(crystal.position() + 3, type.getField("teleportNpcSettings")
+		assertEquals(crystal.position() + 7, type.getField("teleportNpcSettings")
 			.getAnnotation(net.runelite.client.config.ConfigSection.class).position());
 		assertEquals(Color.class, type.getMethod("crystal3dActiveColor").getReturnType());
 		assertEquals(Color.class, type.getMethod("crystal3dInactiveColor").getReturnType());
@@ -653,6 +709,8 @@ public class EscapeCrystalNotifyCrystal3dTest
 		boolean inventoryEverywhere = true;
 		Crystal3dFillMode fillMode = Crystal3dFillMode.DISABLED;
 		int size = 100;
+		int leftSize = 100, rightSize = 100;
+		int leftOffset = 56, leftForwardOffset, leftHeight = 20;
 		boolean automatic;
 		int manualHeight = 60;
 		int sideOffset = 56;
@@ -666,6 +724,11 @@ public class EscapeCrystalNotifyCrystal3dTest
 		@Override public Crystal3dFillMode crystal3dFillMode() { return fillMode; }
 		@Override public Crystal3dDisplayStyle crystal3dDisplayStyle() { return style; }
 		@Override public int crystal3dSize() { return size; }
+		@Override public int crystal3dLeftSize() { return leftSize; }
+		@Override public int crystal3dRightSize() { return rightSize; }
+		@Override public int crystal3dLeftOffset() { return leftOffset; }
+		@Override public int crystal3dLeftForwardOffset() { return leftForwardOffset; }
+		@Override public int crystal3dLeftHeight() { return leftHeight; }
 		@Override public int crystal3dBobHeight() { return 0; }
 		@Override public int crystal3dHeight() { return manualHeight; }
 		@Override public int crystal3dSideOffset() { return sideOffset; }

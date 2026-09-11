@@ -100,8 +100,11 @@ class EscapeCrystalNotifyCrystal3d
 			return;
 		}
 
-		boolean besideHead = config.crystal3dDisplayStyle() == EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.SMALL_NEXT_TO_HEAD;
-		int requestedSize = config.crystal3dSize();
+		EscapeCrystalNotifyConfig.Crystal3dDisplayStyle placement = config.crystal3dDisplayStyle();
+		boolean leftOfHead = placement == EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.LEFT_OF_HEAD;
+		boolean besideHead = placement != EscapeCrystalNotifyConfig.Crystal3dDisplayStyle.ABOVE_HEAD;
+		int requestedSize = !besideHead ? config.crystal3dSize()
+			: leftOfHead ? config.crystal3dLeftSize() : config.crystal3dRightSize();
 		int bobHeight = config.crystal3dBobHeight();
 		if (besideHead)
 		{
@@ -178,8 +181,11 @@ class EscapeCrystalNotifyCrystal3d
 		{
 			clearance.clear();
 			// Use the rendered facing direction and the player's ground height, not the camera or offset tile.
+			int distance = Math.max(0, Math.min(MAX_SIDE_OFFSET,
+				leftOfHead ? config.crystal3dLeftOffset() : config.crystal3dSideOffset()));
 			LocalPoint side = EscapeCrystalNotifyCrystalSidePosition.position(location, player.getCurrentOrientation(),
-				config.crystal3dSideOffset(), config.crystal3dForwardOffset());
+				leftOfHead ? -distance : distance,
+				leftOfHead ? config.crystal3dLeftForwardOffset() : config.crystal3dForwardOffset());
 			if (!EscapeCrystalNotifySceneBounds.contains(side, worldView))
 			{
 				if (crystal.isActive()) crystal.setActive(false);
@@ -187,7 +193,8 @@ class EscapeCrystalNotifyCrystal3d
 			}
 			crystal.setX(side.getX());
 			crystal.setY(side.getY());
-			lift = player.getLogicalHeight() + config.crystal3dSideHeight() + bob;
+			lift = player.getLogicalHeight()
+				+ (leftOfHead ? config.crystal3dLeftHeight() : config.crystal3dSideHeight()) + bob;
 		}
 		else if (config.crystal3dAutomaticClearance())
 		{

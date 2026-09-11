@@ -29,7 +29,7 @@ public class EscapeCrystalNotifyConfigRoutingTest
 			assertEquals(item.keyName(), notificationKeys.contains(item.keyName()), f.settings.notificationReads > 0);
 			checked++;
 		}
-		assertEquals("Update the audit when config options are added or removed", 121, checked);
+		assertEquals("Update the audit when config options are added or removed", 126, checked);
 	}
 
 	@Test
