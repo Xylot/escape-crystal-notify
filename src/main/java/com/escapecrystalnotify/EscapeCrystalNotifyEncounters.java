@@ -116,7 +116,7 @@ final class EscapeCrystalNotifyEncounters {
             case RAIDS_CHAMBERS_OF_XERIC: return ItemID.OLMPET;
             case RAIDS_THEATRE_OF_BLOOD: return ItemID.VERZIKPET;
             case RAIDS_TOMBS_OF_AMASCUT: return ItemID.WARDENPET_TUMEKEN;
-            case BOSS_BRUTUS: return 33124;
+            case BOSS_BRUTUS: return ItemID.COWBOSSPET;
             default: return ItemID.TOB_TELEPORT;
         }
     }
