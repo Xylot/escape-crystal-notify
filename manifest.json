@@ -1,0 +1,223 @@
+{
+  "submission": "2dbb04dc-0f33-48a5-90b9-73ef64fe171f",
+  "revision": "FM4OLXyMxRjQxfk7M8FOaPvV26KXbqAsjWyRI6MfoZw",
+  "base": "fe017f4641ff6f22946056e01d53c4795730e1d4",
+  "evidence": {
+    "panels": [
+      {
+        "id": "BOSS_BRUTUS-arena-1",
+        "bossId": "BOSS_BRUTUS",
+        "name": "Brutus",
+        "kind": "arena",
+        "context": {
+          "x": 3253,
+          "y": 3277,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": 0,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Lumbridge_cow_field",
+          "revision": 15338664
+        },
+        "regions": [
+          12850,
+          12851,
+          13106,
+          13107
+        ],
+        "chunks": [
+          829849,
+          829850,
+          829851,
+          829852,
+          831894,
+          831895,
+          831896,
+          831897,
+          831898,
+          831899,
+          831900,
+          833942,
+          833943,
+          833944,
+          833945,
+          833946,
+          833947,
+          833948,
+          835990,
+          835991,
+          835992,
+          835993,
+          835994,
+          835995,
+          835996
+        ],
+        "restrictChunks": true,
+        "renderScale": 2,
+        "minX": 50,
+        "maxY": 51,
+        "columns": 2,
+        "rows": 2,
+        "label": "Arena coverage (inside instance only)"
+      },
+      {
+        "id": "BOSS_BRUTUS-notification-1",
+        "bossId": "BOSS_BRUTUS",
+        "name": "Brutus",
+        "kind": "notification",
+        "context": {
+          "x": 3262,
+          "y": 3294,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": 0,
+            "plane": 0
+          }
+        },
+        "regions": [
+          12851
+        ],
+        "chunks": [
+          833947
+        ],
+        "restrictChunks": true,
+        "renderScale": 2,
+        "minX": 50,
+        "maxY": 51,
+        "columns": 1,
+        "rows": 1,
+        "detectionChunks": [
+          833947
+        ],
+        "label": "Entrance (outside instance)"
+      }
+    ],
+    "contexts": {
+      "BOSS_BRUTUS": {
+        "after": {
+          "arena": {
+            "x": 3253,
+            "y": 3277,
+            "plane": 0,
+            "tiles": {
+              "version": "2026-08-12_a",
+              "mapId": 0,
+              "plane": 0
+            },
+            "source": "https://oldschool.runescape.wiki/w/Lumbridge_cow_field",
+            "revision": 15338664
+          },
+          "entrance": {
+            "x": 3262,
+            "y": 3294,
+            "plane": 0,
+            "tiles": {
+              "version": "2026-08-12_a",
+              "mapId": 0,
+              "plane": 0
+            }
+          }
+        }
+      }
+    },
+    "sources": {
+      "BOSS_BRUTUS": [
+        "https://oldschool.runescape.wiki/w/Brutus",
+        "https://oldschool.runescape.wiki/w/Lumbridge_cow_field",
+        "https://oldschool.runescape.wiki/w/Lumbridge_cow_field?oldid=15338664"
+      ]
+    }
+  },
+  "presentation": {
+    "BOSS_BRUTUS": {
+      "scope": "boss",
+      "images": [
+        "60760",
+        "60763"
+      ]
+    }
+  },
+  "states": {
+    "BOSS_BRUTUS": {
+      "before": null,
+      "after": {
+        "id": "BOSS_BRUTUS",
+        "name": "Brutus",
+        "regionType": "BOSSES",
+        "deathType": "UNSAFE",
+        "notifyRegion": true,
+        "bossInstanced": true,
+        "entranceDangerous": false,
+        "arenaRegions": [
+          12850,
+          12851,
+          13106,
+          13107
+        ],
+        "entranceRegions": [
+          12851
+        ],
+        "entranceNotifyChunks": [
+          833947
+        ],
+        "regions": [
+          12850,
+          12851,
+          13106,
+          13107
+        ],
+        "chunks": [
+          829849,
+          829850,
+          829851,
+          829852,
+          831894,
+          831895,
+          831896,
+          831897,
+          831898,
+          831899,
+          831900,
+          833942,
+          833943,
+          833944,
+          833945,
+          833946,
+          833947,
+          833948,
+          835990,
+          835991,
+          835992,
+          835993,
+          835994,
+          835995,
+          835996
+        ],
+        "entrance": {
+          "overlay": "DEPRIORITIZED_WITH_HIGHLIGHT",
+          "direction": "",
+          "chunks": [
+            833947
+          ],
+          "plane": "",
+          "objectType": "GAME_OBJECT",
+          "ids": [
+            "ObjectID.FENCEGATE_R_COWBOSS_START",
+            "ObjectID.FENCEGATE_L_COWBOSS_START"
+          ],
+          "bossInstanced": true
+        },
+        "entranceRaw": "new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, List.of(833947), EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, ObjectID.FENCEGATE_R_COWBOSS_START, ObjectID.FENCEGATE_L_COWBOSS_START).withInstancedBoss()",
+        "entranceChunks": [
+          833947
+        ],
+        "extraSettings": [],
+        "recommendedSeconds": 5,
+        "petIcon": "ItemID.COWBOSSPET"
+      }
+    }
+  }
+}
