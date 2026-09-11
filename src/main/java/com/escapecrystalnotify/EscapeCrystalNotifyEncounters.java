@@ -60,6 +60,7 @@ final class EscapeCrystalNotifyEncounters {
         switch (canonical(region)) {
             case BOSS_SHELLBANE_GRYPHON: return ItemID.GRYPHONBOSSPET;
             case BOSS_MAGGOT_KING: return ItemID.MAGGOTKINGPET;
+            case BOSS_MAD_ANGEL: return ItemID.MADANGELPET;
             case BOSS_ABYSSAL_SIRE: return ItemID.ABYSSALSIRE_PET;
             case BOSS_AMOXLIATL: return ItemID.AMOXLIATLPET;
             case BOSS_ARAXXOR: return ItemID.ARAXXORPET;

@@ -33,6 +33,7 @@ final class EscapeCrystalNotifyThresholdDefaults {
             case BOSS_KQ:
             case BOSS_KREEARRA:
             case BOSS_KRIL_TSUTSAROTH:
+            case BOSS_MAD_ANGEL:
             case BOSS_MAGGOT_KING:
             case BOSS_MIMIC:
             case BOSS_MIMIC_ENTRANCE:
