@@ -7,6 +7,7 @@ final class EscapeCrystalNotifyThresholdDefaults {
 
     static int seconds(EscapeCrystalNotifyRegion encounter) {
         switch (EscapeCrystalNotifyEncounters.canonical(encounter)) {
+            case BOSS_BRUTUS:
             case BOSS_ABYSSAL_SIRE:
             case BOSS_ARAXXOR:
             case BOSS_ARTIO:
