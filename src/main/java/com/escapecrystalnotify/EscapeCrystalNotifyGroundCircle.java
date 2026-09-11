@@ -12,7 +12,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
-import net.runelite.api.Point;
 import net.runelite.api.Player;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.client.util.ImageUtil;
@@ -22,33 +21,31 @@ final class EscapeCrystalNotifyGroundCircle
 {
 	private static final int SIZE = 256;
 	private static final int HALF_GROUND_SIZE = 96;
+	// Texture corners at orientation zero, with the top of the crystal pointing south.
+	private static final float[] GROUND_X = {HALF_GROUND_SIZE, -HALF_GROUND_SIZE, -HALF_GROUND_SIZE, HALF_GROUND_SIZE};
+	private static final float[] GROUND_Y = {-HALF_GROUND_SIZE, -HALF_GROUND_SIZE, HALF_GROUND_SIZE, HALF_GROUND_SIZE};
+	private static final float[] GROUND_HEIGHT = new float[4];
 	private static final BufferedImage CRYSTAL = ImageUtil.loadImageResource(EscapeCrystalNotifyPlugin.class, "/escape-crystal-active.png");
 	private BufferedImage texture;
 	private Color textureColor;
 	private int textureWidth, textureGlow;
 	private BufferedImage textureIcon;
 	private BufferedImage buffer;
+	private final Polygon corners = new Polygon(new int[4], new int[4], 4);
 	private final EscapeCrystalNotifyPlayerMask playerMask = new EscapeCrystalNotifyPlayerMask();
 
 	void draw(Graphics2D graphics, Client client, LocalPoint location, int plane,
 		Color color, int width, int glow, boolean showImage, Player player)
 	{
 		int height = Perspective.getTileHeight(client, location, plane);
-		int x = location.getX(), y = location.getY(), view = location.getWorldView();
-		// Rotate the ground quad so the image's top points forward (actor orientation 0 faces south).
-		// Use the current orientation to follow the player's visible turn without rebuilding the texture.
-		int orientation = player.getCurrentOrientation();
-		int cos = -Math.round(Perspective.COSINEF[orientation] * HALF_GROUND_SIZE);
-		int sin = -Math.round(Perspective.SINEF[orientation] * HALF_GROUND_SIZE);
-		Point a = Perspective.localToCanvas(client, view, x - cos + sin, y + sin + cos, height);
-		Point b = Perspective.localToCanvas(client, view, x + cos + sin, y - sin + cos, height);
-		Point c = Perspective.localToCanvas(client, view, x + cos - sin, y - sin - cos, height);
-		Point d = Perspective.localToCanvas(client, view, x - cos - sin, y + sin - cos, height);
-		if (a == null || b == null || c == null || d == null) return;
+		Perspective.modelToCanvas(client, player.getWorldView(), 4, location.getX(), location.getY(), height,
+			player.getCurrentOrientation(), GROUND_X, GROUND_Y, GROUND_HEIGHT, corners.xpoints, corners.ypoints);
+		for (int x : corners.xpoints)
+			if (x == Integer.MIN_VALUE) return;
+		corners.invalidate();
 		BufferedImage icon = showImage ? CRYSTAL : null;
 		BufferedImage image = texture(color, width, glow, icon);
-		Rectangle bounds = new Polygon(new int[]{a.getX(), b.getX(), c.getX(), d.getX()},
-			new int[]{a.getY(), b.getY(), c.getY(), d.getY()}, 4).getBounds();
+		Rectangle bounds = corners.getBounds();
 		bounds = bounds.intersection(new Rectangle(client.getViewportXOffset(), client.getViewportYOffset(),
 			client.getViewportWidth(), client.getViewportHeight()));
 		if (bounds.isEmpty()) return;
@@ -65,14 +62,8 @@ final class EscapeCrystalNotifyGroundCircle
 			g.setComposite(AlphaComposite.SrcOver);
 			g.translate(-bounds.x, -bounds.y);
 			// Two clipped triangles map all four image corners onto the ground quadrilateral.
-			drawTriangle(g, image, a, b, d, new AffineTransform(
-				(b.getX() - a.getX()) / (double) SIZE, (b.getY() - a.getY()) / (double) SIZE,
-				(d.getX() - a.getX()) / (double) SIZE, (d.getY() - a.getY()) / (double) SIZE,
-				a.getX(), a.getY()));
-			drawTriangle(g, image, b, c, d, new AffineTransform(
-				(c.getX() - d.getX()) / (double) SIZE, (c.getY() - d.getY()) / (double) SIZE,
-				(c.getX() - b.getX()) / (double) SIZE, (c.getY() - b.getY()) / (double) SIZE,
-				b.getX() + d.getX() - c.getX(), b.getY() + d.getY() - c.getY()));
+			drawTriangle(g, image, corners, 0);
+			drawTriangle(g, image, corners, 2);
 			playerMask.erase(g, client, player, location, height, bounds);
 		}
 		finally { g.dispose(); }
@@ -122,12 +113,20 @@ final class EscapeCrystalNotifyGroundCircle
 		return texture;
 	}
 
-	private static void drawTriangle(Graphics2D graphics, BufferedImage image, Point a, Point b, Point c, AffineTransform transform)
+	static void drawTriangle(Graphics2D graphics, BufferedImage image, Polygon corners, int origin)
 	{
+		int next = (origin + 1) % 4, previous = (origin + 3) % 4;
+		int[] x = corners.xpoints, y = corners.ypoints;
+		AffineTransform transform = new AffineTransform(
+			(x[next] - x[origin]) / (double) image.getWidth(), (y[next] - y[origin]) / (double) image.getWidth(),
+			(x[previous] - x[origin]) / (double) image.getHeight(), (y[previous] - y[origin]) / (double) image.getHeight(),
+			x[origin], y[origin]);
+		// The opposite triangle starts at the image's bottom-right corner.
+		if (origin == 2) transform.quadrantRotate(2, image.getWidth() / 2.0, image.getHeight() / 2.0);
 		Graphics2D g = (Graphics2D) graphics.create();
 		try
 		{
-			g.clip(new Polygon(new int[]{a.getX(), b.getX(), c.getX()}, new int[]{a.getY(), b.getY(), c.getY()}, 3));
+			g.clip(new Polygon(new int[]{x[origin], x[next], x[previous]}, new int[]{y[origin], y[next], y[previous]}, 3));
 			g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 			g.drawImage(image, transform, null);
 		}
