@@ -77,7 +77,9 @@ final class EscapeCrystalNotifyThresholdDefaults {
             case BOSS_SCURRIUS:
             case BOSS_SMOKE_DEVIL:
                 return 4;
-            case BOSS_BARROWS: return 5;
+            case BOSS_BARROWS:
+            case BOSS_BRUTUS:
+                return 5;
             case BOSS_WINTERTODT:
             case BOSS_WINTERTODT_ENTRANCE:
                 return 8;

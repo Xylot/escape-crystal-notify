@@ -87,23 +87,23 @@ public class EscapeCrystalNotifyThresholdsTest {
         profile = new HashMap<>();
         assertTrue(plugin.saveThresholdInput(BOSS_ARAXXOR, "9", oldProfile));
         assertTrue(profile.isEmpty());
-        assertEquals(4, thresholds.get(BOSS_ARAXXOR));
+        assertEquals(EscapeCrystalNotifyThresholdDefaults.seconds(BOSS_ARAXXOR), thresholds.get(BOSS_ARAXXOR));
     }
 
     @Test public void profilesPersistIndependentlyAndRejectStaleEdits() {
-        assertEquals(4, thresholds.get(BOSS_ARAXXOR));
+        assertEquals(EscapeCrystalNotifyThresholdDefaults.seconds(BOSS_ARAXXOR), thresholds.get(BOSS_ARAXXOR));
         for (String invalid : Arrays.asList("", "-1", "0", "1", "2.5", "bad", "999999999999")) {
             profile.put("maximumSeconds_BOSS_ARAXXOR", invalid);
-            assertEquals(4, thresholds.get(BOSS_ARAXXOR));
+            assertEquals(EscapeCrystalNotifyThresholdDefaults.seconds(BOSS_ARAXXOR), thresholds.get(BOSS_ARAXXOR));
         }
         Map<String, String> first = profile;
         thresholds.set(BOSS_ARAXXOR, 8, first);
         assertEquals(8, thresholds.get(BOSS_ARAXXOR));
-        assertEquals(4, thresholds.get(BOSS_AMOXLIATL));
+        assertEquals(EscapeCrystalNotifyThresholdDefaults.seconds(BOSS_AMOXLIATL), thresholds.get(BOSS_AMOXLIATL));
         profile = new HashMap<>();
         thresholds.set(BOSS_ARAXXOR, 9, first);
         assertTrue(profile.isEmpty());
-        assertEquals(4, thresholds.get(BOSS_ARAXXOR));
+        assertEquals(EscapeCrystalNotifyThresholdDefaults.seconds(BOSS_ARAXXOR), thresholds.get(BOSS_ARAXXOR));
         thresholds.set(BOSS_ARAXXOR, 3, profile);
         assertEquals(3, thresholds.get(BOSS_ARAXXOR));
         profile = first;
@@ -134,6 +134,7 @@ public class EscapeCrystalNotifyThresholdsTest {
             EscapeCrystalNotifyPanel panel = new EscapeCrystalNotifyPanel(thresholds, (id, label) -> icons.add(id));
             assertEquals(EscapeCrystalNotifyEncounters.all().size(), icons.size());
             JSpinner spinner = findSpinner(panel);
+            int defaultSeconds = (Integer) spinner.getValue();
             JFormattedTextField input = ((JSpinner.NumberEditor) spinner.getEditor()).getTextField();
             input.setText("9");
             input.postActionEvent();
@@ -158,7 +159,7 @@ public class EscapeCrystalNotifyThresholdsTest {
             input.setText("12");
             input.postActionEvent();
             assertTrue(profile.isEmpty());
-            assertEquals(4, spinner.getValue());
+            assertEquals(defaultSeconds, spinner.getValue());
             profile = first;
             panel.refresh();
             assertEquals(7, spinner.getValue());
@@ -167,6 +168,7 @@ public class EscapeCrystalNotifyThresholdsTest {
     }
 
     @Test public void comparesRoundedSettingNotCountdownAndPreservesInactiveWarnings() throws Exception {
+        thresholds.set(BOSS_ARAXXOR, 4, profile); // Explicit boundary for this behavior test.
         EscapeCrystalNotifyPlugin plugin = plugin();
         EscapeCrystalNotifyLocatedEntrance entrance = entrance(BOSS_ARAXXOR);
         plugin.getValidEntrances().add(entrance);
@@ -199,19 +201,21 @@ public class EscapeCrystalNotifyThresholdsTest {
             EscapeCrystalNotifyPanel panel = new EscapeCrystalNotifyPanel(thresholds, (id, label) -> {});
             List<JSpinner> spinners = components(panel, JSpinner.class);
             JSpinner first = spinners.get(0);
+            int firstDefault = (Integer) first.getValue();
+            int secondDefault = (Integer) spinners.get(1).getValue();
             JFormattedTextField draft = ((JSpinner.NumberEditor) spinners.get(1).getEditor()).getTextField();
             draft.setText("12");
             thresholds.set(BOSS_ABYSSAL_SIRE, 9, profile);
             panel.refresh(EscapeCrystalNotifyThresholds.key(BOSS_ABYSSAL_SIRE));
             assertEquals(9, first.getValue());
             assertEquals("12", draft.getText());
-            assertEquals(4, spinners.get(1).getValue());
+            assertEquals(secondDefault, spinners.get(1).getValue());
 
             JButton reset = components(panel, JButton.class).stream()
                 .filter(button -> "Reset".equals(button.getText())).findFirst().get();
             reset.doClick();
-            assertEquals(4, first.getValue());
-            assertEquals(4, thresholds.get(BOSS_ABYSSAL_SIRE));
+            assertEquals(firstDefault, first.getValue());
+            assertEquals(EscapeCrystalNotifyThresholdDefaults.seconds(BOSS_ABYSSAL_SIRE), thresholds.get(BOSS_ABYSSAL_SIRE));
             assertEquals("12", draft.getText());
 
             profile = new HashMap<>();
@@ -219,7 +223,7 @@ public class EscapeCrystalNotifyThresholdsTest {
             reset.doClick(); // A stale panel must not reset the newly selected profile.
             assertEquals(7, first.getValue());
             assertEquals(7, thresholds.get(BOSS_ABYSSAL_SIRE));
-            assertEquals("4", draft.getText());
+            assertEquals(Integer.toString(secondDefault), draft.getText());
         });
     }
 
@@ -334,6 +338,7 @@ public class EscapeCrystalNotifyThresholdsTest {
             }, () -> profile);
             EscapeCrystalNotifyPanel panel = new EscapeCrystalNotifyPanel(settings, (id, label) -> {});
             JSpinner spinner = findSpinner(panel);
+            int defaultSeconds = (Integer) spinner.getValue();
             JFormattedTextField input = ((JSpinner.NumberEditor) spinner.getEditor()).getTextField();
             spinner.setValue(9);
             reads.clear();
@@ -341,20 +346,20 @@ public class EscapeCrystalNotifyThresholdsTest {
             JButton reset = components(panel, JButton.class).stream()
                 .filter(button -> "Reset".equals(button.getText())).findFirst().get();
             reset.doClick();
-            assertEquals(Arrays.asList(4), writes);
+            assertEquals(Arrays.asList(defaultSeconds), writes);
             assertTrue(reads.isEmpty()); // Reset uses the editor's save path without rereading the row.
             input.setText("12");
             String key = EscapeCrystalNotifyThresholds.key(BOSS_ABYSSAL_SIRE);
             panel.refresh(key); // The config event for Reset arrives after another edit began.
             assertEquals(Arrays.asList(key), reads);
             assertEquals("12", input.getText());
-            reset.doClick(); // Reset must also discard a draft when the saved value is already 4.
-            assertEquals("4", input.getText());
-            assertEquals(Arrays.asList(4), writes);
+            reset.doClick(); // Reset must also discard a draft when the saved value is already the default.
+            assertEquals(Integer.toString(defaultSeconds), input.getText());
+            assertEquals(Arrays.asList(defaultSeconds), writes);
             input.setText("8");
             profile = new HashMap<>();
             panel.refresh(key);
-            assertEquals("4", input.getText()); // A profile switch forces refresh even if both saved values are 4.
+            assertEquals(Integer.toString(defaultSeconds), input.getText()); // A profile switch forces refresh even if both saved values equal the default.
             assertTrue(profile.isEmpty());
         });
     }
@@ -377,6 +382,7 @@ public class EscapeCrystalNotifyThresholdsTest {
     }
 
     @Test public void menuUsesHoveredBossAndKeepsLogoutPriority() throws Exception {
+        thresholds.set(BOSS_ARAXXOR, 4, profile); // Explicit boundary for this behavior test.
         EscapeCrystalNotifyPlugin plugin = plugin();
         List<String> reads = new ArrayList<>();
         set(plugin, "thresholds", new EscapeCrystalNotifyThresholds(key -> {
@@ -496,6 +502,7 @@ public class EscapeCrystalNotifyThresholdsTest {
     }
 
     @Test public void overlayPaintsOrangeOnlyAboveMaximum() throws Exception {
+        thresholds.set(BOSS_ARAXXOR, 4, profile); // Explicit boundary for this behavior test.
         EscapeCrystalNotifyPlugin plugin = plugin();
         List<String> reads = new ArrayList<>();
         set(plugin, "thresholds", new EscapeCrystalNotifyThresholds(key -> {
