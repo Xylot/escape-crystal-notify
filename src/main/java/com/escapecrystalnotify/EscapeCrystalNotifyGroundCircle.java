@@ -15,8 +15,8 @@ import net.runelite.api.Perspective;
 import net.runelite.api.Player;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.client.util.ImageUtil;
+import com.escapecrystalnotify.EscapeCrystalNotifyConfig.PlayerCircleDisplay;
 
-/** Caches the artwork and masks the projected ground effect beneath the player. */
 final class EscapeCrystalNotifyGroundCircle
 {
 	private static final int SIZE = 256;
@@ -29,13 +29,13 @@ final class EscapeCrystalNotifyGroundCircle
 	private BufferedImage texture;
 	private Color textureColor;
 	private int textureWidth, textureGlow;
-	private BufferedImage textureIcon;
+	private PlayerCircleDisplay textureDisplay;
 	private BufferedImage buffer;
 	private final Polygon corners = new Polygon(new int[4], new int[4], 4);
 	private final EscapeCrystalNotifyPlayerMask playerMask = new EscapeCrystalNotifyPlayerMask();
 
 	void draw(Graphics2D graphics, Client client, LocalPoint location, int plane,
-		Color color, int width, int glow, boolean showImage, Player player)
+		Color color, int width, int glow, PlayerCircleDisplay display, Player player)
 	{
 		int height = Perspective.getTileHeight(client, location, plane);
 		Perspective.modelToCanvas(client, player.getWorldView(), 4, location.getX(), location.getY(), height,
@@ -43,8 +43,7 @@ final class EscapeCrystalNotifyGroundCircle
 		for (int x : corners.xpoints)
 			if (x == Integer.MIN_VALUE) return;
 		corners.invalidate();
-		BufferedImage icon = showImage ? CRYSTAL : null;
-		BufferedImage image = texture(color, width, glow, icon);
+		BufferedImage image = texture(color, width, glow, display);
 		Rectangle bounds = corners.getBounds();
 		bounds = bounds.intersection(new Rectangle(client.getViewportXOffset(), client.getViewportYOffset(),
 			client.getViewportWidth(), client.getViewportHeight()));
@@ -71,45 +70,48 @@ final class EscapeCrystalNotifyGroundCircle
 			0, 0, bounds.width, bounds.height, null);
 	}
 
-	BufferedImage texture(Color color, int width, int glow, BufferedImage icon)
+	BufferedImage texture(Color color, int width, int glow, PlayerCircleDisplay display)
 	{
 		if (texture != null && color.equals(textureColor) && width == textureWidth
-			&& glow == textureGlow && icon == textureIcon) return texture;
+			&& glow == textureGlow && display == textureDisplay) return texture;
 		texture = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = texture.createGraphics();
 		try
 		{
 			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 			g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-			int radius = SIZE / 3;
-			int left = SIZE / 2 - radius;
-			if (glow > 0)
+			if (display != PlayerCircleDisplay.CRYSTAL_ONLY)
 			{
-				int spread = width + glow * 3;
-				int outerRadius = radius + spread;
-				Color clear = new Color(color.getRed(), color.getGreen(), color.getBlue(), 0);
-				Color halo = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha() * 2 / 3);
-				g.setPaint(new RadialGradientPaint(SIZE / 2f, SIZE / 2f, outerRadius,
-					new float[]{0, (radius - spread) / (float) outerRadius, radius / (float) outerRadius, 1},
-					new Color[]{clear, clear, halo, clear}));
-				g.fillOval(SIZE / 2 - outerRadius, SIZE / 2 - outerRadius, outerRadius * 2, outerRadius * 2);
-			}
-			g.setColor(color);
-			g.setStroke(new BasicStroke(width * 2));
-			g.drawOval(left, left, radius * 2, radius * 2);
-			if (icon != null)
+				int radius = SIZE / 3;
+				int left = SIZE / 2 - radius;
+				if (glow > 0)
+				{
+					int spread = width + glow * 3;
+					int outerRadius = radius + spread;
+					Color clear = new Color(color.getRed(), color.getGreen(), color.getBlue(), 0);
+					Color halo = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha() * 2 / 3);
+					g.setPaint(new RadialGradientPaint(SIZE / 2f, SIZE / 2f, outerRadius,
+						new float[]{0, (radius - spread) / (float) outerRadius, radius / (float) outerRadius, 1},
+						new Color[]{clear, clear, halo, clear}));
+					g.fillOval(SIZE / 2 - outerRadius, SIZE / 2 - outerRadius, outerRadius * 2, outerRadius * 2);
+				}
+				g.setColor(color);
+				g.setStroke(new BasicStroke(width * 2));
+				g.drawOval(left, left, radius * 2, radius * 2);
+				}
+			if (display != PlayerCircleDisplay.CIRCLE_ONLY)
 			{
 				int iconHeight = Math.round(SIZE * 0.6f);
-				int iconWidth = icon.getWidth() * iconHeight / icon.getHeight();
+				int iconWidth = CRYSTAL.getWidth() * iconHeight / CRYSTAL.getHeight();
 				g.setComposite(java.awt.AlphaComposite.SrcOver.derive(color.getAlpha() / 255f));
-				g.drawImage(icon, (SIZE - iconWidth) / 2, (SIZE - iconHeight) / 2, iconWidth, iconHeight, null);
+				g.drawImage(CRYSTAL, (SIZE - iconWidth) / 2, (SIZE - iconHeight) / 2, iconWidth, iconHeight, null);
 			}
 		}
 		finally { g.dispose(); }
 		textureColor = color;
 		textureWidth = width;
 		textureGlow = glow;
-		textureIcon = icon;
+		textureDisplay = display;
 		return texture;
 	}
 

@@ -732,7 +732,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 
 	@ConfigSection(
 		name = "Player Outline",
-		description = "Outline your character or draw a circle beneath it to show whether your escape crystal is active",
+		description = "Outline your character to show whether your escape crystal is active",
 		closedByDefault = true,
 		position = 8
 	)
@@ -740,25 +740,10 @@ public interface EscapeCrystalNotifyConfig extends Config
 
 	@ConfigItem(
 		keyName = "enablePlayerOutline", name = "Enable Player Outline",
-		description = "Show the selected player indicator using the active or inactive color. Follows the HCIM/HCGIM account filter.",
+		description = "Outline your character using the active or inactive color. Follows the HCIM/HCGIM account filter.",
 		section = playerOutlineSettings, position = 1
 	)
 	default boolean enablePlayerOutline() { return false; }
-
-	@ConfigItem(
-		keyName = "playerOutlineStyle", name = "Display Style",
-		description = "Outline the player's body or draw a circle on the ground beneath the player",
-		section = playerOutlineSettings, position = 2
-	)
-	default PlayerOutlineStyle playerOutlineStyle() { return PlayerOutlineStyle.BODY_OUTLINE; }
-
-	enum PlayerOutlineStyle {
-		BODY_OUTLINE("Body Outline"),
-		GROUND_CIRCLE("Ground Circle");
-		private final String displayName;
-		PlayerOutlineStyle(String displayName) { this.displayName = displayName; }
-		@Override public String toString() { return displayName; }
-	}
 
 	@ConfigItem(
 		keyName = "alwaysDisplayPlayerOutline", name = "Display Everywhere",
@@ -781,12 +766,12 @@ public interface EscapeCrystalNotifyConfig extends Config
 		description = "Outline color while your escape crystal is inactive or missing",
 		section = playerOutlineSettings, position = 5
 	)
-	default Color playerOutlineInactiveColor() { return new Color(205, 50, 50, 75); }
+	default Color playerOutlineInactiveColor() { return new Color(200, 50, 50, 75); }
 
 	@Range(min = 1, max = 10)
 	@ConfigItem(
 		keyName = "playerOutlineWidth", name = "Border Width",
-		description = "Width of the body outline or ground circle",
+		description = "Width of the player body outline",
 		section = playerOutlineSettings, position = 6
 	)
 	default int playerOutlineWidth() { return 4; }
@@ -794,29 +779,83 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@Range(min = 0, max = 4)
 	@ConfigItem(
 		keyName = "playerOutlineFeather", name = "Outline Feather",
-		description = "How much the body outline edge fades (0-4). Does not affect the ground circle.",
+		description = "How much the body outline edge fades (0-4).",
 		section = playerOutlineSettings, position = 7
 	)
 	default int playerOutlineFeather() { return 4; }
 
-	@ConfigItem(
-		keyName = "groundCircleImage", name = "Ground Circle Crystal Image",
-		description = "Display the active or inactive escape crystal image inside the ground circle",
-		section = playerOutlineSettings, position = 8
+	@ConfigSection(
+		name = "Player Circle",
+		description = "Draw a circle beneath your character independently of the body outline",
+		closedByDefault = true, position = 9
 	)
-	default boolean groundCircleImage() { return true; }
+	String playerCircleSettings = "playerCircleSettings";
+
+	@ConfigItem(
+		keyName = "enablePlayerCircle", name = "Enable Player Circle",
+		description = "Show a ground circle using the active or inactive color. Follows the HCIM/HCGIM account filter.",
+		section = playerCircleSettings, position = 1
+	)
+	default boolean enablePlayerCircle() { return false; }
+
+	@ConfigItem(
+		keyName = "playerCircleDisplay", name = "Display Options",
+		description = "Choose whether to display the circle, crystal image, or both",
+		section = playerCircleSettings, position = 2
+	)
+	default PlayerCircleDisplay playerCircleDisplay() { return PlayerCircleDisplay.CIRCLE_AND_CRYSTAL; }
+
+	enum PlayerCircleDisplay {
+		CIRCLE_AND_CRYSTAL("Circle & Crystal"),
+		CIRCLE_ONLY("Circle Only"),
+		CRYSTAL_ONLY("Crystal Only");
+		private final String displayName;
+		PlayerCircleDisplay(String displayName) { this.displayName = displayName; }
+		@Override public String toString() { return displayName; }
+	}
+
+	@ConfigItem(
+		keyName = "alwaysDisplayPlayerCircle", name = "Display Everywhere",
+		description = "Always enable the player circle regardless of location",
+		section = playerCircleSettings, position = 3
+	)
+	default boolean alwaysDisplayPlayerCircle() { return true; }
+
+	@Alpha
+	@ConfigItem(
+		keyName = "playerCircleActiveColor", name = "Active Color",
+		description = "Circle color while carrying or wearing an active escape crystal",
+		section = playerCircleSettings, position = 4
+	)
+	default Color playerCircleActiveColor() { return new Color(50, 205, 50, 0); }
+
+	@Alpha
+	@ConfigItem(
+		keyName = "playerCircleInactiveColor", name = "Inactive Color",
+		description = "Circle color while your escape crystal is inactive or missing",
+		section = playerCircleSettings, position = 5
+	)
+	default Color playerCircleInactiveColor() { return new Color(200, 50, 50, 200); }
+
+	@Range(min = 1, max = 10)
+	@ConfigItem(
+		keyName = "playerCircleWidth", name = "Border Width",
+		description = "Width of the ground circle border",
+		section = playerCircleSettings, position = 6
+	)
+	default int playerCircleWidth() { return 4; }
 
 	@Range(min = 0, max = 10)
 	@ConfigItem(
-		keyName = "groundCircleGlow", name = "Ground Circle Glow",
+		keyName = "groundCircleGlow", name = "Glow",
 		description = "Soft glow around the ground circle (0 disables the glow)",
-		section = playerOutlineSettings, position = 9
+		section = playerCircleSettings, position = 7
 	)
 	default int groundCircleGlow() { return 8; }
 
 	@ConfigSection(
 		name = "Teleport NPC", description = "A temporary NPC reacting to an escape crystal teleport",
-		closedByDefault = true, position = 9
+		closedByDefault = true, position = 10
 	)
 	String teleportNpcSettings = "teleportNpcSettings";
 
@@ -845,7 +884,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Notification Settings",
 		description = "Configure preferences for Runelite notifications",
 		closedByDefault = true,
-		position = 10
+		position = 11
 	)
 	String notificationSettings = "notificationSettings";
 
@@ -919,7 +958,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Leviathan Safeguards",
 		description = "Configure optional safeguards for the fixed Leviathan logout bug",
 		closedByDefault = true,
-		position = 11
+		position = 12
 	)
 	String leviathanSafeguardSettings = "leviathanSafeguardSettings";
 
@@ -1001,7 +1040,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Doom Safeguards",
 		description = "Configure optional safeguards for the fixed Doom logout bug",
 		closedByDefault = true,
-		position = 12
+		position = 13
 	)
 	String doomSafeguardSettings = "doomSafeguardSettings";
 
@@ -1083,7 +1122,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Non-HC Inventory Highlight",
 		description = "Settings for minimal inventory highlighting for non-hardcore accounts",
 		closedByDefault = true,
-		position = 13
+		position = 14
 	)
 	String nonHardcoreInventorySettings = "nonHardcoreInventorySettings";
 
@@ -1132,7 +1171,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Debug",
 		description = "Settings for testing and debugging the plugin",
 		closedByDefault = true,
-		position = 14
+		position = 15
 	)
 	String debugSettings = "debugSettings";
 

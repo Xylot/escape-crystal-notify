@@ -631,7 +631,9 @@ public class EscapeCrystalNotifyCrystal3dTest
 		assertEquals(inventoryPosition + 1, crystal.position());
 		assertEquals(crystal.position() + 1, type.getField("playerOutlineSettings")
 			.getAnnotation(net.runelite.client.config.ConfigSection.class).position());
-		assertEquals(crystal.position() + 2, type.getField("teleportNpcSettings")
+		assertEquals(crystal.position() + 2, type.getField("playerCircleSettings")
+			.getAnnotation(net.runelite.client.config.ConfigSection.class).position());
+		assertEquals(crystal.position() + 3, type.getField("teleportNpcSettings")
 			.getAnnotation(net.runelite.client.config.ConfigSection.class).position());
 		assertEquals(Color.class, type.getMethod("crystal3dActiveColor").getReturnType());
 		assertEquals(Color.class, type.getMethod("crystal3dInactiveColor").getReturnType());

@@ -7,7 +7,7 @@ Useful for HCIM/HCGIM
 - Scalable reminder image display
 - Info Box Display
 - Inventory & equipment screen highlighting and info
-- Optional player outline or glowing ground circle with active/inactive colors and an optional crystal image
+- Independent player outline and glowing ground circle, each with its own active/inactive colors, width, and location settings; the circle also supports a crystal image
 - Optional client-only NPC saying "-75k" during the player's escape crystal teleport animation
 - Boss entrance highlight and overlay reminder
 - Deprioritized left-click entry on boss entrances when an Escape Crystal is not active (Wilderness bosses are always left-click entry)

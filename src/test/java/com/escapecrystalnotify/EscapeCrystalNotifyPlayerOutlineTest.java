@@ -22,7 +22,8 @@ public class EscapeCrystalNotifyPlayerOutlineTest
 	public void groundCircleRendersRingWithoutBodyRendererAndPreservesGraphicsState() throws Exception
 	{
 		Fixture f = new Fixture();
-		f.settings.style = EscapeCrystalNotifyConfig.PlayerOutlineStyle.GROUND_CIRCLE;
+		f.settings.enabled = false;
+		f.settings.circleEnabled = true;
 		WorldView view = stub(WorldView.class, (name, args) -> {
 			switch (name) {
 				case "getId": return WorldView.TOPLEVEL;
@@ -140,14 +141,44 @@ public class EscapeCrystalNotifyPlayerOutlineTest
 	}
 
 	@Test
-	public void bodyOutlineIsDefaultAndTransparentCircleSkipsPlayerAccess() throws Exception
+	public void indicatorsDefaultToDisabledAndTransparentCircleSkipsPlayerAccess() throws Exception
 	{
-		assertEquals(EscapeCrystalNotifyConfig.PlayerOutlineStyle.BODY_OUTLINE,
-			new EscapeCrystalNotifyConfig() {}.playerOutlineStyle());
+		EscapeCrystalNotifyConfig defaults = new EscapeCrystalNotifyConfig() {};
+		assertFalse(defaults.enablePlayerOutline());
+		assertFalse(defaults.enablePlayerCircle());
 		Fixture f = new Fixture();
-		f.settings.style = EscapeCrystalNotifyConfig.PlayerOutlineStyle.GROUND_CIRCLE;
-		f.settings.activeColor = new Color(0, 0, 0, 0);
+		f.settings.enabled = false;
+		f.settings.circleEnabled = true;
+		f.settings.circleActive = new Color(0, 0, 0, 0);
 		assertNull(f.overlay.render(null));
+	}
+
+	@Test
+	public void bothIndicatorsHaveIndependentTogglesColorsAndLocations() throws Exception
+	{
+		Fixture f = new Fixture();
+		f.settings.circleEnabled = true;
+		f.settings.circleActive = Color.ORANGE;
+		assertEquals(Color.CYAN, f.overlay.outlineColor());
+		assertEquals(Color.ORANGE, f.overlay.circleColor());
+		f.settings.enabled = false;
+		assertNull(f.overlay.outlineColor());
+		assertEquals(Color.ORANGE, f.overlay.circleColor());
+		f.settings.enabled = true;
+		f.settings.circleEverywhere = false;
+		assertEquals(Color.CYAN, f.overlay.outlineColor());
+		assertNull(f.overlay.circleColor());
+		set(f.plugin, "atNotifyRegionId", true);
+		assertEquals(Color.ORANGE, f.overlay.circleColor());
+		set(f.plugin, "escapeCrystalActive", false);
+		assertEquals(Color.MAGENTA, f.overlay.outlineColor());
+		assertEquals(Color.BLUE, f.overlay.circleColor());
+		set(f.plugin, "escapeCrystalActive", true);
+		set(f.plugin, "escapeCrystalWithPlayer", false);
+		assertEquals(Color.BLUE, f.overlay.circleColor());
+		f.settings.hardcoreOnly = true;
+		assertNull(f.overlay.outlineColor());
+		assertNull(f.overlay.circleColor());
 	}
 
 	@Test
@@ -186,11 +217,15 @@ public class EscapeCrystalNotifyPlayerOutlineTest
 	{
 		boolean enabled = true, everywhere = true, hardcoreOnly;
 		Color activeColor = Color.CYAN;
-		PlayerOutlineStyle style = PlayerOutlineStyle.BODY_OUTLINE;
+		boolean circleEnabled, circleEverywhere = true;
+		Color circleActive = Color.CYAN;
 		boolean image;
 		int glow;
-		@Override public PlayerOutlineStyle playerOutlineStyle() { return style; }
-		@Override public boolean groundCircleImage() { return image; }
+		@Override public boolean enablePlayerCircle() { return circleEnabled; }
+		@Override public boolean alwaysDisplayPlayerCircle() { return circleEverywhere; }
+		@Override public Color playerCircleActiveColor() { return circleActive; }
+		@Override public Color playerCircleInactiveColor() { return Color.BLUE; }
+		@Override public PlayerCircleDisplay playerCircleDisplay() { return image ? PlayerCircleDisplay.CIRCLE_AND_CRYSTAL : PlayerCircleDisplay.CIRCLE_ONLY; }
 		@Override public int groundCircleGlow() { return glow; }
 		@Override public boolean enablePlayerOutline() { return enabled; }
 		@Override public boolean alwaysDisplayPlayerOutline() { return everywhere; }

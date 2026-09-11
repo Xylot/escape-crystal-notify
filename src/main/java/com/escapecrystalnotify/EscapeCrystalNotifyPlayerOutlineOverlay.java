@@ -34,30 +34,47 @@ public class EscapeCrystalNotifyPlayerOutlineOverlay extends Overlay
 
 	Color outlineColor()
 	{
-		if (!config.enablePlayerOutline() || !plugin.isAccountTypeEnabled()
-			|| (!config.alwaysDisplayPlayerOutline() && !plugin.isAtNotifyRegionId())) return null;
+		return indicatorColor(config.enablePlayerOutline(), config.alwaysDisplayPlayerOutline(),
+			config.playerOutlineActiveColor(), config.playerOutlineInactiveColor());
+	}
+
+	Color circleColor()
+	{
+		return indicatorColor(config.enablePlayerCircle(), config.alwaysDisplayPlayerCircle(),
+			config.playerCircleActiveColor(), config.playerCircleInactiveColor());
+	}
+
+	private Color indicatorColor(boolean enabled, boolean everywhere, Color active, Color inactive)
+	{
+		if (!enabled || !plugin.isAccountTypeEnabled()
+			|| (!everywhere && !plugin.isAtNotifyRegionId())) return null;
 		return plugin.isEscapeCrystalInactivityTeleportActive()
-			? config.playerOutlineActiveColor() : config.playerOutlineInactiveColor();
+			? active : inactive;
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		Color color = outlineColor();
-		if (color == null || color.getAlpha() == 0) return null;
+		Color outline = outlineColor(), circle = circleColor();
+		if (!isVisible(outline) && !isVisible(circle)) return null;
 		Player player = client.getLocalPlayer();
 		if (player != null)
 		{
-			if (config.playerOutlineStyle() == EscapeCrystalNotifyConfig.PlayerOutlineStyle.GROUND_CIRCLE)
+			if (isVisible(circle))
 			{
-				drawGroundCircle(graphics, player, color);
+				drawGroundCircle(graphics, player, circle);
 			}
-			else
+			if (isVisible(outline))
 			{
-				outlines.drawOutline(player, config.playerOutlineWidth(), color, config.playerOutlineFeather());
+				outlines.drawOutline(player, config.playerOutlineWidth(), outline, config.playerOutlineFeather());
 			}
 		}
 		return null;
+	}
+
+	private static boolean isVisible(Color color)
+	{
+		return color != null && color.getAlpha() != 0;
 	}
 
 	private void drawGroundCircle(Graphics2D graphics, Player player, Color color)
@@ -65,6 +82,6 @@ public class EscapeCrystalNotifyPlayerOutlineOverlay extends Overlay
 		LocalPoint location = player.getLocalLocation();
 		if (location == null || player.getWorldView() == null) return;
 		groundCircle.draw(graphics, client, location, player.getWorldView().getPlane(), color,
-			config.playerOutlineWidth(), config.groundCircleGlow(), config.groundCircleImage(), player);
+			config.playerCircleWidth(), config.groundCircleGlow(), config.playerCircleDisplay(), player);
 	}
 }
