@@ -15,7 +15,7 @@ public class EscapeCrystalNotifyRegionPolicyTest {
 
     @Test
     public void instancedBossOnlyNotifiesAfterEnteringInstanceInSameRegion() throws Exception {
-        EscapeCrystalNotifyRegionEntrance entrance = EscapeCrystalNotifyRegion.BOSS_MAGGOT_KING.getRegionEntrance();
+        EscapeCrystalNotifyRegionEntrance entrance = EscapeCrystalNotifyRegion.BOSS_BRUTUS.getRegionEntrance();
         Field requirement = EscapeCrystalNotifyRegionEntrance.class.getDeclaredField("bossInstanced");
         requirement.setAccessible(true);
         boolean original = entrance.isBossInstanced();
@@ -30,7 +30,7 @@ public class EscapeCrystalNotifyRegionPolicyTest {
                 set(plugin, "client", Proxy.newProxyInstance(Client.class.getClassLoader(), new Class<?>[]{Client.class},
                     (p, m, a) -> m.getName().equals("isInInstancedRegion") ? instanced[0]
                         : m.getName().equals("getLocalPlayer") ? player : null));
-                WorldPoint point = region(11645, 0);
+                WorldPoint point = region(13107, 0);
                 at(plugin, point);
                 invoke(plugin, "computeNotificationMetrics");
                 assertFalse(plugin.isAtNotifyRegionId());
@@ -54,7 +54,7 @@ public class EscapeCrystalNotifyRegionPolicyTest {
                 assertTrue(plugin.isAtEntranceLocation());
 
                 set(plugin, "config", new EscapeCrystalNotifyConfig() {
-                    @Override public String includeRegionIds() { return "11645"; }
+                    @Override public String includeRegionIds() { return "13107"; }
                 });
                 plugin.onConfigChanged(null);
                 at(plugin, point);
@@ -62,7 +62,7 @@ public class EscapeCrystalNotifyRegionPolicyTest {
 
                 set(plugin, "config", new EscapeCrystalNotifyConfig() {
                     @Override public boolean displayEverywhere() { return true; }
-                    @Override public String excludeRegionIds() { return "11645"; }
+                    @Override public String excludeRegionIds() { return "13107"; }
                 });
                 plugin.onConfigChanged(null);
                 at(plugin, point);
