@@ -17,8 +17,10 @@ import java.awt.*;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntPredicate;
 
 
 @Slf4j
@@ -97,7 +99,7 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
 
         WorldPoint worldPoint = plugin.getCurrentWorldPoint();
         String worldPointText = worldPoint != null ? 
-            String.format("(%d, %d, %d)", worldPoint.getX(), worldPoint.getY(), worldPoint.getPlane()) : "null";
+            String.format("(x=%d, y=%d, z=%d, plane=%d)", worldPoint.getX(), worldPoint.getY(), plugin.getCurrentZ(), worldPoint.getPlane()) : "null";
         
         panelComponent.getChildren().add(LineComponent.builder()
                 .left("World Point:")
@@ -358,12 +360,13 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
                 
                 for (EscapeCrystalNotifyLocatedEntrance entrance : entrances) {
                     try {
-                        String entranceInfo = entrance.getTarget().getId() + 
-                                            " at " + formatWorldPoint(entrance.getTarget().getWorldLocation()) +
+                        String entranceInfo = entrance.getTarget().getId() +
+                                            " at " + formatWorldPoint(entrance.getTarget().getWorldLocation(), entrance.getTarget().getZ()) +
                                             " (Valid: " + entrance.isEntranceInValidChunk() +
                                             ", Moved: " + entrance.hasMoved() +
                                             ", Past: " + entrance.isPlayerPastEntrance(plugin.getCurrentWorldPoint()) +
-                                            ", Plane Match: " + entrance.matchesPlayerPlane(plugin.getCurrentPlaneId()) + ")";
+                                            ", Plane Match: " + entrance.matchesPlayerPlane(plugin.getCurrentPlaneId()) +
+                                            ", Varbits: " + plugin.getVarbitConstraintValues(entrance.getDefinition().getConstraintVarbitIds()) + ")";
                         
                         panelComponent.getChildren().add(LineComponent.builder()
                             .left("  - " + entranceInfo)
@@ -405,7 +408,7 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
             for (EscapeCrystalNotifyLocatedEntrance entrance : validEntrances) {
                 try {
                     String validInfo = entrance.getTarget().getId() + 
-                                    " at " + formatWorldPoint(entrance.getTarget().getWorldLocation()) +
+                                    " at " + formatWorldPoint(entrance.getTarget().getWorldLocation(), entrance.getTarget().getZ()) +
                                     " (Can Highlight: " + entrance.canHighlight() +
                                     ", Can Deprioritize: " + entrance.canDeprioritize() +
                                     ", Prioritized: " + entrance.isPrioritized() + ")";
@@ -552,8 +555,8 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
         return height;
     }
 
-    private String formatWorldPoint(WorldPoint worldPoint) {
+    private String formatWorldPoint(WorldPoint worldPoint, int z) {
         if (worldPoint == null) return "null";
-        return String.format("(region=%d, x=%d, y=%d, plane=%d)", worldPoint.getRegionID(), worldPoint.getX(), worldPoint.getY(), worldPoint.getPlane());
+        return String.format("(region=%d, x=%d, y=%d, z=%d, plane=%d)", worldPoint.getRegionID(), worldPoint.getX(), worldPoint.getY(), z, worldPoint.getPlane());
     }
 }

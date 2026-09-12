@@ -45,6 +45,7 @@ import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
+import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 import java.util.function.Predicate;
 
@@ -182,6 +183,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Getter
 	private int expectedTicksUntilTeleport;
 	@Getter
+	private Player currentPlayer;
+	@Getter
 	private WorldPoint currentWorldPoint;
 	@Getter
 	private int currentRegionId;
@@ -207,6 +210,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private boolean previouslyInTimeRemainingThreshold = false;
 	@Getter
 	private boolean enteredTimeRemainingThreshold = false;
+	@Getter
+	private int currentZ;
 	@Getter
 	private int currentPlaneId;
 	@Getter
@@ -832,6 +837,15 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.currentRegionId = this.currentWorldPoint.getRegionID();
 		this.currentPlaneId = this.currentWorldPoint.getPlane();
 		this.currentChunkId = this.computeChunkIdFromWorldPoint(this.currentWorldPoint);
+		this.currentPlayer = client.getLocalPlayer();
+
+		if (this.currentPlayer != null) {
+			this.currentZ = Perspective.getTileHeight(
+					client,
+					currentPlayer.getLocalLocation(),
+					currentPlayer.getWorldLocation().getPlane()
+			);
+		}
 	}
 
 	private boolean isDebugEntranceNpcId(int id) {
@@ -865,6 +879,8 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		}
 
 		this.validEntrances.clear();
+		Map<Integer, Integer> closestDistances = new HashMap<>();
+		Map<Integer, Integer> closestIndices = new HashMap<>();
 		Set<EscapeCrystalNotifyRegion> nearby = EnumSet.noneOf(EscapeCrystalNotifyRegion.class);
 		for (List<EscapeCrystalNotifyLocatedEntrance> entrances : this.possibleEntrances.values()) {
 			for (EscapeCrystalNotifyLocatedEntrance entrance : entrances) {
@@ -873,11 +889,37 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 					!entrance.hasMoved() && 
 					!entrance.isPlayerPastEntrance(this.currentWorldPoint) &&
 					entrance.matchesPlayerPlane(this.currentPlaneId)) {
+
+					if (!this.checkVarbitConstraints(entrance.getDefinition().getVarbitConstraints())) continue;
+
+					if (entrance.getDefinition().isClosest()) {
+						EscapeCrystalNotifyRegionEntranceObject target = entrance.getTarget();
+						int id = target.getId();
+
+						WorldPoint location = target.getWorldLocation();
+
+						if (target.getZ() != this.currentZ) continue;
+
+						int distance = this.currentWorldPoint.distanceTo(location);
+						if (distance >= closestDistances.getOrDefault(id, Integer.MAX_VALUE)) continue;
+
+						closestDistances.put(id, distance);
+						Integer index = closestIndices.get(id);
+
+						if (index != null) {
+							this.validEntrances.set(index, entrance);
+							continue;
+						}
+						closestIndices.put(id, this.validEntrances.size());
+					}
+
 					this.validEntrances.add(entrance);
-					EscapeCrystalNotifyRegion encounter = EscapeCrystalNotifyEncounters.forEntrance(entrance.getDefinition());
-					if (encounter != null) nearby.add(encounter);
 				}
 			}
+		}
+		for (EscapeCrystalNotifyLocatedEntrance entrance : this.validEntrances) {
+			EscapeCrystalNotifyRegion encounter = EscapeCrystalNotifyEncounters.forEntrance(entrance.getDefinition());
+			if (encounter != null) nearby.add(encounter);
 		}
 		updateNearbyBosses(nearby);
 	}
@@ -1336,6 +1378,32 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		}
 
 		return Color.WHITE;
+	}
+
+	public boolean checkVarbitConstraints(Map<Integer, IntPredicate> constraints) {
+		if (constraints == null) return true;
+
+		for (Map.Entry<Integer, IntPredicate> entry : constraints.entrySet()) {
+			int currentValue = client.getVarbitValue(entry.getKey());
+
+			if (!entry.getValue().test(currentValue)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public Map<Integer, Integer> getVarbitConstraintValues(Set<Integer> varbits) {
+		Map<Integer, Integer> current = new HashMap<>();
+
+		if (varbits == null) return current;
+
+		for (Integer key : varbits) {
+			current.put(key, client.getVarbitValue(key));
+		}
+
+		return current;
 	}
 
 	public boolean isAccountTypeEnabled() {

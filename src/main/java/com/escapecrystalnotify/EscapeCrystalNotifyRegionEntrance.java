@@ -2,7 +2,8 @@ package com.escapecrystalnotify;
 
 import lombok.Getter;
 
-import java.util.List;
+import java.util.*;
+import java.util.function.IntPredicate;
 
 @Getter
 public class EscapeCrystalNotifyRegionEntrance {
@@ -15,10 +16,29 @@ public class EscapeCrystalNotifyRegionEntrance {
     public boolean logoutBugPossible;
     public EscapeCrystalNotifyRegionEntranceObjectType objectType;
     public boolean isDebug;
-    private boolean bossInstanced;
+    public boolean bossInstanced;
+    public boolean closest;
+    public Map<Integer, IntPredicate> varbitConstraints;
+
+    public EscapeCrystalNotifyRegionEntrance withClosest() {
+        this.closest = true;
+        return this;
+    }
 
     public EscapeCrystalNotifyRegionEntrance withInstancedBoss() {
         this.bossInstanced = true;
+        return this;
+    }
+
+    public EscapeCrystalNotifyRegionEntrance withVarbitConstraints(List<Map<Integer, IntPredicate>> constraints) {
+        Map<Integer, IntPredicate> combined = new HashMap<>();
+
+        for (Map<Integer, IntPredicate> map : constraints) {
+            combined.putAll(map);
+        }
+
+        this.varbitConstraints = combined;
+
         return this;
     }
 
@@ -125,5 +145,10 @@ public class EscapeCrystalNotifyRegionEntrance {
         this.escapeCrystalDisabled = escapeCrystalDisabled;
         this.logoutBugPossible = logoutBugPossible;
         this.objectType = objectType;
+    }
+
+    public Set<Integer> getConstraintVarbitIds() {
+        if (this.varbitConstraints == null) return new HashSet<>();
+        return this.varbitConstraints.keySet();
     }
 }

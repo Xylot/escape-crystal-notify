@@ -118,6 +118,26 @@ public class EscapeCrystalNotifyRegionEntranceObject {
         return -1;
     }
 
+    public int getZ() {
+        if (this.gameObject != null) {
+            return this.gameObject.getZ();
+        }
+
+        if (this.npc != null) {
+            return -1;
+        }
+
+        if (this.decorativeObject != null) {
+            return this.decorativeObject.getZ();
+        }
+
+        if (this.wallObject != null) {
+            return this.wallObject.getZ();
+        }
+
+        return -1;
+    }
+
     public Shape getConvexHull() {
         try {
             if (gameObject != null) {
