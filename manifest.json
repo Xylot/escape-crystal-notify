@@ -1,0 +1,284 @@
+{
+  "submission": "ae71aa58-893c-4aed-9a10-565b22368914",
+  "revision": "qgZBXgJ7kzu5e50uPgkhaulwNSACowVWscSuNCxcoRs",
+  "base": "e23bf318a0ceccdf5ed843c140feb0c9184d9c0c",
+  "evidence": {
+    "panels": [
+      {
+        "id": "BOSS_BRYOPHYTA-before-arena-1",
+        "bossId": "BOSS_BRYOPHYTA",
+        "name": "Bryophyta",
+        "kind": "arena",
+        "context": {
+          "x": 3229,
+          "y": 9934,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": -1,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Chest_(Bryophyta's_lair)",
+          "revision": 15329555
+        },
+        "regions": [
+          12955
+        ],
+        "chunks": [],
+        "restrictChunks": false,
+        "renderScale": 2,
+        "minX": 50,
+        "maxY": 155,
+        "columns": 1,
+        "rows": 1,
+        "state": "before"
+      },
+      {
+        "id": "BOSS_BRYOPHYTA-before-entrance-1",
+        "bossId": "BOSS_BRYOPHYTA",
+        "name": "Bryophyta",
+        "kind": "entrance",
+        "context": {
+          "x": 3232,
+          "y": 9952,
+          "plane": 0
+        },
+        "regions": [
+          12698
+        ],
+        "chunks": [
+          812245
+        ],
+        "restrictChunks": true,
+        "renderScale": 2,
+        "minX": 49,
+        "maxY": 154,
+        "columns": 1,
+        "rows": 1,
+        "state": "before"
+      },
+      {
+        "id": "BOSS_BRYOPHYTA-after-arena-1",
+        "bossId": "BOSS_BRYOPHYTA",
+        "name": "Bryophyta",
+        "kind": "arena",
+        "context": {
+          "x": 3229,
+          "y": 9934,
+          "plane": 0,
+          "tiles": {
+            "version": "2026-08-12_a",
+            "mapId": -1,
+            "plane": 0
+          },
+          "source": "https://oldschool.runescape.wiki/w/Chest_(Bryophyta's_lair)",
+          "revision": 15329555
+        },
+        "regions": [
+          12955
+        ],
+        "chunks": [],
+        "restrictChunks": false,
+        "renderScale": 2,
+        "minX": 50,
+        "maxY": 155,
+        "columns": 1,
+        "rows": 1,
+        "state": "after"
+      },
+      {
+        "id": "BOSS_BRYOPHYTA-after-notification-1",
+        "bossId": "BOSS_BRYOPHYTA",
+        "name": "Bryophyta",
+        "kind": "notification",
+        "context": {
+          "x": 3232,
+          "y": 9952,
+          "plane": 0
+        },
+        "regions": [
+          12698
+        ],
+        "chunks": [
+          812245
+        ],
+        "restrictChunks": true,
+        "renderScale": 2,
+        "minX": 49,
+        "maxY": 154,
+        "columns": 1,
+        "rows": 1,
+        "detectionChunks": [
+          812245
+        ],
+        "label": "Entrance notification coverage",
+        "state": "after"
+      }
+    ],
+    "contexts": {
+      "BOSS_BRYOPHYTA": {
+        "before": {
+          "arena": {
+            "x": 3229,
+            "y": 9934,
+            "plane": 0,
+            "tiles": {
+              "version": "2026-08-12_a",
+              "mapId": -1,
+              "plane": 0
+            },
+            "source": "https://oldschool.runescape.wiki/w/Chest_(Bryophyta's_lair)",
+            "revision": 15329555
+          },
+          "entrance": {
+            "x": 3232,
+            "y": 9952,
+            "plane": 0
+          }
+        },
+        "after": {
+          "arena": {
+            "x": 3229,
+            "y": 9934,
+            "plane": 0,
+            "tiles": {
+              "version": "2026-08-12_a",
+              "mapId": -1,
+              "plane": 0
+            },
+            "source": "https://oldschool.runescape.wiki/w/Chest_(Bryophyta's_lair)",
+            "revision": 15329555
+          },
+          "entrance": {
+            "x": 3232,
+            "y": 9952,
+            "plane": 0
+          }
+        }
+      }
+    },
+    "sources": {
+      "BOSS_BRYOPHYTA": [
+        "https://oldschool.runescape.wiki/w/Bryophyta",
+        "https://oldschool.runescape.wiki/w/Chest_(Bryophyta's_lair)",
+        "https://oldschool.runescape.wiki/w/Chest_(Bryophyta's_lair)?oldid=15329555"
+      ]
+    }
+  },
+  "presentation": {
+    "BOSS_BRYOPHYTA": {
+      "scope": "boss",
+      "images": [
+        "32534"
+      ],
+      "beforeImages": [
+        "32534"
+      ]
+    }
+  },
+  "states": {
+    "BOSS_BRYOPHYTA": {
+      "before": {
+        "id": "BOSS_BRYOPHYTA",
+        "name": "Bryophyta",
+        "regionType": "BOSSES",
+        "deathType": "UNSAFE",
+        "notifyRegion": true,
+        "regions": [
+          12955
+        ],
+        "chunks": [],
+        "entrance": {
+          "overlay": "DEPRIORITIZED_WITH_HIGHLIGHT",
+          "direction": "",
+          "chunks": [
+            812245
+          ],
+          "plane": "",
+          "objectType": "GAME_OBJECT",
+          "ids": [
+            "ObjectID.GB_MOSS_DOOR_IN"
+          ]
+        },
+        "entranceRaw": "new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, List.of(812245), EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, ObjectID.GB_MOSS_DOOR_IN)",
+        "entranceChunks": [
+          812245
+        ],
+        "extraSettings": [],
+        "canonicalId": "BOSS_BRYOPHYTA",
+        "recommendedSeconds": 4,
+        "petIcon": "ItemID.GB_MOSS_ESSENCE"
+      },
+      "after": {
+        "id": "BOSS_BRYOPHYTA",
+        "name": "Bryophyta",
+        "regionType": "BOSSES",
+        "deathType": "UNSAFE",
+        "notifyRegion": true,
+        "regions": [
+          12955
+        ],
+        "chunks": [],
+        "entrance": {
+          "overlay": "DEPRIORITIZED_WITH_HIGHLIGHT",
+          "direction": "",
+          "chunks": [
+            812245
+          ],
+          "plane": "",
+          "objectType": "GAME_OBJECT",
+          "ids": [
+            "ObjectID.GB_MOSS_DOOR_IN"
+          ]
+        },
+        "entranceRaw": "new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, List.of(812245), EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, ObjectID.GB_MOSS_DOOR_IN)",
+        "entranceChunks": [
+          812245
+        ],
+        "extraSettings": [],
+        "entranceEntry": {
+          "id": "BOSS_BRYOPHYTA_ENTRANCE",
+          "name": "Bryophyta Entrance",
+          "regionType": "BOSSES",
+          "deathType": "UNSAFE",
+          "notifyRegion": true,
+          "regions": [
+            12698
+          ],
+          "chunks": [
+            812245
+          ],
+          "entrance": {
+            "overlay": "DEPRIORITIZED_WITH_HIGHLIGHT",
+            "direction": "",
+            "chunks": [
+              812245
+            ],
+            "plane": "",
+            "objectType": "GAME_OBJECT",
+            "ids": [
+              "ObjectID.GB_MOSS_DOOR_IN"
+            ]
+          },
+          "entranceRaw": "new EscapeCrystalNotifyRegionEntrance(EscapeCrystalNotifyRegionEntranceOverlayType.DEPRIORITIZED_WITH_HIGHLIGHT, List.of(812245), EscapeCrystalNotifyRegionEntranceObjectType.GAME_OBJECT, ObjectID.GB_MOSS_DOOR_IN)",
+          "entranceChunks": [
+            812245
+          ],
+          "extraSettings": []
+        },
+        "entranceRegions": [
+          12698
+        ],
+        "entranceNotifyChunks": [
+          812245
+        ],
+        "entranceDangerous": true,
+        "recommendedSeconds": 4,
+        "petIcon": "ItemID.GB_MOSS_ESSENCE",
+        "arenaRegions": [
+          12955
+        ]
+      }
+    }
+  }
+}
