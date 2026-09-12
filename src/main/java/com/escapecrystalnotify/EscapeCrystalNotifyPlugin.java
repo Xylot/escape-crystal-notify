@@ -878,6 +878,20 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			return;
 		}
 
+		if (this.currentWorldPoint == null) {
+			Player player = this.currentPlayer != null
+				? this.currentPlayer
+				: this.client != null
+					? this.client.getLocalPlayer()
+					: null;
+
+			if (player != null && player.getWorldLocation() != null) {
+				this.currentWorldPoint = player.getWorldLocation();
+				this.currentPlaneId = this.currentWorldPoint.getPlane();
+				this.currentPlayer = player;
+			}
+		}
+
 		this.validEntrances.clear();
 		Map<Integer, Integer> closestDistances = new HashMap<>();
 		Map<Integer, Integer> closestIndices = new HashMap<>();
@@ -896,9 +910,33 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 						EscapeCrystalNotifyRegionEntranceObject target = entrance.getTarget();
 						int id = target.getId();
 
-						WorldPoint location = target.getWorldLocation();
+						WorldPoint location = null;
+						WorldView targetWorldView = null;
 
-						if (target.getZ() != this.currentZ) continue;
+						if (target.gameObject != null) {
+							location = target.gameObject.getWorldLocation();
+							targetWorldView = target.gameObject.getWorldView();
+							if (targetWorldView != null && targetWorldView.isInstance()) {
+								location = resolvePossiblyInstancedWorldPoint(location, target.gameObject.getLocalLocation());
+							}
+						} else if (target.npc != null) {
+							location = target.npc.getWorldLocation();
+							targetWorldView = target.npc.getWorldView();
+						} else if (target.decorativeObject != null) {
+							location = target.decorativeObject.getWorldLocation();
+							targetWorldView = target.decorativeObject.getWorldView();
+						} else if (target.wallObject != null) {
+							location = target.wallObject.getWorldLocation();
+							targetWorldView = target.wallObject.getWorldView();
+						}
+
+						WorldView playerWorldView = this.currentPlayer != null ? this.currentPlayer.getWorldView() : null;
+						if (playerWorldView != null && targetWorldView != playerWorldView) continue;
+						if (location == null || this.currentWorldPoint == null) continue;
+
+						int targetZ = target.getZ();
+						if (targetZ != -1 && targetZ != this.currentZ) continue;
+						if (targetZ == -1 && location.getPlane() != this.currentPlaneId) continue;
 
 						int distance = this.currentWorldPoint.distanceTo(location);
 						if (distance >= closestDistances.getOrDefault(id, Integer.MAX_VALUE)) continue;

@@ -10,3 +10,4 @@ nbproject/
 /bin
 /null-ignored.json
 .vscode/
+/.gradle-cache
