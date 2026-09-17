@@ -2,6 +2,7 @@ package com.escapecrystalnotify;
 
 import com.google.inject.Provides;
 import javax.inject.Inject;
+import javax.inject.Named;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
@@ -91,6 +92,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Inject
 	private EscapeCrystalNotifyConfig config;
+
+	@Inject
+	@Named("developerMode")
+	private boolean developerMode;
 
 	@Inject
 	private EscapeCrystalNotifyCrystal3d crystal3d;
@@ -293,7 +298,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		overlayManager.add(escapeCrystalNotifyTeleportDisabledPanel);
 		overlayManager.add(escapeCrystalNotifyRegionEntranceOverlay);
 		overlayManager.add(escapeCrystalNotifyRegionEntranceSixHourOverlay);
-		overlayManager.add(escapeCrystalNotifyTestingOverlay);
+		if (developerMode) overlayManager.add(escapeCrystalNotifyTestingOverlay);
 	}
 
 	private void setupThresholdPanel() {
@@ -395,7 +400,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 				: Arrays.stream(animation.getFrameLengths()).sum();
 		}
 		teleportNpc.spawnHidden(player, client.getGameCycle() + teleportDuration);
-		if (config.enableDebugMode() && config.debugTeleportNpcOnAnyTeleport()) teleportNpc.show();
+		if (isDebugModeEnabled() && config.debugTeleportNpcOnAnyTeleport()) teleportNpc.show();
 	}
 
 	@Subscribe
@@ -780,7 +785,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	private EscapeCrystalNotifyAccountType determineAccountType() {
-		if (config.testingAccountTypeOverride() != EscapeCrystalNotifyConfig.TestingAccountType.DEFAULT) {
+		if (developerMode && config.testingAccountTypeOverride() != EscapeCrystalNotifyConfig.TestingAccountType.DEFAULT) {
 			switch (config.testingAccountTypeOverride()) {
 				case NON_HARDCORE: return EscapeCrystalNotifyAccountType.NON_HARDCORE;
 				case STANDARD_HARDCORE: return EscapeCrystalNotifyAccountType.STANDARD_HARDCORE;
@@ -849,11 +854,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	private boolean isDebugEntranceNpcId(int id) {
-		return this.debugNpcEntranceIds.contains(id);
+		return developerMode && this.debugNpcEntranceIds.contains(id);
 	}
 
 	private boolean isDebugEntranceObjectId(int id) {
-		return this.debugGameObjectEntranceIds.contains(id);
+		return developerMode && this.debugGameObjectEntranceIds.contains(id);
 	}
 
 	private void addPossibleEntrance(int regionId, EscapeCrystalNotifyLocatedEntrance entrance) {
@@ -898,7 +903,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		Set<EscapeCrystalNotifyRegion> nearby = EnumSet.noneOf(EscapeCrystalNotifyRegion.class);
 		for (List<EscapeCrystalNotifyLocatedEntrance> entrances : this.possibleEntrances.values()) {
 			for (EscapeCrystalNotifyLocatedEntrance entrance : entrances) {
-				if ((!entrance.getDefinition().isDebug() || config.enableDebugMode()) &&
+				if ((!entrance.getDefinition().isDebug() || isDebugModeEnabled()) &&
 					entrance.isEntranceInValidChunk() &&
 					!entrance.hasMoved() && 
 					!entrance.isPlayerPastEntrance(this.currentWorldPoint) &&
@@ -1142,7 +1147,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		for (List<EscapeCrystalNotifyLocatedEntrance> entrances : this.possibleEntrances.values()) {
 			entrances.removeIf(inactiveDebugEntrance);
 		}
-		this.validEntrances.removeIf(inactiveDebugEntrance.or(entrance -> entrance.getDefinition().isDebug() && !config.enableDebugMode()));
+		this.validEntrances.removeIf(inactiveDebugEntrance.or(entrance -> entrance.getDefinition().isDebug() && !isDebugModeEnabled()));
 	}
 
 	private void refreshNotificationSettings() {
@@ -1179,8 +1184,10 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		this.entranceOnlyRegionIds.removeAll(excludeRegionIds);
 		this.instancedOnlyRegionIds = EscapeCrystalNotifyRegion.getInstancedOnlyRegionIdsFromTypes(targetRegions, getTargetDeathTypes(accountType));
 		this.instancedOnlyRegionIds.removeAll(includeRegionIds);
-		this.debugGameObjectEntranceIds = EscapeCrystalNotifyIdParser.parseIds(config.debugEntranceObjects());
-		this.debugNpcEntranceIds = EscapeCrystalNotifyIdParser.parseIds(config.debugEntranceNpcs());
+		this.debugGameObjectEntranceIds = developerMode
+			? EscapeCrystalNotifyIdParser.parseIds(config.debugEntranceObjects()) : Collections.emptySet();
+		this.debugNpcEntranceIds = developerMode
+			? EscapeCrystalNotifyIdParser.parseIds(config.debugEntranceNpcs()) : Collections.emptySet();
 
 		regionIds.addAll(includeRegionIds);
 		regionIds.removeAll(excludeRegionIds);
@@ -1560,7 +1567,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	private boolean isCloseToSixHourLogout(int warningTicks) {
-		int ticksToUse = config.ticksSinceLoginOverride() >= 0 ? config.ticksSinceLoginOverride() : ticksSinceLogin;
+		int ticksToUse = developerMode && config.ticksSinceLoginOverride() >= 0 ? config.ticksSinceLoginOverride() : ticksSinceLogin;
 		return ticksToUse >= warningTicks;
 	}
 
@@ -1674,7 +1681,12 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		return getEscapeCrystalInactivitySeconds() > maximum ? maximum : 0;
 	}
 
+	public boolean isDebugModeEnabled() {
+		return developerMode && config.enableDebugMode();
+	}
+
 	public void toggleTestingMode() {
+		if (!developerMode) return;
 		this.testingModeEnabled = !this.testingModeEnabled;
 		log.info("Testing mode " + (this.testingModeEnabled ? "enabled" : "disabled"));
 	}

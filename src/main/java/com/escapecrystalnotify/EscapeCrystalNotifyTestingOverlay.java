@@ -45,7 +45,7 @@ public class EscapeCrystalNotifyTestingOverlay extends OverlayPanel {
 
     @Override
     public Dimension render(Graphics2D graphics) {
-        if (!config.enableDebugMode()) {
+        if (!plugin.isDebugModeEnabled()) {
             return null;
         }
 
