@@ -70,15 +70,16 @@ public class EscapeCrystalNotifyTeleportTriggerTest
 	@Test
 	public void debugRevealRequiresBothDebugSettingsAndFeatureEnabled()
 	{
-		for (int flags = 0; flags < 8; flags++)
+		for (int flags = 0; flags < 16; flags++)
 		{
 			Fixture f = new Fixture(0, 0);
 			f.settings.enabled = (flags & 1) != 0;
 			f.settings.debug = (flags & 2) != 0;
 			f.settings.anyTeleport = (flags & 4) != 0;
+			set(f.plugin, "developerMode", (flags & 8) != 0);
 			f.animate(714);
 			assertEquals((flags & 1) != 0 ? 1 : 0, f.npc.spawns);
-			assertEquals(flags == 7, f.npc.visible);
+			assertEquals(flags == 15, f.npc.visible);
 		}
 	}
 
