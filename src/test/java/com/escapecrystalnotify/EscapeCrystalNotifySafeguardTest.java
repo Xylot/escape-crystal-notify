@@ -97,6 +97,8 @@ public class EscapeCrystalNotifySafeguardTest {
         assertTrue(plugin.isCloseToLeviathanSixHourLogout());
         assertFalse(plugin.isCloseToDoomSixHourLogout());
         manager.setConfiguration(GROUP, "ticksSinceLoginOverride", 33000);
+        assertFalse(plugin.isCloseToDoomSixHourLogout()); // Saved debug settings cannot affect normal sessions.
+        set("developerMode", true);
         assertTrue(plugin.isCloseToDoomSixHourLogout());
         manager.setConfiguration(GROUP, "ticksSinceLoginOverride", 31999);
         assertFalse(plugin.isCloseToLeviathanSixHourLogout());

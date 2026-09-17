@@ -316,11 +316,16 @@ public class EscapeCrystalNotifyDebugSpawnTest {
     }
 
     private EscapeCrystalNotifyPlugin plugin(boolean enabled) throws Exception {
+        return plugin(enabled, true);
+    }
+
+    private EscapeCrystalNotifyPlugin plugin(boolean enabled, boolean developerMode) throws Exception {
         EscapeCrystalNotifyPlugin plugin = new EscapeCrystalNotifyPlugin();
         EscapeCrystalNotifyConfig config = debugConfig(enabled);
         Client client = (Client) Proxy.newProxyInstance(Client.class.getClassLoader(), new Class<?>[]{Client.class},
             (proxy, method, args) -> method.getName().equals("isInInstancedRegion") ? false : null);
         set(plugin, "config", config);
+        set(plugin, "developerMode", developerMode);
         set(plugin, "client", client);
         set(plugin, "crystal3d", new EscapeCrystalNotifyCrystal3d(client, config));
         set(plugin, "gameObjectEntranceIds", new HashSet<Integer>());
