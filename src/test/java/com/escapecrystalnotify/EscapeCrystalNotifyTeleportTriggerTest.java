@@ -68,7 +68,7 @@ public class EscapeCrystalNotifyTeleportTriggerTest
 	}
 
 	@Test
-	public void debugRevealRequiresBothDebugSettingsAndFeatureEnabled()
+	public void debugRevealRequiresBothDebugSettingsAndFeatureEnabled() throws Exception
 	{
 		for (int flags = 0; flags < 16; flags++)
 		{
