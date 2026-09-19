@@ -311,8 +311,17 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			thresholdNavigation = NavigationButton.builder().tooltip("Escape Crystal Notify")
 				.icon(ImageUtil.resizeCanvas(ImageUtil.resizeImage(crystalIcon, 16, 16, true), 16, 16))
 				.priority(5).panel(panel).build();
-			clientToolbar.addNavigation(thresholdNavigation);
+			updateThresholdNavigation();
 		}));
+	}
+
+	private void updateThresholdNavigation() {
+		if (thresholdNavigation == null) return;
+		if (config.showSidePanel()) {
+			clientToolbar.addNavigation(thresholdNavigation);
+		} else {
+			clientToolbar.removeNavigation(thresholdNavigation);
+		}
 	}
 
 	@Override
@@ -1106,6 +1115,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		if (event != null && !EscapeCrystalNotifyConfig.GROUP.equals(event.getGroup())) return;
 		String key = event == null ? null : event.getKey();
 		if (key == null) {
+			SwingUtilities.invokeLater(this::updateThresholdNavigation);
 			refreshRegionSettings();
 			refreshNotificationSettings();
 			return;
@@ -1115,6 +1125,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			return;
 		}
 		switch (key) {
+			case "showSidePanel":
+				SwingUtilities.invokeLater(this::updateThresholdNavigation);
+				break;
 			case "enableDebugMode":
 			case "displayBosses":
 			case "displayRaids":
@@ -1158,6 +1171,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	@Subscribe
 	public void onProfileChanged(ProfileChanged event) {
 		clientThread.invoke(this::resetCrystalConsumption);
+		SwingUtilities.invokeLater(this::updateThresholdNavigation);
 		refreshThresholdPanel(null);
 	}
 

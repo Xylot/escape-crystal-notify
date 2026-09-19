@@ -66,11 +66,19 @@ public interface EscapeCrystalNotifyConfig extends Config
 	)
 	default boolean requireHardcoreAccountType() { return true; }
 
+	@ConfigItem(
+		keyName = "showSidePanel",
+		name = "Show Side Panel",
+		description = "Show the sidebar icon and panel for configuring crystal warning thresholds",
+		position = 2
+	)
+	default boolean showSidePanel() { return true; }
+
 	@ConfigSection(
 			name = "Location Filter",
 			description = "Filter locations where the reminder is shown",
 			closedByDefault = true,
-			position = 2
+			position = 3
 	)
 	String displayRegionFilter = "displayRegionFilter";
 
@@ -168,7 +176,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 			name = "Entrance Overlay",
 			description = "Add a reminder overlay to boss/dungeon entrances and optional deprioritization of the enter menu option",
 			closedByDefault = true,
-			position = 3
+			position = 4
 	)
 	String entranceOverlaySettings = "entranceOverlaySettings";
 
@@ -293,7 +301,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "On-Screen Widget",
 		description = "Settings for the movable and resizable on-screen widget",
 		closedByDefault = true,
-		position = 4
+		position = 5
 	)
 	String onScreenWidgetSettings = "onScreenWidgetSettings";
 
@@ -394,7 +402,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Info Box",
 		description = "Settings for Info Box",
 		closedByDefault = true,
-		position = 5
+		position = 6
 )
 	String infoBoxDisplaySettings = "infoBoxDisplaySettings";
 
@@ -462,7 +470,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Inventory Highlight",
 		description = "Settings for inventory & equipment screen",
 		closedByDefault = true,
-		position = 6
+		position = 7
 	)
 	String inventoryDisplaySettings = "inventoryDisplaySettings";
 
@@ -591,7 +599,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "3D Crystal",
 		description = "Floating crystal with status colors and resource fill, visible only in your client",
 		closedByDefault = DEFAULT_SECTION_CLOSED,
-		position = 7
+		position = 8
 	)
 	String crystal3dSettings = "crystal3dSettings";
 
@@ -599,7 +607,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "3D Crystal: Appearance",
 		description = "Shared status colors and animation for all three placements",
 		closedByDefault = true,
-		position = 8
+		position = 9
 	)
 	String crystal3dAppearanceSettings = "crystal3dAppearanceSettings";
 
@@ -607,7 +615,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "3D Crystal: Above Head",
 		description = "Position adjustments used only when Placement is Above head",
 		closedByDefault = true,
-		position = 9
+		position = 10
 	)
 	String crystal3dAboveHeadSettings = "crystal3dAboveHeadSettings";
 
@@ -615,7 +623,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "3D Crystal: Left of Head",
 		description = "Saved size and position used only when Placement is Left of head",
 		closedByDefault = true,
-		position = 10
+		position = 11
 	)
 	String crystal3dLeftSettings = "crystal3dLeftSettings";
 
@@ -623,7 +631,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "3D Crystal: Right of Head",
 		description = "Saved size and position used only when Placement is Right of head",
 		closedByDefault = true,
-		position = 11
+		position = 12
 	)
 	String crystal3dBesideSettings = "crystal3dBesideSettings";
 
@@ -809,7 +817,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Player Outline",
 		description = "Outline your character to show whether your escape crystal is active",
 		closedByDefault = true,
-		position = 12
+		position = 13
 	)
 	String playerOutlineSettings = "playerOutlineSettings";
 
@@ -862,7 +870,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigSection(
 		name = "Player Circle",
 		description = "Draw a circle beneath your character independently of the body outline",
-		closedByDefault = true, position = 13
+		closedByDefault = true, position = 14
 	)
 	String playerCircleSettings = "playerCircleSettings";
 
@@ -930,7 +938,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 
 	@ConfigSection(
 		name = "Teleport NPC", description = "A temporary NPC reacting to an escape crystal teleport",
-		closedByDefault = true, position = 14
+		closedByDefault = true, position = 15
 	)
 	String teleportNpcSettings = "teleportNpcSettings";
 
@@ -959,7 +967,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Notification Settings",
 		description = "Configure preferences for Runelite notifications",
 		closedByDefault = true,
-		position = 15
+		position = 16
 	)
 	String notificationSettings = "notificationSettings";
 
@@ -1033,7 +1041,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Leviathan Safeguards",
 		description = "Configure optional safeguards for the fixed Leviathan logout bug",
 		closedByDefault = true,
-		position = 16
+		position = 17
 	)
 	String leviathanSafeguardSettings = "leviathanSafeguardSettings";
 
@@ -1115,7 +1123,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Doom Safeguards",
 		description = "Configure optional safeguards for the fixed Doom logout bug",
 		closedByDefault = true,
-		position = 17
+		position = 18
 	)
 	String doomSafeguardSettings = "doomSafeguardSettings";
 
@@ -1197,7 +1205,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Non-HC Inventory Highlight",
 		description = "Settings for minimal inventory highlighting for non-hardcore accounts",
 		closedByDefault = true,
-		position = 18
+		position = 19
 	)
 	String nonHardcoreInventorySettings = "nonHardcoreInventorySettings";
 
@@ -1246,7 +1254,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 		name = "Debug",
 		description = "Settings for testing and debugging the plugin",
 		closedByDefault = true,
-		position = 19
+		position = 20
 	)
 	String debugSettings = "debugSettings";
 
