@@ -65,6 +65,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	private static final int ZULRAH_REVIVE_VARBIT = VarbitID.ZULRAH_REVIVE;
 	private static final int ZULRAH_ENTRANCE_REGION_ID = 8751;
 	private static final int YAMA_REGION_ID = 6045;
+	private static final Set<Integer> DIVINE_POTION_TIMER_VARBITS = Set.of(
+		VarbitID.DIVINEATTACK_POTION_TIME, VarbitID.DIVINESTRENGTH_POTION_TIME, VarbitID.DIVINEDEFENCE_POTION_TIME,
+		VarbitID.DIVINERANGE_POTION_TIME, VarbitID.DIVINEMAGIC_POTION_TIME, VarbitID.DIVINECOMBAT_POTION_TIME,
+		VarbitID.DIVINEBASTION_POTION_TIME, VarbitID.DIVINEBATTLEMAGE_POTION_TIME);
+	private static final int DIVINE_POTION_DAMAGE = 10;
 	private static final HashSet<Integer> LEVIATHAN_LOBBY_CHUNK_IDS = new HashSet<>(List.of(525092, 525093, 527139, 527140, 527141, 529188));
 	private static final HashSet<Integer> DOOM_LOBBY_CHUNK_IDS = new HashSet<>(List.of(335016, 335017, 335018, 337064, 337065, 337066));
 	private static final HashSet<Integer> DOOM_BURROW_HOLE_IDS = new HashSet<>(List.of(ObjectID.DOM_DESCEND_HOLE, ObjectID.DOM_DESCEND_HOLE_UNIQUE));
@@ -154,6 +159,11 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	@Getter
 	private Instant lastCombatTime;
+
+	// Divine potions deal self-damage, which shows the health bar without any real combat.
+	private final Map<Integer, Integer> divinePotionTimers = new HashMap<>();
+	private int divinePotionDrinkTick = -1;
+	private boolean healthBarFromDivinePotionOnly;
 
 	private boolean ready;
 	private boolean revealTeleportNpc;
@@ -410,6 +420,27 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		}
 		teleportNpc.spawnHidden(player, client.getGameCycle() + teleportDuration);
 		if (isDebugModeEnabled() && config.debugTeleportNpcOnAnyTeleport()) teleportNpc.show();
+	}
+
+	@Subscribe
+	public void onVarbitChanged(VarbitChanged event)
+	{
+		int varbitId = event.getVarbitId();
+		if (!DIVINE_POTION_TIMER_VARBITS.contains(varbitId)) return;
+		Integer previous = divinePotionTimers.put(varbitId, event.getValue());
+		// Timers only count down, so an increase means a dose was just drunk.
+		if (event.getValue() <= (previous == null ? 0 : previous)) return;
+		divinePotionDrinkTick = client.getTickCount();
+		healthBarFromDivinePotionOnly = true;
+	}
+
+	@Subscribe
+	public void onHitsplatApplied(HitsplatApplied event)
+	{
+		if (event.getActor() != client.getLocalPlayer()) return;
+		boolean isDivinePotionDamage = event.getHitsplat().getAmount() == DIVINE_POTION_DAMAGE
+			&& divinePotionDrinkTick >= 0 && client.getTickCount() - divinePotionDrinkTick <= 1;
+		if (!isDivinePotionDamage) healthBarFromDivinePotionOnly = false;
 	}
 
 	@Subscribe
@@ -1060,7 +1091,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 			return;
 		}
 
-		if (client.getLocalPlayer().getHealthScale() != -1) {
+		if (client.getLocalPlayer().getHealthScale() == -1) {
+			this.healthBarFromDivinePotionOnly = false;
+		} else if (!this.healthBarFromDivinePotionOnly) {
 			this.lastCombatTime = Instant.now();
 		}
 
