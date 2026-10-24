@@ -163,7 +163,6 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	// Divine potions deal self-damage, which shows the health bar without any real combat.
 	private final Map<Integer, Integer> divinePotionTimers = new HashMap<>();
 	private int divinePotionDrinkTick = -1;
-	private int divinePotionSizedHitsplatTick = -1;
 	private boolean healthBarFromDivinePotionOnly;
 
 	private boolean ready;
@@ -432,38 +431,16 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 		// Timers only count down, so an increase means a dose was just drunk.
 		if (event.getValue() <= (previous == null ? 0 : previous)) return;
 		divinePotionDrinkTick = client.getTickCount();
-		// The self-damage hitsplat can arrive before the timer update.
-		if (isWithinDivinePotionWindow(divinePotionSizedHitsplatTick))
-		{
-			healthBarFromDivinePotionOnly = true;
-			divinePotionSizedHitsplatTick = -1;
-		}
+		healthBarFromDivinePotionOnly = true;
 	}
 
 	@Subscribe
 	public void onHitsplatApplied(HitsplatApplied event)
 	{
 		if (event.getActor() != client.getLocalPlayer()) return;
-		if (event.getHitsplat().getAmount() == DIVINE_POTION_DAMAGE)
-		{
-			if (isWithinDivinePotionWindow(divinePotionDrinkTick))
-			{
-				healthBarFromDivinePotionOnly = true;
-				divinePotionDrinkTick = -1;
-				return;
-			}
-			divinePotionSizedHitsplatTick = client.getTickCount();
-		}
-		else
-		{
-			divinePotionSizedHitsplatTick = -1;
-		}
-		healthBarFromDivinePotionOnly = false;
-	}
-
-	private boolean isWithinDivinePotionWindow(int tick)
-	{
-		return tick >= 0 && client.getTickCount() - tick <= 1;
+		boolean isDivinePotionDamage = event.getHitsplat().getAmount() == DIVINE_POTION_DAMAGE
+			&& divinePotionDrinkTick >= 0 && client.getTickCount() - divinePotionDrinkTick <= 1;
+		if (!isDivinePotionDamage) healthBarFromDivinePotionOnly = false;
 	}
 
 	@Subscribe
