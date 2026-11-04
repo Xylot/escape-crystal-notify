@@ -60,8 +60,8 @@ public interface EscapeCrystalNotifyConfig extends Config
 
 	@ConfigItem(
 		keyName = "requireHardcoreAccountType",
-		name = "Only display for HCIM/HCGIM",
-		description = "Only display when logged in as a HCIM or HCGIM",
+		name = "Only display for hardcore modes",
+		description = "Only display when logged in as a HCIM, HCGIM, or on a Hardcore Main world",
 		position = 1
 	)
 	default boolean requireHardcoreAccountType() { return true; }
@@ -148,7 +148,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 	@ConfigItem(
 			keyName = "excludeSafeForRegularHardcoreRegions",
 			name = "Exclude Safe Regular HC Regions",
-			description = "Don't display at regions that are explicitly safe for regular hardcores (Cox, inferno, etc..). Displays will still be enabled when playing on a GHCIM.",
+			description = "Don't display at regions that are explicitly safe for regular hardcores (Cox, inferno, etc..). Displays will still be enabled when playing on a HCGIM or Hardcore Main.",
 			section = "displayRegionFilter",
 			position = 8
 	)
@@ -823,7 +823,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 
 	@ConfigItem(
 		keyName = "enablePlayerOutline", name = "Enable Player Outline",
-		description = "Outline your character using the active or inactive color. Follows the HCIM/HCGIM account filter.",
+		description = "Outline your character using the active or inactive color. Follows the hardcore mode filter.",
 		section = playerOutlineSettings, position = 1
 	)
 	default boolean enablePlayerOutline() { return false; }
@@ -876,7 +876,7 @@ public interface EscapeCrystalNotifyConfig extends Config
 
 	@ConfigItem(
 		keyName = "enablePlayerCircle", name = "Enable Player Circle",
-		description = "Show a ground circle using the active or inactive color. Follows the HCIM/HCGIM account filter.",
+		description = "Show a ground circle using the active or inactive color. Follows the hardcore mode filter.",
 		section = playerCircleSettings, position = 1
 	)
 	default boolean enablePlayerCircle() { return false; }
@@ -1379,7 +1379,8 @@ public interface EscapeCrystalNotifyConfig extends Config
 		DEFAULT ("Default (Actual Account Type)"),
 		NON_HARDCORE ("Non-Hardcore"),
 		STANDARD_HARDCORE ("Standard Hardcore"),
-		GROUP_HARDCORE ("Group Hardcore");
+		GROUP_HARDCORE ("Group Hardcore"),
+		HARDCORE_MAIN ("Hardcore Main");
 
 		private final String displayName;
 

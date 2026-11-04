@@ -799,8 +799,14 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 				case NON_HARDCORE: return EscapeCrystalNotifyAccountType.NON_HARDCORE;
 				case STANDARD_HARDCORE: return EscapeCrystalNotifyAccountType.STANDARD_HARDCORE;
 				case GROUP_HARDCORE: return EscapeCrystalNotifyAccountType.GROUP_HARDCORE;
+				case HARDCORE_MAIN: return EscapeCrystalNotifyAccountType.HARDCORE_MAIN;
 				default: break;
 			}
+		}
+
+		// Hardcore Main uses the same death rules as HCGIM, but is identified by world type.
+		if (client.getWorldType().contains(WorldType.HARDCORE_MAIN)) {
+			return EscapeCrystalNotifyAccountType.HARDCORE_MAIN;
 		}
 
 		switch (client.getVarbitValue(Varbits.ACCOUNT_TYPE)) {
@@ -1219,6 +1225,7 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 
 	private List<EscapeCrystalNotifyRegionDeathType> getTargetDeathTypes(EscapeCrystalNotifyAccountType accountType) {
 		switch (accountType) {
+            case HARDCORE_MAIN:
             case GROUP_HARDCORE: return Arrays.asList(EscapeCrystalNotifyRegionDeathType.UNSAFE, EscapeCrystalNotifyRegionDeathType.UNSAFE_HCGIM);
 			default: return List.of(EscapeCrystalNotifyRegionDeathType.UNSAFE);
         }
@@ -1642,7 +1649,9 @@ public class EscapeCrystalNotifyPlugin extends Plugin
 	}
 
 	public boolean isRegionSafe(int regionId) {
-		boolean atExcludedSafeForRegularHardcoreRegion = this.config.excludeSafeForRegularHardcoreRegions() && this.safeForRegularHardcoreRegionIds.contains(regionId) && this.accountType != EscapeCrystalNotifyAccountType.GROUP_HARDCORE;
+		boolean atExcludedSafeForRegularHardcoreRegion = this.config.excludeSafeForRegularHardcoreRegions() && this.safeForRegularHardcoreRegionIds.contains(regionId)
+			&& this.accountType != EscapeCrystalNotifyAccountType.GROUP_HARDCORE
+			&& this.accountType != EscapeCrystalNotifyAccountType.HARDCORE_MAIN;
 		boolean atManuallyExcludedConfigRegion = this.manuallyExcludedRegionIds.contains(regionId);
 		return atExcludedSafeForRegularHardcoreRegion || atManuallyExcludedConfigRegion;
 	}

@@ -125,7 +125,7 @@ public class EscapeCrystalNotifyRegionPolicyTest {
     }
 
     @Test
-    public void allAccountTypesKeepSafeEntranceSeparateAndInfernoStillRequiresGroupHardcore() throws Exception {
+    public void allAccountTypesKeepSafeEntranceSeparateAndInfernoRequiresGroupHardcoreOrHardcoreMain() throws Exception {
         for (EscapeCrystalNotifyAccountType account : EscapeCrystalNotifyAccountType.values()) {
             EscapeCrystalNotifyPlugin plugin = plugin(account);
             at(plugin, SHELLBANE_ENTRANCE);
@@ -134,7 +134,8 @@ public class EscapeCrystalNotifyRegionPolicyTest {
             at(plugin, SHELLBANE_ARENA);
             assertTrue(account.name(), plugin.isAtNotifyRegionId());
             at(plugin, region(9043, 0));
-            assertEquals(account.name(), account == EscapeCrystalNotifyAccountType.GROUP_HARDCORE,
+            assertEquals(account.name(), account == EscapeCrystalNotifyAccountType.GROUP_HARDCORE
+                || account == EscapeCrystalNotifyAccountType.HARDCORE_MAIN,
                 plugin.isAtNotifyRegionId());
         }
     }

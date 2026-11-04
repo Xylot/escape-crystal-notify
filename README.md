@@ -1,7 +1,7 @@
 # Escape Crystal Notify
 Provides an all-in-one suite for managing your Escape Crystal in Old School Runescape. 
 
-Useful for HCIM/HCGIM
+Useful for HCIM/HCGIM and Hardcore Main. Hardcore Main is detected by world type and uses the same hardcore settings and dangerous-death locations as HCGIM.
 
 # Features
 - Scalable reminder image display
